@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grade Management — Teacher | SPSMIS</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../../assets/css/theme.css">
+  <link rel="stylesheet" href="../../assets/css/admin.css">
+  <style>
+    .sidebar { background: #1e3a2f; }
+    .sidebar-link.active { background: var(--secondary); }
+    .sf10-header { background: linear-gradient(135deg, #1e3a2f, #2d5a40); color: #fff; padding: 1rem 1.5rem; border-radius: 12px 12px 0 0; }
+    .grade-input { width: 60px; text-align: center; padding: .3rem .4rem; font-size: .82rem; }
+    .final-cell { font-weight: 700; font-size: .95rem; }
+    .passed { color: var(--secondary); } .failed { color: var(--danger); }
+    @media print { .no-print { display: none !important; } body { background: white; } .main-content { margin: 0 !important; } }
+  </style>
+</head>
+<body>
+<div id="desktop-only-overlay"><i class="fas fa-desktop"></i><h4>Desktop Required</h4><p>Please use a computer or laptop.</p></div>
+<div id="sidebar-placeholder"></div>
+<div class="app-wrapper">
+  <div class="main-content page-content">
+    <nav class="top-navbar no-print">
+      <div><div class="page-title">Grade Management (SF10)</div><nav aria-label="breadcrumb"><ol class="breadcrumb mb-0"><li class="breadcrumb-item text-muted">Teacher</li><li class="breadcrumb-item active">Grades</li></ol></nav></div>
+      <div class="ms-auto"><div class="user-menu"><div class="user-avatar" id="user-avatar-text" style="background:var(--secondary);">T</div><div><div class="user-name" id="user-display-name">Teacher</div><div class="user-role" id="user-display-role">Teacher</div></div></div></div>
+    </nav>
+
+    <div class="page-header no-print"><h3>Grade Management</h3><p>Enter and manage student grades (SF10 format)</p></div>
+
+    <!-- Student Selector -->
+    <div class="card mb-3 no-print">
+      <div class="card-body">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label mb-1">Grade Level</label>
+            <select id="sel-grade" class="form-select" onchange="loadStudentList()"><option value="">Select Grade</option></select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label mb-1">Student</label>
+            <select id="sel-student" class="form-select"><option value="">Select Student</option></select>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-success w-100" onclick="loadSF10()"><i class="fas fa-eye me-2"></i>View SF10</button>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-outline-secondary w-100" onclick="window.print()"><i class="fas fa-print me-2"></i>Print</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SF10 Card -->
+    <div id="sf10-container" style="display:none;">
+      <div class="card">
+        <div class="sf10-header">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <div style="font-size:.7rem;opacity:.7;letter-spacing:.5px;">REPUBLIC OF THE PHILIPPINES — DEPARTMENT OF EDUCATION</div>
+              <div style="font-size:1rem;font-weight:700;">SCHOOL FORM 10 (SF10) — Learner's Permanent Academic Record</div>
+              <div style="font-size:.78rem;opacity:.85;">Minanga Integrated School &nbsp;|&nbsp; S.Y. 2025–2026</div>
+            </div>
+            <div class="text-end">
+              <div style="font-size:.7rem;opacity:.7;">School ID: 123456</div>
+              <div style="font-size:.7rem;opacity:.7;">Region X — Northern Mindanao</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body border-bottom">
+          <div class="row g-2" id="sf10-student-info"></div>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table mb-0" style="font-size:.85rem;">
+              <thead>
+                <tr style="background:#f1f3f4;">
+                  <th style="min-width:200px;padding:.6rem .8rem;">Learning Area</th>
+                  <th class="text-center">Q1</th>
+                  <th class="text-center">Q2</th>
+                  <th class="text-center">Q3</th>
+                  <th class="text-center">Q4</th>
+                  <th class="text-center">Final Grade</th>
+                  <th class="text-center">Remarks</th>
+                </tr>
+              </thead>
+              <tbody id="sf10-grades-tbody"></tbody>
+              <tfoot id="sf10-tfoot"></tfoot>
+            </table>
+          </div>
+        </div>
+        <div class="card-body no-print">
+          <div class="d-flex gap-2">
+            <button class="btn btn-success" onclick="saveGrades()"><i class="fas fa-save me-2"></i>Save Grades</button>
+            <button class="btn btn-outline-primary" onclick="openEditModal()"><i class="fas fa-edit me-2"></i>Edit Grades</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="sf10-empty" class="empty-state" style="margin-top:3rem;">
+      <i class="fas fa-file-alt"></i>
+      <p>Select a grade level and student to view their SF10 grade card.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Grades Modal -->
+<div class="modal fade" id="editGradesModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header" style="background:var(--secondary);"><h5 class="modal-title">Edit Grades</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <p class="text-muted mb-3" style="font-size:.85rem;">Enter grades (0–100) for each subject per quarter. Final grade is auto-computed.</p>
+        <div class="table-responsive">
+          <table class="table" style="font-size:.85rem;">
+            <thead><tr style="background:#f1f3f4;"><th>Subject</th><th class="text-center">Q1</th><th class="text-center">Q2</th><th class="text-center">Q3</th><th class="text-center">Q4</th><th class="text-center">Final</th><th class="text-center">Remarks</th></tr></thead>
+            <tbody id="edit-grades-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" onclick="applyEditedGrades()"><i class="fas fa-save me-2"></i>Apply Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../data/mock-users.js"></script>
+<script src="../../data/mock-students.js"></script>
+<script src="../../data/mock-grades.js"></script>
+<script src="../../assets/js/storage.js"></script>
+<script src="../../assets/js/components.js"></script>
+<script src="../../assets/js/auth.js"></script>
+<script>
+  initTeacherPage('grades');
+  loadComponent('#sidebar-placeholder', '/components/teacher-sidebar.html');
+  populateGradeDropdown(document.getElementById('sel-grade'), false);
+  const editModal = new bootstrap.Modal(document.getElementById('editGradesModal'));
+
+  let currentStudent = null;
+  let currentGradeData = null;
+
+  function loadStudentList() {
+    const grade = document.getElementById('sel-grade').value;
+    const sel = document.getElementById('sel-student');
+    sel.innerHTML = '<option value="">Select Student</option>';
+    if (!grade) return;
+    getStudents().filter(s => s.gradeLevel === grade).forEach(s => {
+      const o = document.createElement('option');
+      o.value = s.id;
+      o.textContent = `${s.lastName}, ${s.firstName} ${s.middleName}`;
+      sel.appendChild(o);
+    });
+  }
+
+  function loadSF10() {
+    const sid = document.getElementById('sel-student').value;
+    if (!sid) { showToast('Please select a student.', 'error'); return; }
+    currentStudent = getStudentById(sid);
+    if (!currentStudent) return;
+    const grade = currentStudent.gradeLevel;
+    const subjects = getSubjectsForGrade(grade);
+    let gradeData = getStudentGrades(sid);
+    if (!gradeData) {
+      gradeData = { schoolYear:'2025-2026', gradeLevel: grade, section: currentStudent.section, subjects:{} };
+      subjects.forEach(sub => gradeData.subjects[sub] = { q1:0, q2:0, q3:0, q4:0, final:0, remarks:'—' });
+    }
+    currentGradeData = gradeData;
+
+    // Student info
+    document.getElementById('sf10-student-info').innerHTML = `
+      <div class="col-md-3"><div style="font-size:.72rem;color:var(--gray-600);">Learner Reference Number (LRN)</div><div class="fw-bold" style="font-family:monospace;">${currentStudent.lrn}</div></div>
+      <div class="col-md-3"><div style="font-size:.72rem;color:var(--gray-600);">Full Name</div><div class="fw-bold">${currentStudent.lastName}, ${currentStudent.firstName} ${currentStudent.middleName}</div></div>
+      <div class="col-md-2"><div style="font-size:.72rem;color:var(--gray-600);">Grade Level</div><div class="fw-bold">${grade}</div></div>
+      <div class="col-md-2"><div style="font-size:.72rem;color:var(--gray-600);">Section</div><div class="fw-bold">${currentStudent.section}</div></div>
+      <div class="col-md-2"><div style="font-size:.72rem;color:var(--gray-600);">Sex</div><div class="fw-bold">${currentStudent.sex}</div></div>`;
+
+    renderSF10Table(gradeData, subjects);
+    document.getElementById('sf10-container').style.display = 'block';
+    document.getElementById('sf10-empty').style.display = 'none';
+  }
+
+  function renderSF10Table(gradeData, subjects) {
+    const tbody = document.getElementById('sf10-grades-tbody');
+    let totalFinal = 0, passed = 0, failed = 0;
+    tbody.innerHTML = subjects.map(sub => {
+      const g = gradeData.subjects[sub] || { q1:'—', q2:'—', q3:'—', q4:'—', final:'—', remarks:'—' };
+      const finalNum = parseInt(g.final) || 0;
+      if (finalNum > 0) { totalFinal += finalNum; if (finalNum >= 75) passed++; else failed++; }
+      const passClass = g.remarks === 'Passed' ? 'passed' : (g.remarks === 'Failed' ? 'failed' : '');
+      return `<tr>
+        <td style="padding:.5rem .8rem;">${sub}</td>
+        <td class="text-center">${g.q1}</td><td class="text-center">${g.q2}</td>
+        <td class="text-center">${g.q3}</td><td class="text-center">${g.q4}</td>
+        <td class="text-center final-cell ${passClass}">${g.final}</td>
+        <td class="text-center">${g.remarks === 'Passed' ? '<span class="badge-passed">Passed</span>' : (g.remarks === 'Failed' ? '<span class="badge-failed">Failed</span>' : '<span class="text-muted">—</span>')}</td>
+      </tr>`;
+    }).join('');
+    const avg = subjects.length > 0 ? Math.round(totalFinal / subjects.length) : 0;
+    document.getElementById('sf10-tfoot').innerHTML = `<tr style="background:#f1f3f4;font-weight:700;">
+      <td style="padding:.6rem .8rem;">General Average</td>
+      <td colspan="4"></td>
+      <td class="text-center ${avg >= 75 ? 'passed' : 'failed'}">${avg || '—'}</td>
+      <td class="text-center">${avg >= 75 ? '<span class="badge-passed">Promoted</span>' : (avg > 0 ? '<span class="badge-failed">Retained</span>' : '—')}</td>
+    </tr>`;
+  }
+
+  function openEditModal() {
+    if (!currentStudent || !currentGradeData) return;
+    const subjects = getSubjectsForGrade(currentStudent.gradeLevel);
+    const tbody = document.getElementById('edit-grades-tbody');
+    tbody.innerHTML = subjects.map(sub => {
+      const g = currentGradeData.subjects[sub] || { q1:0, q2:0, q3:0, q4:0, final:0, remarks:'—' };
+      return `<tr data-subject="${sub}">
+        <td>${sub}</td>
+        <td class="text-center"><input type="number" class="form-control grade-input q1-inp" min="0" max="100" value="${g.q1||''}" onchange="recomputeRow(this)"></td>
+        <td class="text-center"><input type="number" class="form-control grade-input q2-inp" min="0" max="100" value="${g.q2||''}" onchange="recomputeRow(this)"></td>
+        <td class="text-center"><input type="number" class="form-control grade-input q3-inp" min="0" max="100" value="${g.q3||''}" onchange="recomputeRow(this)"></td>
+        <td class="text-center"><input type="number" class="form-control grade-input q4-inp" min="0" max="100" value="${g.q4||''}" onchange="recomputeRow(this)"></td>
+        <td class="text-center final-display fw-bold">${g.final||'—'}</td>
+        <td class="text-center remarks-display">${g.remarks === 'Passed' ? '<span class="badge-passed">Passed</span>' : (g.remarks === 'Failed' ? '<span class="badge-failed">Failed</span>' : '—')}</td>
+      </tr>`;
+    }).join('');
+    editModal.show();
+  }
+
+  function recomputeRow(input) {
+    const row = input.closest('tr');
+    const q1 = parseInt(row.querySelector('.q1-inp').value) || 0;
+    const q2 = parseInt(row.querySelector('.q2-inp').value) || 0;
+    const q3 = parseInt(row.querySelector('.q3-inp').value) || 0;
+    const q4 = parseInt(row.querySelector('.q4-inp').value) || 0;
+    const final = computeFinal(q1, q2, q3, q4);
+    const remarks = getRemarks(final);
+    row.querySelector('.final-display').textContent = final;
+    row.querySelector('.remarks-display').innerHTML = remarks === 'Passed' ? '<span class="badge-passed">Passed</span>' : '<span class="badge-failed">Failed</span>';
+  }
+
+  function applyEditedGrades() {
+    const rows = document.querySelectorAll('#edit-grades-tbody tr');
+    rows.forEach(row => {
+      const sub = row.dataset.subject;
+      const q1 = parseInt(row.querySelector('.q1-inp').value) || 0;
+      const q2 = parseInt(row.querySelector('.q2-inp').value) || 0;
+      const q3 = parseInt(row.querySelector('.q3-inp').value) || 0;
+      const q4 = parseInt(row.querySelector('.q4-inp').value) || 0;
+      const final = computeFinal(q1, q2, q3, q4);
+      currentGradeData.subjects[sub] = { q1, q2, q3, q4, final, remarks: getRemarks(final) };
+    });
+    editModal.hide();
+    renderSF10Table(currentGradeData, getSubjectsForGrade(currentStudent.gradeLevel));
+    showToast('Grade changes applied. Click Save to persist.', 'info');
+  }
+
+  function saveGrades() {
+    if (!currentStudent || !currentGradeData) return;
+    saveStudentGrades(currentStudent.id, currentGradeData);
+    showToast('Grades saved to localStorage successfully!', 'success');
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings — Admin | SPSMIS</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../../assets/css/theme.css">
+  <link rel="stylesheet" href="../../assets/css/admin.css">
+</head>
+<body>
+<div id="desktop-only-overlay"><i class="fas fa-desktop"></i><h4>Desktop Required</h4><p>Please use a computer or laptop to access this portal.</p></div>
+<div id="sidebar-placeholder"></div>
+<div class="app-wrapper">
+  <div class="main-content page-content">
+    <nav class="top-navbar">
+      <div><div class="page-title">Settings</div><nav aria-label="breadcrumb"><ol class="breadcrumb mb-0"><li class="breadcrumb-item text-muted">Admin</li><li class="breadcrumb-item active">Settings</li></ol></nav></div>
+      <div class="ms-auto"><div class="user-menu"><div class="user-avatar" id="user-avatar-text">A</div><div><div class="user-name" id="user-display-name">Admin</div><div class="user-role" id="user-display-role">Administrator</div></div></div></div>
+    </nav>
+
+    <div class="page-header"><h3>Settings</h3><p>Manage your profile and account preferences</p></div>
+
+    <div class="row g-3">
+      <!-- Profile -->
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header"><i class="fas fa-user me-2" style="color:var(--primary);"></i>Profile Settings</div>
+          <div class="card-body">
+            <div class="text-center mb-3">
+              <div style="width:72px;height:72px;background:var(--primary-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:700;color:var(--primary);margin:0 auto .75rem;" id="avatar-display">A</div>
+              <div class="fw-bold" id="profile-name-display">—</div>
+              <div class="text-muted" style="font-size:.78rem;" id="profile-role-display">—</div>
+            </div>
+            <div class="mb-3"><label class="form-label">Display Name</label><input type="text" id="s-name" class="form-control" placeholder="Full Name"></div>
+            <div class="mb-3"><label class="form-label">Email Address</label><input type="email" id="s-email" class="form-control"></div>
+            <button class="btn btn-primary" onclick="saveProfile()"><i class="fas fa-save me-2"></i>Save Profile</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header"><i class="fas fa-lock me-2" style="color:var(--primary);"></i>Change Password</div>
+          <div class="card-body">
+            <div class="mb-3"><label class="form-label">Current Password</label><input type="password" id="s-old-pw" class="form-control" placeholder="Current password"></div>
+            <div class="mb-3"><label class="form-label">New Password</label><input type="password" id="s-new-pw" class="form-control" placeholder="Min. 6 characters"></div>
+            <div class="mb-3"><label class="form-label">Confirm New Password</label><input type="password" id="s-confirm-pw" class="form-control" placeholder="Repeat new password"></div>
+            <button class="btn btn-primary" onclick="changePassword()"><i class="fas fa-key me-2"></i>Change Password</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Security Questions -->
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header"><i class="fas fa-shield-alt me-2" style="color:var(--primary);"></i>Security Question</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label">Security Question</label>
+              <select id="s-question" class="form-select">
+                <option>What is the name of your first pet?</option>
+                <option>What is your mother's maiden name?</option>
+                <option>What city were you born in?</option>
+                <option>What is the name of your elementary school?</option>
+                <option>What was the name of your first teacher?</option>
+              </select>
+            </div>
+            <div class="mb-3"><label class="form-label">Answer</label><input type="text" id="s-answer" class="form-control" placeholder="Your answer"></div>
+            <button class="btn btn-primary" onclick="saveSecurityQ()"><i class="fas fa-save me-2"></i>Save</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Danger Zone -->
+      <div class="col-lg-6">
+        <div class="card" style="border-color:var(--danger);">
+          <div class="card-header" style="color:var(--danger);"><i class="fas fa-exclamation-triangle me-2"></i>Account Actions</div>
+          <div class="card-body">
+            <p style="font-size:.85rem;color:var(--gray-600);">Log out from all sessions and return to the login page.</p>
+            <button class="btn btn-danger" onclick="handleLogout(event)"><i class="fas fa-sign-out-alt me-2"></i>Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../data/mock-users.js"></script>
+<script src="../../data/mock-students.js"></script>
+<script src="../../assets/js/storage.js"></script>
+<script src="../../assets/js/components.js"></script>
+<script src="../../assets/js/auth.js"></script>
+<script>
+  const session = initAdminPage('settings');
+  loadComponent('#sidebar-placeholder', '/components/admin-sidebar.html');
+
+  if (session) {
+    document.getElementById('avatar-display').textContent = session.name.charAt(0);
+    document.getElementById('profile-name-display').textContent = session.name;
+    document.getElementById('profile-role-display').textContent = session.position || 'Administrator';
+    document.getElementById('s-name').value = session.name;
+    const user = getUserById(session.id);
+    if (user) document.getElementById('s-email').value = user.email || '';
+  }
+
+  function saveProfile() {
+    const name = document.getElementById('s-name').value.trim();
+    if (!name) { showToast('Name cannot be empty.', 'error'); return; }
+    const s = getSession();
+    s.name = name;
+    localStorage.setItem('spsmis_session', JSON.stringify(s));
+    document.getElementById('profile-name-display').textContent = name;
+    document.getElementById('avatar-display').textContent = name.charAt(0);
+    document.getElementById('user-display-name').textContent = name;
+    showToast('Profile updated successfully!', 'success');
+  }
+
+  function changePassword() {
+    const oldPw = document.getElementById('s-old-pw').value;
+    const newPw = document.getElementById('s-new-pw').value;
+    const confirmPw = document.getElementById('s-confirm-pw').value;
+    const s = getSession();
+    const user = MOCK_USERS.find(u => u.id === s.id);
+    if (!user || oldPw !== user.password) { showToast('Current password is incorrect.', 'error'); return; }
+    if (newPw.length < 6) { showToast('New password must be at least 6 characters.', 'error'); return; }
+    if (newPw !== confirmPw) { showToast('Passwords do not match.', 'error'); return; }
+    user.password = newPw;
+    showToast('Password changed successfully!', 'success');
+    ['s-old-pw','s-new-pw','s-confirm-pw'].forEach(id => document.getElementById(id).value = '');
+  }
+
+  function saveSecurityQ() {
+    const q = document.getElementById('s-question').value;
+    const a = document.getElementById('s-answer').value.trim();
+    if (!a) { showToast('Please enter your answer.', 'error'); return; }
+    showToast('Security question saved!', 'success');
+  }
+</script>
+</body>
+</html>

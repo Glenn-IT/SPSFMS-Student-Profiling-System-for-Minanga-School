@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics — Admin | SPSMIS</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../../assets/css/theme.css">
+  <link rel="stylesheet" href="../../assets/css/admin.css">
+</head>
+<body>
+<div id="desktop-only-overlay"><i class="fas fa-desktop"></i><h4>Desktop Required</h4><p>Please use a computer or laptop to access this portal.</p></div>
+<div id="sidebar-placeholder"></div>
+<div class="app-wrapper">
+  <div class="main-content page-content">
+    <nav class="top-navbar">
+      <div><div class="page-title">Analytics</div><nav aria-label="breadcrumb"><ol class="breadcrumb mb-0"><li class="breadcrumb-item text-muted">Admin</li><li class="breadcrumb-item active">Analytics</li></ol></nav></div>
+      <div class="ms-auto"><div class="user-menu"><div class="user-avatar" id="user-avatar-text">A</div><div><div class="user-name" id="user-display-name">Admin</div><div class="user-role" id="user-display-role">Administrator</div></div></div></div>
+    </nav>
+
+    <div class="page-header"><h3>Analytics</h3><p>Enrollment trends and population insights</p></div>
+
+    <!-- Trend Chart -->
+    <div class="row g-3 mb-4">
+      <div class="col-lg-8">
+        <div class="card h-100">
+          <div class="card-header"><i class="fas fa-chart-line me-2" style="color:var(--primary);"></i>Enrollment Trend (3-Year)</div>
+          <div class="card-body"><canvas id="trendChart" style="max-height:280px;"></canvas></div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="card h-100">
+          <div class="card-header"><i class="fas fa-chart-pie me-2" style="color:var(--primary);"></i>Level Distribution</div>
+          <div class="card-body d-flex align-items-center justify-content-center">
+            <canvas id="levelChart" style="max-height:260px;"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header"><i class="fas fa-trophy me-2" style="color:var(--primary);"></i>Top Sections by Student Count</div>
+          <div class="card-body p-0">
+            <table class="table table-modern mb-0">
+              <thead><tr><th>Rank</th><th>Section</th><th>Grade Level</th><th>Students</th></tr></thead>
+              <tbody id="top-sections-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header"><i class="fas fa-venus-mars me-2" style="color:var(--primary);"></i>Gender by Level</div>
+          <div class="card-body"><canvas id="genderLevelChart" style="max-height:220px;"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="../../data/mock-users.js"></script>
+<script src="../../data/mock-students.js"></script>
+<script src="../../assets/js/storage.js"></script>
+<script src="../../assets/js/components.js"></script>
+<script src="../../assets/js/auth.js"></script>
+<script>
+  initAdminPage('analytics');
+  loadComponent('#sidebar-placeholder', '/components/admin-sidebar.html');
+  const students = getStudents();
+
+  // Trend (mock 3-year data)
+  const currentTotal = students.length;
+  new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+      labels: ['2023–2024','2024–2025','2025–2026'],
+      datasets: [
+        { label: 'Elementary', data: [14,16,students.filter(s=>['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6'].includes(s.gradeLevel)).length], borderColor:'#34a853', backgroundColor:'rgba(52,168,83,.1)', tension:.4, fill:true },
+        { label: 'Junior High', data: [9,11,students.filter(s=>['Grade 7','Grade 8','Grade 9','Grade 10'].includes(s.gradeLevel)).length], borderColor:'#1a73e8', backgroundColor:'rgba(26,115,232,.1)', tension:.4, fill:true },
+        { label: 'Senior High', data: [4,5,students.filter(s=>['Grade 11','Grade 12'].includes(s.gradeLevel)).length], borderColor:'#ea4335', backgroundColor:'rgba(234,67,53,.1)', tension:.4, fill:true }
+      ]
+    },
+    options: { plugins: { legend: { position:'bottom' } }, scales: { y: { beginAtZero: true, ticks:{ precision:0 } } } }
+  });
+
+  // Level donut
+  const elem = students.filter(s=>['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6'].includes(s.gradeLevel)).length;
+  const jhs  = students.filter(s=>['Grade 7','Grade 8','Grade 9','Grade 10'].includes(s.gradeLevel)).length;
+  const shs  = students.filter(s=>['Grade 11','Grade 12'].includes(s.gradeLevel)).length;
+  new Chart(document.getElementById('levelChart'), {
+    type: 'doughnut',
+    data: { labels:['Elementary','JHS','SHS'], datasets:[{ data:[elem,jhs,shs], backgroundColor:['#34a853','#1a73e8','#ea4335'], borderWidth:0 }] },
+    options: { plugins:{ legend:{ position:'bottom', labels:{ font:{ size:11 } } } }, cutout:'65%' }
+  });
+
+  // Top sections
+  const sectionCounts = {};
+  students.forEach(s => {
+    const key = `${s.section}||${s.gradeLevel}`;
+    sectionCounts[key] = (sectionCounts[key]||0) + 1;
+  });
+  const sorted = Object.entries(sectionCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const tbody = document.getElementById('top-sections-tbody');
+  const medals = ['🥇','🥈','🥉','4th','5th'];
+  tbody.innerHTML = sorted.map(([key,count],i) => {
+    const [sec,grade] = key.split('||');
+    return `<tr><td>${medals[i]}</td><td><strong>${sec}</strong></td><td>${grade}</td><td><span class="fw-bold" style="color:var(--primary);">${count}</span></td></tr>`;
+  }).join('');
+
+  // Gender by level
+  new Chart(document.getElementById('genderLevelChart'), {
+    type:'bar',
+    data: {
+      labels:['Elementary','JHS','SHS'],
+      datasets:[
+        { label:'Male',   data:[students.filter(s=>['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6'].includes(s.gradeLevel)&&s.sex==='Male').length, students.filter(s=>['Grade 7','Grade 8','Grade 9','Grade 10'].includes(s.gradeLevel)&&s.sex==='Male').length, students.filter(s=>['Grade 11','Grade 12'].includes(s.gradeLevel)&&s.sex==='Male').length], backgroundColor:'#1a73e8', borderRadius:4 },
+        { label:'Female', data:[students.filter(s=>['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6'].includes(s.gradeLevel)&&s.sex==='Female').length, students.filter(s=>['Grade 7','Grade 8','Grade 9','Grade 10'].includes(s.gradeLevel)&&s.sex==='Female').length, students.filter(s=>['Grade 11','Grade 12'].includes(s.gradeLevel)&&s.sex==='Female').length], backgroundColor:'#ea4335', borderRadius:4 }
+      ]
+    },
+    options:{ plugins:{ legend:{ position:'bottom' } }, scales:{ x:{ grid:{ display:false } }, y:{ beginAtZero:true, ticks:{ precision:0 } } } }
+  });
+</script>
+</body>
+</html>
