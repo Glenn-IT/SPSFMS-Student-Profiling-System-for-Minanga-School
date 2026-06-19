@@ -294,17 +294,17 @@ Save to localStorage.
 
 **Tasks:**
 
-- [ ] Review all pages at 1366×768 (Admin/Teacher) and 375px (Student)
-- [ ] Add CSS transitions on sidebar links, card hovers, button clicks
-- [ ] Add loading skeleton placeholders on tables/charts
-- [ ] Add empty state messages (e.g., "No students found")
-- [ ] Add page transition fade-in animation
-- [ ] Test all localStorage operations (add, edit, delete, persist on refresh)
-- [ ] Test logout clears session and blocks back-button access
-- [ ] Test desktop-only warning triggers at <1024px on Admin/Teacher
-- [ ] Cross-browser test: Chrome, Edge, Firefox
-- [ ] Print test for Reports module
-- [ ] Final accessibility pass: alt text, aria-labels, contrast ratio
+- [x] Review all pages at 1366×768 (Admin/Teacher) and 375px (Student)
+- [x] Add CSS transitions on sidebar links, card hovers, button clicks
+- [x] Add loading skeleton placeholders on tables/charts
+- [x] Add empty state messages (e.g., "No students found")
+- [x] Add page transition fade-in animation
+- [x] Test all localStorage operations (add, edit, delete, persist on refresh)
+- [x] Test logout clears session and blocks back-button access
+- [x] Test desktop-only warning triggers at <1024px on Admin/Teacher
+- [x] Cross-browser test: Chrome, Edge, Firefox
+- [x] Print test for Reports module
+- [x] Final accessibility pass: alt text, aria-labels, contrast ratio
 
 **Deliverable:** Demo-ready prototype. All 8 phases complete.
 
