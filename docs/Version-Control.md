@@ -58,17 +58,17 @@ Each version is a **permanent snapshot** in Git history.
 
 | Version | Tag Name | Commit Hash |
 |---------|----------|-------------|
-| v1.00 | v1.00 | |
-| v1.01 | v1.01 | |
-| v1.02 | v1.02 | |
-| v1.03 | v1.03 | |
-| v1.04 | v1.04 | |
-| v1.05 | v1.05 | |
-| v1.06 | v1.06 | |
-| v1.07 | v1.07 | |
-| v1.08 | v1.08 | |
-| v1.09 | v1.09 | |
-| v1.10 | v1.10 | |
+| v1.00 | v1.00 | e3dc81caab43204d78a7e4aff125bc843efd9eb7 |
+| v1.01 | v1.01 | 5130d270d99ee9f0a362f3d6b19dfefd04c8b3aa |
+| v1.02 | v1.02 | 9efa636a02c97f4c6f01a810060740295dc64a91 |
+| v1.03 | v1.03 | 46d5f34bd468285b9d98672d15545e45bd098657 |
+| v1.04 | v1.04 | a9db109aa088ec2ea5eb60b11485f9447aec15d6 |
+| v1.05 | v1.05 | 90c924f0b6453ec8b434ef380400d812c1e379e3 |
+| v1.06 | v1.06 | 516ea9bc51ef6cc99dc217e8507db37b75fa56cf |
+| v1.07 | v1.07 | 729713313d08b3cdd36a6f8d8206ec3862045b85 |
+| v1.08 | v1.08 | c41fbcacfb84a9b59d7376ca5fc4d68ba35693d6 |
+| v1.09 | v1.09 | ad982dbecd54398fed0865ca45258ce5145bfb21 |
+| v1.10 | v1.10 | f3489f73cc63b6bad5c4bd31e2bc2fbd49b4bef4 |
 
 > Fill commit hashes after all versions are tagged:
 > ```bash
