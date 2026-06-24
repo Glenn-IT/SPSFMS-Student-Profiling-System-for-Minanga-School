@@ -1,5 +1,3 @@
-const BASE = '/SPSFMS-Student-Profiling-System-for-Minanga-School';
-
 async function loadComponent(selector, url) {
   const el = document.querySelector(selector);
   if (!el) return;

@@ -1,0 +1,18 @@
+# SPSMIS — Apache configuration
+
+# Prevent directory listing
+Options -Indexes
+
+# Block direct browser access to sensitive directories
+<FilesMatch "\.(sql|md|json|log|env)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Block access to config and database directories from the browser
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block direct access to config/ (database/setup.php is intentionally public)
+    RewriteRule ^config/ - [F,L]
+</IfModule>
