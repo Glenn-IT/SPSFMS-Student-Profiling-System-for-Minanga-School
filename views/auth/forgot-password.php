@@ -45,10 +45,16 @@ if (!in_array($role, ['admin','teacher','student'])) $role = 'admin';
   <!-- Step 2: Security Question -->
   <div class="step" id="step2">
     <h5 class="fw-bold mb-1">Security Question</h5>
-    <p class="text-muted mb-3" style="font-size:.85rem;">Answer your security question.</p>
+    <p class="text-muted mb-3" style="font-size:.85rem;">Select the security question you set, then enter your answer.</p>
     <div class="mb-3">
-      <label class="form-label">Question</label>
-      <div id="sec-question-text" class="form-control bg-light" style="height:auto;min-height:38px;"></div>
+      <label class="form-label">Select Your Question</label>
+      <select id="fp-question" class="form-select">
+        <option value="">— Choose a question —</option>
+        <option value="What is the name of your first pet?">What is the name of your first pet?</option>
+        <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+        <option value="What city were you born in?">What city were you born in?</option>
+        <option value="What is the name of your elementary school?">What is the name of your elementary school?</option>
+      </select>
     </div>
     <div class="mb-3">
       <label class="form-label">Your Answer</label>
@@ -85,19 +91,22 @@ if (!in_array($role, ['admin','teacher','student'])) $role = 'admin';
     if (!data.ok) { err.textContent = data.message; err.style.display='block'; return; }
     err.style.display = 'none';
     foundUserId = data.user_id;
-    document.getElementById('sec-question-text').textContent = data.question;
+    document.getElementById('fp-question').value = '';
+    document.getElementById('fp-answer').value = '';
     goStep(2);
   }
 
   async function checkAnswer() {
+    const question = document.getElementById('fp-question').value;
     const answer = document.getElementById('fp-answer').value.trim();
     const err = document.getElementById('s2-error');
+    if (!question) { err.textContent = 'Please select your security question.'; err.style.display='block'; return; }
     if (!answer) { err.textContent = 'Please enter your answer.'; err.style.display='block'; return; }
 
     const res = await fetch(BASE + '/api/auth/forgot-step2.php', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ user_id: foundUserId, answer })
+      body: JSON.stringify({ user_id: foundUserId, question, answer })
     });
     const data = await res.json();
     if (!data.ok) { err.textContent = data.message; err.style.display='block'; return; }

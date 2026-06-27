@@ -19,4 +19,5 @@ if (!$user || !$user['sec_question']) {
     exit;
 }
 
-echo json_encode(['ok'=>true,'user_id'=>$user['id'],'question'=>$user['sec_question']]);
+// Do NOT reveal which question the user set — let them pick it in the UI
+echo json_encode(['ok'=>true,'user_id'=>$user['id']]);
