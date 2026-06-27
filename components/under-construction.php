@@ -1,5 +1,6 @@
 <?php
 define('CURRENT_VERSION', 'v1.10');
+if (!defined('BASE_URL')) require_once __DIR__ . '/../config/constants.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -74,7 +75,10 @@ define('CURRENT_VERSION', 'v1.10');
     <h1>Under Construction</h1>
     <p>This page is not yet available in the current version of the system.<br>
        It will be unlocked in a future release.</p>
-    <a href="javascript:history.back()" class="btn-back">← Go Back</a>
+    <a href="<?php echo BASE_URL; ?>/api/auth/logout.php" class="btn-back"
+       onclick="return confirm('This will log you out. Continue?');">
+      ⏻ Logout
+    </a>
   </div>
 </body>
 </html>
