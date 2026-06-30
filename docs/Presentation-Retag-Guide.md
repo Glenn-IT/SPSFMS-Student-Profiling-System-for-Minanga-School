@@ -9,6 +9,7 @@ A reference for applying post-presentation fixes to a version tag **without** br
 When you fix a bug on a feature that belongs to an older version (e.g., v1.00 owns Forgot Password), you cannot just move the tag to `main` — because `main` is already at the latest version (e.g., v1.10, fully unlocked). Moving the tag to `main` would make `git checkout v1.00` show the full system instead of the gated presentation state.
 
 **Wrong approach (what NOT to do):**
+
 ```bash
 # This moves v1.00 to the fully-unlocked HEAD — WRONG
 git tag -d v1.00
@@ -119,6 +120,7 @@ git checkout main
 ## Real Example — v1.00 Retag (June 28, 2026)
 
 **Fixes applied after original v1.00 tag:**
+
 1. Forgot Password — changed security question from auto-revealed text to a dropdown; user must select the question they set + enter the answer. Both question and answer are verified on the backend.
 2. Under Construction page — replaced "← Go Back" button with a **Logout** button that destroys the session and redirects to login, preventing session trapping on gated pages.
 
@@ -131,6 +133,7 @@ git checkout main
 | `components/under-construction.php` | Added `require_once` for constants (to get `BASE_URL`); replaced Go Back `<a>` with a Logout `<a>` pointing to `api/auth/logout.php` |
 
 **Commands used:**
+
 ```bash
 git checkout -b v1.00-presentation e3dc81c
 git cherry-pick 7a40e51   # forgot-password fix
@@ -148,12 +151,12 @@ git checkout v1.00        # switched XAMPP to presentation state
 
 ## Quick Reference — Switching States
 
-| Goal | Command |
-|------|---------|
-| Present vX.XX | `git checkout vX.XX` |
-| Return to full system | `git checkout main` |
-| Check which state XAMPP is serving | `git status` (shows branch or `HEAD detached at vX.XX`) |
-| Verify gate lines are active | `head -1 views/admin/dashboard.php` (should show `require_once`) |
+| Goal                               | Command                                                          |
+| ---------------------------------- | ---------------------------------------------------------------- |
+| Present vX.XX                      | `git checkout vX.XX`                                             |
+| Return to full system              | `git checkout main`                                              |
+| Check which state XAMPP is serving | `git status` (shows branch or `HEAD detached at vX.XX`)          |
+| Verify gate lines are active       | `head -1 views/admin/dashboard.php` (should show `require_once`) |
 
 ---
 
