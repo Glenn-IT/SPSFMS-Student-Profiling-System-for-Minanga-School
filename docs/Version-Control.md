@@ -4,7 +4,7 @@
 
 | Version | Feature Unlocked | Pages Unlocked | Pages Still Gated |
 |---------|-----------------|----------------|-------------------|
-| v1.00 | Login / Forgot Password | `views/auth/login.php`, `views/auth/forgot-password.php` | All admin, teacher, student pages |
+| v1.00 | Login / Forgot Password / Register | `views/auth/login.php`, `views/auth/forgot-password.php`, `views/auth/register.php` | All admin, teacher, student pages |
 | v1.01 | Admin: Dashboard | `views/admin/dashboard.php` | analytics, students, accounts, reports, settings (admin); all teacher; all student |
 | v1.02 | Admin: Analytics + Manage Students | `views/admin/analytics.php`, `views/admin/students.php` | accounts, reports, settings (admin); all teacher; all student |
 | v1.03 | Admin: Manage Accounts + Reports | `views/admin/accounts.php`, `views/admin/reports.php` | settings (admin); all teacher; all student |
@@ -58,7 +58,7 @@ Each version is a **permanent snapshot** in Git history.
 
 | Version | Tag Name | Commit Hash |
 |---------|----------|-------------|
-| v1.00 | v1.00 | cf45f9faf92590ba8ea52e6953e4bf7287585e52 |
+| v1.00 | v1.00 | 28fd95644a130fa5611cd21f3156bb52e6884b9a |
 | v1.01 | v1.01 | 5130d270d99ee9f0a362f3d6b19dfefd04c8b3aa |
 | v1.02 | v1.02 | 9efa636a02c97f4c6f01a810060740295dc64a91 |
 | v1.03 | v1.03 | 46d5f34bd468285b9d98672d15545e45bd098657 |
