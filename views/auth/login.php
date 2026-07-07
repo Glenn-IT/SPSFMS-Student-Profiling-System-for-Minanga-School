@@ -94,6 +94,12 @@ $cfg = [
     <a href="forgot-password.php?role=<?= $role ?>" style="color:var(--primary);text-decoration:none;font-weight:500;">Forgot Password?</a>
   </div>
 
+  <?php if ($role !== 'admin'): ?>
+  <div style="text-align:center;margin:.75rem 0;font-size:.82rem;">
+    Don't have an account? <a href="register.php?role=<?= $role ?>" style="color:var(--primary);text-decoration:none;font-weight:500;">Register</a>
+  </div>
+  <?php endif; ?>
+
   <a href="<?= BASE_URL ?>/index.php" class="back-link"><i class="fas fa-arrow-left me-1"></i>Back to portal selection</a>
 </div>
 
