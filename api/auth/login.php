@@ -19,7 +19,7 @@ if (!$username || !$password) {
     exit;
 }
 
-$stmt = $pdo->prepare('SELECT * FROM users WHERE username = ? AND status = "active" LIMIT 1');
+$stmt = $pdo->prepare('SELECT * FROM users WHERE BINARY username = ? AND status = "active" LIMIT 1');
 $stmt->execute([$username]);
 $user = $stmt->fetch();
 

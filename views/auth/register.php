@@ -28,8 +28,11 @@ if (!in_array($role, ['teacher', 'student'])) $role = 'student';
     .login-icon.student { background:var(--warning-light); color:#b06a00; }
     .login-header h4 { font-weight:700; color:var(--dark); font-size:1.15rem; }
     .login-header p  { font-size:.8rem; color:var(--gray-600); }
-    .password-wrapper { position:relative; }
-    .password-wrapper .toggle-pw { position:absolute; right:.75rem; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--gray-400); cursor:pointer; padding:0; font-size:.9rem; }
+    .toggle-pw { cursor:pointer; color:var(--gray-400); font-size:.85rem; }
+    .toggle-pw:hover { color:var(--gray-600); }
+    input[type="password"]::-ms-reveal, input[type="password"]::-ms-clear { display:none; }
+    input[type="password"]::-webkit-credentials-auto-fill-button,
+    input[type="password"]::-webkit-strong-password-auto-fill-button { display:none !important; visibility:hidden; }
     .btn-login { width:100%; padding:.65rem; font-size:.95rem; font-weight:600; border-radius:8px; }
     .btn-login.teacher-btn { background:var(--secondary); border-color:var(--secondary); }
     .btn-login.student-btn { background:#b06a00; border-color:#b06a00; }
@@ -115,19 +118,19 @@ $cfg = [
 
     <div class="mb-3">
       <label class="form-label">Password</label>
-      <div class="input-group password-wrapper">
+      <div class="input-group">
         <span class="input-group-text bg-white"><i class="fas fa-lock" style="color:var(--gray-400);font-size:.85rem;"></i></span>
         <input type="password" id="password" class="form-control" placeholder="At least 6 characters" required autocomplete="new-password">
-        <button type="button" class="toggle-pw" onclick="togglePw('password','pw-eye')"><i class="fas fa-eye" id="pw-eye"></i></button>
+        <span class="input-group-text bg-white toggle-pw" onclick="togglePw('password','pw-eye')"><i class="fas fa-eye" id="pw-eye"></i></span>
       </div>
     </div>
 
     <div class="mb-3">
       <label class="form-label">Confirm Password</label>
-      <div class="input-group password-wrapper">
+      <div class="input-group">
         <span class="input-group-text bg-white"><i class="fas fa-lock" style="color:var(--gray-400);font-size:.85rem;"></i></span>
         <input type="password" id="confirm_password" class="form-control" placeholder="Re-enter password" required autocomplete="new-password">
-        <button type="button" class="toggle-pw" onclick="togglePw('confirm_password','pw-eye2')"><i class="fas fa-eye" id="pw-eye2"></i></button>
+        <span class="input-group-text bg-white toggle-pw" onclick="togglePw('confirm_password','pw-eye2')"><i class="fas fa-eye" id="pw-eye2"></i></span>
       </div>
     </div>
 
@@ -156,10 +159,8 @@ $cfg = [
   </form>
 
   <div style="text-align:center;margin:.75rem 0;font-size:.82rem;">
-    Already have an account? <a href="login.php?role=<?= $role ?>" style="color:var(--primary);text-decoration:none;font-weight:500;">Log in</a>
+    Already have an account? <a href="login.php" style="color:var(--primary);text-decoration:none;font-weight:500;">Log in</a>
   </div>
-
-  <a href="<?= BASE_URL ?>/index.php" class="back-link"><i class="fas fa-arrow-left me-1"></i>Back to portal selection</a>
 </div>
 
 <script>

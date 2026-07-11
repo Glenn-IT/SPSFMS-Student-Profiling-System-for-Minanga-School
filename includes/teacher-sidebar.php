@@ -31,8 +31,7 @@ $navItems = [
     <?php endforeach; ?>
   </nav>
 
-  <div class="sidebar-section" style="margin-top:auto;">SESSION</div>
-  <div style="padding:1rem 1.25rem;border-top:1px solid rgba(255,255,255,.08);">
+  <div style="margin-top:auto;padding:1rem 1.25rem;border-top:1px solid rgba(255,255,255,.08);">
     <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.75rem;">
       <div style="width:34px;height:34px;background:rgba(52,168,83,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;"><?= htmlspecialchars($initial) ?></div>
       <div style="overflow:hidden;">
