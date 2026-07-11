@@ -58,7 +58,7 @@ Each version is a **permanent snapshot** in Git history.
 
 | Version | Tag Name | Commit Hash |
 |---------|----------|-------------|
-| v1.00 | v1.00 | 28fd95644a130fa5611cd21f3156bb52e6884b9a |
+| v1.00 | v1.00 | 53f07ea340ff0ca3ef12f52357c872232be415d2 |
 | v1.01 | v1.01 | 5130d270d99ee9f0a362f3d6b19dfefd04c8b3aa |
 | v1.02 | v1.02 | 9efa636a02c97f4c6f01a810060740295dc64a91 |
 | v1.03 | v1.03 | 46d5f34bd468285b9d98672d15545e45bd098657 |
