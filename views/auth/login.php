@@ -92,8 +92,10 @@ function redirectByRole(string $role): void {
   const ROLE = 'any';
   const MAX_ATTEMPTS = 3;
   const LOCKOUT_SECS = 15;
+  const LOCKOUT_KEY = 'spsmis_login_lockout_until';
+  const FAILCOUNT_KEY = 'spsmis_login_failcount';
 
-  let failCount = 0;
+  let failCount = parseInt(sessionStorage.getItem(FAILCOUNT_KEY) || '0', 10);
   let lockoutTimer = null;
 
   function togglePw() {
@@ -103,13 +105,16 @@ function redirectByRole(string $role): void {
     else { pw.type = 'password'; eye.className = 'fas fa-eye'; }
   }
 
-  function startLockout() {
+  function startLockout(resumeUntil) {
     const btn         = document.querySelector('button[type="submit"]');
     const errorBox    = document.getElementById('error-box');
     const lockoutBox  = document.getElementById('lockout-box');
     const countdown   = document.getElementById('lockout-countdown');
     const username    = document.getElementById('username');
     const password    = document.getElementById('password');
+
+    const until = resumeUntil || (Date.now() + LOCKOUT_SECS * 1000);
+    sessionStorage.setItem(LOCKOUT_KEY, String(until));
 
     username.value = '';
     password.value = '';
@@ -118,23 +123,37 @@ function redirectByRole(string $role): void {
     btn.disabled = true;
     errorBox.style.display  = 'none';
     lockoutBox.style.display = 'block';
-    let secs = LOCKOUT_SECS;
-    countdown.textContent = secs;
 
-    lockoutTimer = setInterval(() => {
-      secs--;
+    function tick() {
+      const secs = Math.max(0, Math.ceil((until - Date.now()) / 1000));
       countdown.textContent = secs;
       if (secs <= 0) {
         clearInterval(lockoutTimer);
         lockoutTimer = null;
         failCount = 0;
+        sessionStorage.removeItem(LOCKOUT_KEY);
+        sessionStorage.removeItem(FAILCOUNT_KEY);
         username.disabled = false;
         password.disabled = false;
         btn.disabled = false;
         lockoutBox.style.display = 'none';
       }
-    }, 1000);
+    }
+
+    tick();
+    lockoutTimer = setInterval(tick, 1000);
   }
+
+  // Resume an in-progress lockout across page refreshes
+  (function resumeLockout() {
+    const until = parseInt(sessionStorage.getItem(LOCKOUT_KEY) || '0', 10);
+    if (until && until > Date.now()) {
+      startLockout(until);
+    } else if (until) {
+      sessionStorage.removeItem(LOCKOUT_KEY);
+      sessionStorage.removeItem(FAILCOUNT_KEY);
+    }
+  })();
 
   function setLoading(loading) {
     document.getElementById('btn-text').style.display    = loading ? 'none'   : 'inline';
@@ -170,6 +189,7 @@ function redirectByRole(string $role): void {
         window.location.replace(dest[data.role] || BASE+'/index.php');
       } else {
         failCount++;
+        sessionStorage.setItem(FAILCOUNT_KEY, String(failCount));
         setLoading(false);
         if (failCount >= MAX_ATTEMPTS) {
           startLockout();
