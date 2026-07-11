@@ -1,9 +1,4 @@
-# Issues Log
+![alt text](image-1.png)
 
-Logout
 
-- if i click the logout and click the back button of the chrome it goes back to recent page it should stay on the logout it should not go back to logined
-
-Login
-
-- can you add feature that if the user is inputed wrong cred for 3 attempts it will lock the login button and wait for 15 seconds before it will enable
+look at that that is on the login the showp assword eyeicon is miigin right if it cant fix can you just make it like a texbox or anything else do it also on the register
