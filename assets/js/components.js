@@ -77,6 +77,13 @@ function confirmModal(title, message, onConfirm) {
   modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
 }
 
+function confirmLogout(link) {
+  confirmModal('Logout', 'Are you sure you want to logout?', () => {
+    window.location.href = link.href;
+  });
+  return false;
+}
+
 function formatDate(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr);

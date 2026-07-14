@@ -72,7 +72,7 @@ $greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good
         <div class="qa-icon"><i class="fas fa-cog"></i></div>
         <div class="qa-label">Settings</div>
       </a>
-      <a href="<?= BASE_URL ?>/api/auth/logout.php" class="quick-action-btn" onclick="return confirm('Logout?')">
+      <a href="<?= BASE_URL ?>/api/auth/logout.php" class="quick-action-btn" onclick="return confirmLogout(this)">
         <div class="qa-icon" style="background:#fce8e6;color:var(--danger);"><i class="fas fa-sign-out-alt"></i></div>
         <div class="qa-label">Logout</div>
       </a>

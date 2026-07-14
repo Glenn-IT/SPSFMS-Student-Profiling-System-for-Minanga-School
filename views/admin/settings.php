@@ -93,7 +93,7 @@ $secQuestions = [
         <div class="card border-danger">
           <div class="card-header text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Danger Zone</div>
           <div class="card-body">
-            <a href="<?= BASE_URL ?>/api/auth/logout.php" class="btn btn-danger btn-sm" onclick="return confirm('Logout?')"><i class="fas fa-sign-out-alt me-2"></i>Logout</a>
+            <a href="<?= BASE_URL ?>/api/auth/logout.php" class="btn btn-danger btn-sm" onclick="return confirmLogout(this)"><i class="fas fa-sign-out-alt me-2"></i>Logout</a>
           </div>
         </div>
       </div>

@@ -41,7 +41,7 @@ $navItems = [
         <div style="font-size:.68rem;opacity:.6;">Administrator</div>
       </div>
     </div>
-    <a href="<?= BASE_URL ?>/api/auth/logout.php" class="sidebar-link" style="color:#ff7b7b;" onclick="return confirm('Logout?')">
+    <a href="<?= BASE_URL ?>/api/auth/logout.php" class="sidebar-link" style="color:#ff7b7b;" onclick="return confirmLogout(this)">
       <i class="fas fa-sign-out-alt sidebar-icon"></i><span>Logout</span>
     </a>
   </div>
