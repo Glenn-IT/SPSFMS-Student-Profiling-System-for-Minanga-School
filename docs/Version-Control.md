@@ -15,6 +15,9 @@
 | v1.08 | Student: Dashboard | `views/student/dashboard.php` | profile, settings (student) |
 | v1.09 | Student: Profile | `views/student/profile.php` | settings (student) |
 | v1.10 | Student: Settings — **Full System** | `views/student/settings.php` | none |
+| v2.00 | Admin: Dashboard + Settings (new presentation cut) | `views/admin/dashboard.php`, `views/admin/settings.php` | analytics, students, accounts, reports (admin); all teacher; all student |
+
+> **Note:** v2.00 is not a continuation of `main` (which is already the full v1.10 system). It's a separate presentation cut built on branch `v2.00-presentation`, created from the `v1.00` base (login/forgot/register unlocked) with only the admin dashboard and admin settings gates removed, plus the logout-modal fix cherry-picked forward. To present it: `git checkout v2.00`. `main` is unaffected and remains the fully unlocked system.
 
 ---
 
@@ -69,6 +72,7 @@ Each version is a **permanent snapshot** in Git history.
 | v1.08 | v1.08 | c41fbcacfb84a9b59d7376ca5fc4d68ba35693d6 |
 | v1.09 | v1.09 | ad982dbecd54398fed0865ca45258ce5145bfb21 |
 | v1.10 | v1.10 | f3489f73cc63b6bad5c4bd31e2bc2fbd49b4bef4 |
+| v2.00 | v2.00 | 09c9fef8d1c3fcf4d9d6546f97660a59757cc3e7 |
 
 > Fill commit hashes after all versions are tagged:
 > ```bash
