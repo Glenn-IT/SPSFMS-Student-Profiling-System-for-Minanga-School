@@ -102,13 +102,19 @@ $recent = $recentStmt->fetchAll();
 
     <!-- Recent Students -->
     <div class="card">
-      <div class="card-header d-flex align-items-center justify-content-between">
+      <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
         <span><i class="fas fa-clock me-2" style="color:var(--primary);"></i>Recently Enrolled Students</span>
-        <a href="students.php" class="btn btn-sm btn-primary">View All</a>
+        <div class="d-flex align-items-center gap-2">
+          <div class="input-group input-group-sm" style="width:220px;">
+            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+            <input type="text" id="recentStudentsSearch" class="form-control" placeholder="Search...">
+          </div>
+          <a href="students.php" class="btn btn-sm btn-primary">View All</a>
+        </div>
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">
-          <table class="table table-modern mb-0">
+          <table class="table table-modern mb-0" id="recentStudentsTable">
             <thead><tr><th>#</th><th>LRN</th><th>Full Name</th><th>Grade Level</th><th>Section</th><th>Sex</th><th>Status</th></tr></thead>
             <tbody>
               <?php if (empty($recent)): ?>
@@ -124,6 +130,7 @@ $recent = $recentStmt->fetchAll();
                 <td><span class="badge-active">Active</span></td>
               </tr>
               <?php endforeach; endif; ?>
+              <tr id="recentStudentsNoMatch" class="d-none"><td colspan="7" class="text-center py-4 text-muted">No matching students found.</td></tr>
             </tbody>
           </table>
         </div>
@@ -159,6 +166,23 @@ new Chart(document.getElementById('gradeChart'), {
   data:{ labels:GRADE_LABELS, datasets:[{ label:'Students', data:GRADE_COUNTS, backgroundColor:'#1a73e8', borderRadius:4 }] },
   options:{ plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ display:false } }, y:{ beginAtZero:true, ticks:{ precision:0 } } } }
 });
+
+const recentStudentsSearch = document.getElementById('recentStudentsSearch');
+if (recentStudentsSearch) {
+  const table = document.getElementById('recentStudentsTable');
+  const noMatchRow = document.getElementById('recentStudentsNoMatch');
+  const rows = Array.from(table.querySelectorAll('tbody tr')).filter(row => row !== noMatchRow);
+  recentStudentsSearch.addEventListener('input', function () {
+    const term = this.value.trim().toLowerCase();
+    let visibleCount = 0;
+    rows.forEach(row => {
+      const match = row.textContent.toLowerCase().includes(term);
+      row.classList.toggle('d-none', !match);
+      if (match) visibleCount++;
+    });
+    if (noMatchRow) noMatchRow.classList.toggle('d-none', visibleCount !== 0 || rows.length === 0);
+  });
+}
 </script>
 </body>
 </html>
