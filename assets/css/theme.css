@@ -29,6 +29,10 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+html {
+  overflow-y: scroll;
+}
+
 body {
   font-family: var(--font);
   background: var(--gray-100);
@@ -142,8 +146,11 @@ body {
 .toast.error { border-left: 4px solid var(--danger); }
 .toast.info { border-left: 4px solid var(--primary); }
 
-/* ── Page fade-in ── */
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+/* ── Page fade-in ──
+   No transform here: .page-content is the parent of .top-navbar (position: fixed),
+   and any transform on an ancestor makes it the containing block for fixed descendants,
+   which drags the "fixed" header along with this animation on every page load. */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .page-content { animation: fadeIn 0.3s ease; }
 
 /* ── Skeleton loader ── */
