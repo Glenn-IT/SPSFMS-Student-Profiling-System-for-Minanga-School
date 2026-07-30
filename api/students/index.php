@@ -45,6 +45,31 @@ if ($method === 'POST') {
             exit;
         }
     }
+    $namePattern = "/^[A-Za-zÑñ' .\\-]+$/u";
+    foreach (['first_name','last_name'] as $f) {
+        if (!preg_match($namePattern, $d[$f])) {
+            http_response_code(400);
+            echo json_encode(['ok'=>false,'message'=>'Names must not contain numbers.']);
+            exit;
+        }
+    }
+    foreach (['middle_name','mother_name','father_name','guardian_name'] as $f) {
+        if (!empty($d[$f]) && !preg_match($namePattern, $d[$f])) {
+            http_response_code(400);
+            echo json_encode(['ok'=>false,'message'=>'Names must not contain numbers.']);
+            exit;
+        }
+    }
+    if (!empty($d['contact']) && !preg_match('/^09\d{9}$/', $d['contact'])) {
+        http_response_code(400);
+        echo json_encode(['ok'=>false,'message'=>'Contact No. must be an 11-digit PH mobile number starting with 09.']);
+        exit;
+    }
+    if ($d['birthdate'] > date('Y-m-d')) {
+        http_response_code(400);
+        echo json_encode(['ok'=>false,'message'=>'Birthdate cannot be a future date.']);
+        exit;
+    }
     // Check LRN unique
     $check = $pdo->prepare('SELECT id FROM students WHERE lrn = ?');
     $check->execute([$d['lrn']]);

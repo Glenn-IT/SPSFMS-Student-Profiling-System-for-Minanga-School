@@ -101,27 +101,40 @@ $sectionJson  = json_encode(SECTION_MAP);
             <div class="col-md-4"><label class="form-label">LRN *</label><input type="text" id="f-lrn" class="form-control" maxlength="12" required></div>
             <div class="col-md-4"><label class="form-label">Grade Level *</label><select id="f-grade" class="form-select" required onchange="updateFormSection()"><option value="">Select Grade</option></select></div>
             <div class="col-md-4"><label class="form-label">Section *</label><select id="f-section" class="form-select" required><option value="">Select Section</option></select></div>
-            <div class="col-md-4"><label class="form-label">First Name *</label><input type="text" id="f-first" class="form-control" required></div>
-            <div class="col-md-4"><label class="form-label">Middle Name</label><input type="text" id="f-middle" class="form-control"></div>
-            <div class="col-md-4"><label class="form-label">Last Name *</label><input type="text" id="f-last" class="form-control" required></div>
+            <div class="col-md-4"><label class="form-label">First Name *</label><input type="text" id="f-first" class="form-control" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers" required></div>
+            <div class="col-md-4"><label class="form-label">Middle Name</label><input type="text" id="f-middle" class="form-control" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers"></div>
+            <div class="col-md-4"><label class="form-label">Last Name *</label><input type="text" id="f-last" class="form-control" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers" required></div>
             <div class="col-md-3"><label class="form-label">Sex *</label><select id="f-sex" class="form-select" required><option value="">Select</option><option>Male</option><option>Female</option></select></div>
-            <div class="col-md-3"><label class="form-label">Birthdate *</label><input type="date" id="f-birthdate" class="form-control" required onchange="updateAge()"></div>
+            <div class="col-md-3"><label class="form-label">Birthdate *</label><input type="date" id="f-birthdate" class="form-control" max="<?= date('Y-m-d') ?>" required onchange="updateAge()"></div>
             <div class="col-md-2"><label class="form-label">Age</label><input type="number" id="f-age" class="form-control" readonly></div>
             <div class="col-md-4"><label class="form-label">Mother Tongue</label><input type="text" id="f-tongue" class="form-control" value="Cebuano"></div>
-            <div class="col-md-4"><label class="form-label">Religion</label><input type="text" id="f-religion" class="form-control" value="Roman Catholic"></div>
+            <div class="col-md-4"><label class="form-label">Religion</label>
+              <select id="f-religion" class="form-select">
+                <option>Roman Catholic</option>
+                <option>Islam</option>
+                <option>Iglesia ni Cristo</option>
+                <option>Evangelical</option>
+                <option>Aglipayan (Philippine Independent Church)</option>
+                <option>Seventh-day Adventist</option>
+                <option>Baptist</option>
+                <option>United Church of Christ in the Philippines (UCCP)</option>
+                <option>Jehovah's Witness</option>
+                <option>Other</option>
+              </select>
+            </div>
             <div class="col-12"><label class="form-label">Address</label><input type="text" id="f-address" class="form-control"></div>
-            <div class="col-md-6"><label class="form-label">Mother's Name</label><input type="text" id="f-mother" class="form-control"></div>
-            <div class="col-md-6"><label class="form-label">Father's Name</label><input type="text" id="f-father" class="form-control"></div>
-            <div class="col-md-6"><label class="form-label">Guardian's Name</label><input type="text" id="f-guardian" class="form-control"></div>
+            <div class="col-md-6"><label class="form-label">Mother's Name</label><input type="text" id="f-mother" class="form-control" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers"></div>
+            <div class="col-md-6"><label class="form-label">Father's Name</label><input type="text" id="f-father" class="form-control" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers"></div>
+            <div class="col-md-6"><label class="form-label">Guardian's Name</label><input type="text" id="f-guardian" class="form-control" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers"></div>
             <div class="col-md-6"><label class="form-label">Relation to Guardian</label><input type="text" id="f-relation" class="form-control" value="Mother"></div>
-            <div class="col-md-6"><label class="form-label">Contact Number</label><input type="text" id="f-contact" class="form-control"></div>
+            <div class="col-md-6"><label class="form-label">Contact No.</label><input type="text" id="f-contact" class="form-control" maxlength="11" inputmode="numeric" pattern="09[0-9]{9}" title="Enter an 11-digit PH mobile number starting with 09"></div>
             <div class="col-md-6"><label class="form-label">Email</label><input type="email" id="f-email" class="form-control"></div>
           </div>
         </form>
       </div>
       <div class="modal-footer">
         <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn btn-primary" onclick="saveStudent()"><i class="fas fa-save me-2"></i>Save Student</button>
+        <button class="btn btn-primary" id="save-student-btn" onclick="saveStudent()"><i class="fas fa-save me-2"></i>Save Student</button>
       </div>
     </div>
   </div>
@@ -224,11 +237,19 @@ function renderTable() {
 const studentModal = new bootstrap.Modal(document.getElementById('studentModal'));
 const viewModal    = new bootstrap.Modal(document.getElementById('viewModal'));
 
+const RELIGION_OPTION_COUNT = 10; // fixed major-religion options in the #f-religion dropdown
+
+function resetReligionOptions() {
+  const sel = document.getElementById('f-religion');
+  while (sel.options.length > RELIGION_OPTION_COUNT) sel.remove(sel.options.length - 1);
+}
+
 function openAddModal() {
   document.getElementById('modal-title').textContent = 'Add Student';
   document.getElementById('student-form').reset();
   document.getElementById('form-student-id').value = '';
   document.getElementById('f-section').innerHTML = '<option value="">Select Section</option>';
+  resetReligionOptions();
   studentModal.show();
 }
 
@@ -247,7 +268,12 @@ function editStudent(id) {
   document.getElementById('f-birthdate').value = s.birthdate;
   document.getElementById('f-age').value = s.age;
   document.getElementById('f-tongue').value = s.mother_tongue || '';
-  document.getElementById('f-religion').value = s.religion || '';
+  resetReligionOptions();
+  const religionSel = document.getElementById('f-religion');
+  if (s.religion && ![...religionSel.options].some(o => o.value === s.religion)) {
+    religionSel.add(new Option(s.religion, s.religion));
+  }
+  religionSel.value = s.religion || 'Roman Catholic';
   document.getElementById('f-address').value = s.address || '';
   document.getElementById('f-mother').value = s.mother_name || '';
   document.getElementById('f-father').value = s.father_name || '';
@@ -259,6 +285,9 @@ function editStudent(id) {
 }
 
 async function saveStudent() {
+  const saveBtn = document.getElementById('save-student-btn');
+  if (saveBtn.disabled) return; // guard against double-click / double-submit
+
   const id = document.getElementById('form-student-id').value;
   const data = {
     lrn: document.getElementById('f-lrn').value.trim(),
@@ -283,13 +312,37 @@ async function saveStudent() {
   if (!data.lrn || !data.grade_level || !data.section || !data.first_name || !data.last_name) {
     showToast('Please fill in all required fields.','error'); return;
   }
-  const url = id ? BASE+'/api/students/manage.php?id='+id : BASE+'/api/students/index.php';
-  const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
-  const result = await res.json();
-  if (!result.ok) { showToast(result.message,'error'); return; }
-  showToast(id ? 'Student updated!':'Student added!','success');
-  studentModal.hide();
-  loadStudents();
+  const namePattern = /^[A-Za-zÑñ' .\-]+$/;
+  if (!namePattern.test(data.first_name) || !namePattern.test(data.last_name) ||
+      (data.middle_name && !namePattern.test(data.middle_name)) ||
+      (data.mother_name && !namePattern.test(data.mother_name)) ||
+      (data.father_name && !namePattern.test(data.father_name)) ||
+      (data.guardian_name && !namePattern.test(data.guardian_name))) {
+    showToast('Names must not contain numbers.','error'); return;
+  }
+  if (data.contact && !/^09\d{9}$/.test(data.contact)) {
+    showToast('Contact No. must be an 11-digit PH mobile number starting with 09.','error'); return;
+  }
+  const today = new Date().toISOString().slice(0,10);
+  if (data.birthdate > today) {
+    showToast('Birthdate cannot be a future date.','error'); return;
+  }
+
+  saveBtn.disabled = true;
+  const originalLabel = saveBtn.innerHTML;
+  saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+  try {
+    const url = id ? BASE+'/api/students/manage.php?id='+id : BASE+'/api/students/index.php';
+    const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+    const result = await res.json();
+    if (!result.ok) { showToast(result.message,'error'); return; }
+    showToast(id ? 'Student updated!':'Student added!','success');
+    studentModal.hide();
+    loadStudents();
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = originalLabel;
+  }
 }
 
 function viewStudent(id) {

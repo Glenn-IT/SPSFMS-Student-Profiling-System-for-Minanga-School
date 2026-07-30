@@ -1,4 +1,6 @@
-![alt text](image-1.png)
-
-
-look at that that is on the login the showp assword eyeicon is miigin right if it cant fix can you just make it like a texbox or anything else do it also on the register
+1. Fix duplication of data the system should accept duplicate data ok
+2. Change the Contact Number to Contact No.
+3. Contact Number - should not accept letters must be 11 digit number PH base
+   Names- should not accept numbers
+   Bday- should accept future dates (disable)
+   Religion- drop-down Menu give the major religions only ok
