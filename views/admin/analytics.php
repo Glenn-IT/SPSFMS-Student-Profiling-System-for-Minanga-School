@@ -35,13 +35,19 @@ $activePage = 'analytics';
     <div class="row g-3 mb-4">
       <div class="col-lg-8">
         <div class="card h-100">
-          <div class="card-header"><i class="fas fa-chart-line me-2" style="color:var(--primary);"></i>3-Year Enrollment Trend</div>
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-chart-line me-2" style="color:var(--primary);"></i>3-Year Enrollment Trend</span>
+            <?php $chartId = 'trend'; include __DIR__ . '/../../includes/chart-download-menu.php'; ?>
+          </div>
           <div class="card-body"><canvas id="trendChart" style="max-height:280px;"></canvas></div>
         </div>
       </div>
       <div class="col-lg-4">
         <div class="card h-100">
-          <div class="card-header"><i class="fas fa-chart-pie me-2" style="color:var(--primary);"></i>Level Distribution</div>
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-chart-pie me-2" style="color:var(--primary);"></i>Level Distribution</span>
+            <?php $chartId = 'level'; include __DIR__ . '/../../includes/chart-download-menu.php'; ?>
+          </div>
           <div class="card-body d-flex align-items-center justify-content-center">
             <canvas id="levelChart" style="max-height:250px;"></canvas>
           </div>
@@ -52,7 +58,10 @@ $activePage = 'analytics';
     <div class="row g-3">
       <div class="col-lg-5">
         <div class="card">
-          <div class="card-header"><i class="fas fa-trophy me-2" style="color:var(--primary);"></i>Top Sections by Enrollment</div>
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-trophy me-2" style="color:var(--primary);"></i>Top Sections by Enrollment</span>
+            <?php $chartId = 'sections'; include __DIR__ . '/../../includes/chart-download-menu.php'; ?>
+          </div>
           <div class="card-body p-0">
             <table class="table table-modern mb-0" id="top-sections-table">
               <thead><tr><th>Rank</th><th>Section</th><th>Students</th></tr></thead>
@@ -63,7 +72,10 @@ $activePage = 'analytics';
       </div>
       <div class="col-lg-7">
         <div class="card">
-          <div class="card-header"><i class="fas fa-venus-mars me-2" style="color:var(--primary);"></i>Gender by Grade Level</div>
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-venus-mars me-2" style="color:var(--primary);"></i>Gender by Grade Level</span>
+            <?php $chartId = 'genderLevel'; include __DIR__ . '/../../includes/chart-download-menu.php'; ?>
+          </div>
           <div class="card-body"><canvas id="genderLevelChart" style="max-height:250px;"></canvas></div>
         </div>
       </div>
@@ -73,6 +85,8 @@ $activePage = 'analytics';
 
 <script src="/SPSFMS-Student-Profiling-System-for-Minanga-School/assets/lib/bootstrap.bundle.min.js"></script>
 <script src="/SPSFMS-Student-Profiling-System-for-Minanga-School/assets/lib/chart.umd.min.js"></script>
+<script src="/SPSFMS-Student-Profiling-System-for-Minanga-School/assets/lib/jspdf.umd.min.js"></script>
+<script src="/SPSFMS-Student-Profiling-System-for-Minanga-School/assets/lib/jspdf.plugin.autotable.min.js"></script>
 <script src="<?= BASE_URL ?>/assets/js/components.js"></script>
 <script>
 showDesktopOnlyWarning();
@@ -91,13 +105,19 @@ fetch(BASE + '/api/analytics/index.php')
       data:{ labels:trendLabels, datasets:[{ label:'Total Students', data:trendVals, borderColor:'#1a73e8', backgroundColor:'rgba(26,115,232,.1)', tension:.4, fill:true, pointRadius:5, pointBackgroundColor:'#1a73e8' }] },
       options:{ plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:false, ticks:{ precision:0 } } } }
     });
+    document.getElementById('trend-csv-btn').onclick = e => { e.preventDefault(); exportTableToCSV('enrollment_trend', ['School Year','Total Students'], trendLabels.map((l,i) => [l, trendVals[i]])); };
+    document.getElementById('trend-pdf-btn').onclick = e => { e.preventDefault(); exportTableToPDF('3-Year Enrollment Trend', ['School Year','Total Students'], trendLabels.map((l,i) => [l, trendVals[i]])); };
 
     // Level doughnut
+    const levelLabels = ['Elementary','Junior High','Senior High'];
+    const levelVals = [d.elem, d.jhs, d.shs];
     new Chart(document.getElementById('levelChart'), {
       type:'doughnut',
-      data:{ labels:['Elementary','Junior High','Senior High'], datasets:[{ data:[d.elem,d.jhs,d.shs], backgroundColor:['#34a853','#1a73e8','#ea4335'], borderWidth:0 }] },
+      data:{ labels:levelLabels, datasets:[{ data:levelVals, backgroundColor:['#34a853','#1a73e8','#ea4335'], borderWidth:0 }] },
       options:{ plugins:{ legend:{ position:'bottom', labels:{ font:{ size:11 } } } }, cutout:'60%' }
     });
+    document.getElementById('level-csv-btn').onclick = e => { e.preventDefault(); exportTableToCSV('level_distribution', ['Level','Students'], levelLabels.map((l,i) => [l, levelVals[i]])); };
+    document.getElementById('level-pdf-btn').onclick = e => { e.preventDefault(); exportTableToPDF('Level Distribution', ['Level','Students'], levelLabels.map((l,i) => [l, levelVals[i]])); };
 
     // Top sections
     const medals = ['🥇','🥈','🥉','4.','5.'];
@@ -109,11 +129,16 @@ fetch(BASE + '/api/analytics/index.php')
     } else {
       tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No data</td></tr>';
     }
+    const sectionRows = (d.top_sections || []).map((s,i) => [i+1, s.section, s.cnt]);
+    document.getElementById('sections-csv-btn').onclick = e => { e.preventDefault(); exportTableToCSV('top_sections', ['Rank','Section','Students'], sectionRows); };
+    document.getElementById('sections-pdf-btn').onclick = e => { e.preventDefault(); exportTableToPDF('Top Sections by Enrollment', ['Rank','Section','Students'], sectionRows); };
 
     // Gender by level
     const levels = Object.keys(d.gender_by_level);
     const maleVals   = levels.map(l => d.gender_by_level[l]['Male']   || 0);
     const femaleVals = levels.map(l => d.gender_by_level[l]['Female'] || 0);
+    document.getElementById('genderLevel-csv-btn').onclick = e => { e.preventDefault(); exportTableToCSV('gender_by_grade_level', ['Grade Level','Male','Female'], levels.map((l,i) => [l, maleVals[i], femaleVals[i]])); };
+    document.getElementById('genderLevel-pdf-btn').onclick = e => { e.preventDefault(); exportTableToPDF('Gender by Grade Level', ['Grade Level','Male','Female'], levels.map((l,i) => [l, maleVals[i], femaleVals[i]])); };
     new Chart(document.getElementById('genderLevelChart'), {
       type:'bar',
       data:{

@@ -109,6 +109,29 @@ function populateGradeDropdown(selectEl, includeAll = false) {
   });
 }
 
+function exportTableToCSV(filename, headers, rows) {
+  const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const lines = [headers.map(esc).join(','), ...rows.map(r => r.map(esc).join(','))];
+  const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename.toLowerCase().endsWith('.csv') ? filename : filename + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportTableToPDF(title, headers, rows) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(13);
+  doc.text(title, 14, 15);
+  doc.autoTable({ head: [headers], body: rows, startY: 21, styles: { fontSize: 9 }, headStyles: { fillColor: [26, 115, 232] } });
+  doc.save(title.replace(/[^a-z0-9]+/gi, '_') + '.pdf');
+}
+
 function populateSectionDropdown(selectEl, gradeLevel, includeAll = false) {
   const map = {
     'Grade 1':'Mabini','Grade 2':'Mabini','Grade 3':'Mabini',
