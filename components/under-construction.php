@@ -1,5 +1,5 @@
 <?php
-define('CURRENT_VERSION', 'v4.00');
+define('CURRENT_VERSION', 'v4.01');
 if (!defined('BASE_URL')) require_once __DIR__ . '/../config/constants.php';
 ?>
 <!DOCTYPE html>
