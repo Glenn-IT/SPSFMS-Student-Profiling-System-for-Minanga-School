@@ -101,9 +101,9 @@ $sectionJson  = json_encode(SECTION_MAP);
             <div class="col-md-4"><label class="form-label">LRN *</label><input type="text" id="f-lrn" class="form-control" maxlength="12" required></div>
             <div class="col-md-4"><label class="form-label">Grade Level *</label><select id="f-grade" class="form-select" required onchange="updateFormSection()"><option value="">Select Grade</option></select></div>
             <div class="col-md-4"><label class="form-label">Section *</label><select id="f-section" class="form-select" required><option value="">Select Section</option></select></div>
-            <div class="col-md-4"><label class="form-label">First Name *</label><input type="text" id="f-first" class="form-control" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers" required></div>
-            <div class="col-md-4"><label class="form-label">Middle Name</label><input type="text" id="f-middle" class="form-control" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers"></div>
-            <div class="col-md-4"><label class="form-label">Last Name *</label><input type="text" id="f-last" class="form-control" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers" required></div>
+            <div class="col-md-4"><label class="form-label">First Name *</label><input type="text" id="f-first" class="form-control name-only" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers" required></div>
+            <div class="col-md-4"><label class="form-label">Middle Name</label><input type="text" id="f-middle" class="form-control name-only" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers"></div>
+            <div class="col-md-4"><label class="form-label">Last Name *</label><input type="text" id="f-last" class="form-control name-only" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers" required></div>
             <div class="col-md-3"><label class="form-label">Sex *</label><select id="f-sex" class="form-select" required><option value="">Select</option><option>Male</option><option>Female</option></select></div>
             <div class="col-md-3"><label class="form-label">Birthdate *</label><input type="date" id="f-birthdate" class="form-control" max="<?= date('Y-m-d') ?>" required onchange="updateAge()"></div>
             <div class="col-md-2"><label class="form-label">Age</label><input type="number" id="f-age" class="form-control" readonly></div>
@@ -123,11 +123,11 @@ $sectionJson  = json_encode(SECTION_MAP);
               </select>
             </div>
             <div class="col-12"><label class="form-label">Address</label><input type="text" id="f-address" class="form-control"></div>
-            <div class="col-md-6"><label class="form-label">Mother's Name</label><input type="text" id="f-mother" class="form-control" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers"></div>
-            <div class="col-md-6"><label class="form-label">Father's Name</label><input type="text" id="f-father" class="form-control" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers"></div>
-            <div class="col-md-6"><label class="form-label">Guardian's Name</label><input type="text" id="f-guardian" class="form-control" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers"></div>
+            <div class="col-md-6"><label class="form-label">Mother's Name</label><input type="text" id="f-mother" class="form-control name-only" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers"></div>
+            <div class="col-md-6"><label class="form-label">Father's Name</label><input type="text" id="f-father" class="form-control name-only" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers"></div>
+            <div class="col-md-6"><label class="form-label">Guardian's Name</label><input type="text" id="f-guardian" class="form-control name-only" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers"></div>
             <div class="col-md-6"><label class="form-label">Relation to Guardian</label><input type="text" id="f-relation" class="form-control" value="Mother"></div>
-            <div class="col-md-6"><label class="form-label">Contact No.</label><input type="text" id="f-contact" class="form-control" maxlength="11" inputmode="numeric" pattern="09[0-9]{9}" title="Enter an 11-digit PH mobile number starting with 09"></div>
+            <div class="col-md-6"><label class="form-label">Contact No.</label><input type="text" id="f-contact" class="form-control digits-only" maxlength="11" inputmode="numeric" pattern="09[0-9]{9}" title="Enter an 11-digit PH mobile number starting with 09"></div>
             <div class="col-md-6"><label class="form-label">Email</label><input type="email" id="f-email" class="form-control"></div>
           </div>
         </form>
@@ -155,6 +155,20 @@ $sectionJson  = json_encode(SECTION_MAP);
 <script>
 const BASE = '<?= BASE_URL ?>';
 showDesktopOnlyWarning();
+
+// Block numbers in name fields, block letters in contact field (live, as the user types)
+document.querySelectorAll('.name-only').forEach(el => {
+  el.addEventListener('input', () => {
+    const cleaned = el.value.replace(/[^A-Za-zÑñ' .\-]/g, '');
+    if (cleaned !== el.value) el.value = cleaned;
+  });
+});
+document.querySelectorAll('.digits-only').forEach(el => {
+  el.addEventListener('input', () => {
+    const cleaned = el.value.replace(/[^0-9]/g, '');
+    if (cleaned !== el.value) el.value = cleaned;
+  });
+});
 
 const GRADE_LEVELS = <?= $gradeJson ?>;
 const SECTION_MAP  = <?= $sectionJson ?>;
