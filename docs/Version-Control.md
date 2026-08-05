@@ -19,8 +19,9 @@
 | v3.00 | Admin: Account Management (new presentation cut) | `views/admin/dashboard.php`, `views/admin/settings.php`, `views/admin/accounts.php` | analytics, students, reports (admin); all teacher; all student |
 | v4.00 | Admin: Student Management + Analytics (new presentation cut) | `views/admin/dashboard.php`, `views/admin/settings.php`, `views/admin/accounts.php`, `views/admin/analytics.php`, `views/admin/students.php` | reports (admin); all teacher; all student |
 | v4.01 | Admin: Student form input validation fix (same pages as v4.00) | Same as v4.00 | Same as v4.00 |
+| v5.00 | Admin: Reports (new presentation cut - all Admin pages unlocked) | `views/admin/dashboard.php`, `views/admin/settings.php`, `views/admin/accounts.php`, `views/admin/analytics.php`, `views/admin/students.php`, `views/admin/reports.php` | all teacher; all student |
 
-> **Note:** v2.00, v3.00, v4.00, and v4.01 are not continuations of `main` (which is already the full v1.10 system). They are separate presentation cuts. v2.00 is built on branch `v2.00-presentation`, created from the `v1.00` base (login/forgot/register unlocked) with only the admin dashboard and admin settings gates removed, plus the logout-modal fix cherry-picked forward. v3.00 is built on branch `v3.00-presentation`, created from `v2.00-presentation` with the recently-enrolled-students search feature cherry-picked forward, plus the admin account management gate removed. v4.00 is built on branch `v4.00-presentation`, created from `v3.00-presentation` with the admin analytics and student management gates removed. v4.01 is built on branch `v4.01-presentation`, created from `v4.00-presentation` with the name/contact input-validation fix (`views/admin/students.php`) cherry-picked forward from `main`. To present any of these: `git checkout v2.00`, `git checkout v3.00`, `git checkout v4.00`, or `git checkout v4.01`. `main` is unaffected and remains the fully unlocked system.
+> **Note:** v2.00, v3.00, v4.00, v4.01, and v5.00 are not continuations of `main` (which is already the full v1.10 system). They are separate presentation cuts. v2.00 is built on branch `v2.00-presentation`, created from the `v1.00` base (login/forgot/register unlocked) with only the admin dashboard and admin settings gates removed, plus the logout-modal fix cherry-picked forward. v3.00 is built on branch `v3.00-presentation`, created from `v2.00-presentation` with the recently-enrolled-students search feature cherry-picked forward, plus the admin account management gate removed. v4.00 is built on branch `v4.00-presentation`, created from `v3.00-presentation` with the admin analytics and student management gates removed. v4.01 is built on branch `v4.01-presentation`, created from `v4.00-presentation` with the name/contact input-validation fix (`views/admin/students.php`) cherry-picked forward from `main`. v5.00 is built on branch `v5.00-presentation`, created from `v4.01-presentation` with the admin reports gate removed. To present any of these: `git checkout v2.00`, `git checkout v3.00`, `git checkout v4.00`, `git checkout v4.01`, or `git checkout v5.00`. `main` is unaffected and remains the fully unlocked system.
 
 ---
 
@@ -79,6 +80,7 @@ Each version is a **permanent snapshot** in Git history.
 | v3.00 | v3.00 | 85b0451e0b8cef3092992c3b19bef9755ab4abdd |
 | v4.00 | v4.00 | 14e3ba9d61da29f182e817f59e2b220fe2f1e5ae |
 | v4.01 | v4.01 | db40f07a8f6af31e088f0b3ab0b9c1ef6f735be7 |
+| v5.00 | v5.00 | 554b9d371bc00d6b5cf182f7aa44c023d4be3495 |
 
 > Fill commit hashes after all versions are tagged:
 > ```bash
