@@ -14,11 +14,13 @@
 | v1.07 | Teacher: Reports + Settings | `views/teacher/reports.php`, `views/teacher/settings.php` | all student |
 | v1.08 | Student: Dashboard | `views/student/dashboard.php` | profile, settings (student) |
 | v1.09 | Student: Profile | `views/student/profile.php` | settings (student) |
-| v1.10 | Student: Settings — **Full System** | `views/student/settings.php` | none |
+| v2.00 | Admin: Dashboard + Settings (new presentation cut) | `views/admin/dashboard.php`, `views/admin/settings.php` | analytics, students, accounts, reports (admin); all teacher; all student |
+| v3.00 | Admin: Account Management (new presentation cut) | `views/admin/dashboard.php`, `views/admin/settings.php`, `views/admin/accounts.php` | analytics, students, reports (admin); all teacher; all student |
+| v4.00 | Admin: Student Management + Analytics (new presentation cut) | `views/admin/dashboard.php`, `views/admin/settings.php`, `views/admin/accounts.php`, `views/admin/analytics.php`, `views/admin/students.php` | reports (admin); all teacher; all student |
+| v4.01 | Admin: Student form input validation fix (same pages as v4.00) | Same as v4.00 | Same as v4.00 |
+| v5.00 | Admin: Reports (new presentation cut - all Admin pages unlocked) | `views/admin/dashboard.php`, `views/admin/settings.php`, `views/admin/accounts.php`, `views/admin/analytics.php`, `views/admin/students.php`, `views/admin/reports.php` | all teacher; all student |
 
----
-
-## Under Construction Strategy
+> **Note:** v2.00, v3.00, v4.00, v4.01, and v5.00 are not continuations of `main` (which is already the full v1.10 system). They are separate presentation cuts. v2.00 is built on branch `v2.00-presentation`, created from the `v1.00` base (login/forgot/register unlocked) with only the admin dashboard and admin settings gates removed, plus the logout-modal fix cherry-picked forward. v3.00 is built on branch `v3.00-presentation`, created from `v2.00-presentation` with the recently-enrolled-students search feature cherry-picked forward, plus the admin account management gate removed. v4.00 is built on branch `v4.00-presentation`, created from `v3.00-presentation` with the admin analytics and student management gates removed. v4.01 is built on branch `v4.01-presentation`, created from `v4.00-presentation` with the name/contact input-validation fix (`views/admin/students.php`) cherry-picked forward from `main`. v5.00 is built on branch `v5.00-presentation`, created from `v4.01-presentation` with the admin reports gate removed. To present any of these: `git checkout v2.00`, `git checkout v3.00`, `git checkout v4.00`, `git checkout v4.01`, or `git checkout v5.00`. `main` is unaffected and remains the fully unlocked system.
 
 - `components/under-construction.php` holds a single constant `CURRENT_VERSION`.
 - Every page not yet unlocked includes `require_once '../../components/under-construction.php'` as its **very first line**.
@@ -58,17 +60,22 @@ Each version is a **permanent snapshot** in Git history.
 
 | Version | Tag Name | Commit Hash |
 |---------|----------|-------------|
-| v1.00 | v1.00 | |
-| v1.01 | v1.01 | |
-| v1.02 | v1.02 | |
-| v1.03 | v1.03 | |
-| v1.04 | v1.04 | |
-| v1.05 | v1.05 | |
-| v1.06 | v1.06 | |
-| v1.07 | v1.07 | |
-| v1.08 | v1.08 | |
-| v1.09 | v1.09 | |
-| v1.10 | v1.10 | |
+| v1.00 | v1.00 | 53f07ea340ff0ca3ef12f52357c872232be415d2 |
+| v1.01 | v1.01 | 5130d270d99ee9f0a362f3d6b19dfefd04c8b3aa |
+| v1.02 | v1.02 | 9efa636a02c97f4c6f01a810060740295dc64a91 |
+| v1.03 | v1.03 | 46d5f34bd468285b9d98672d15545e45bd098657 |
+| v1.04 | v1.04 | a9db109aa088ec2ea5eb60b11485f9447aec15d6 |
+| v1.05 | v1.05 | 90c924f0b6453ec8b434ef380400d812c1e379e3 |
+| v1.06 | v1.06 | 516ea9bc51ef6cc99dc217e8507db37b75fa56cf |
+| v1.07 | v1.07 | 729713313d08b3cdd36a6f8d8206ec3862045b85 |
+| v1.08 | v1.08 | c41fbcacfb84a9b59d7376ca5fc4d68ba35693d6 |
+| v1.09 | v1.09 | ad982dbecd54398fed0865ca45258ce5145bfb21 |
+| v1.10 | v1.10 | f3489f73cc63b6bad5c4bd31e2bc2fbd49b4bef4 |
+| v2.00 | v2.00 | 09c9fef8d1c3fcf4d9d6546f97660a59757cc3e7 |
+| v3.00 | v3.00 | 85b0451e0b8cef3092992c3b19bef9755ab4abdd |
+| v4.00 | v4.00 | 14e3ba9d61da29f182e817f59e2b220fe2f1e5ae |
+| v4.01 | v4.01 | db40f07a8f6af31e088f0b3ab0b9c1ef6f735be7 |
+| v5.00 | v5.00 | 8074a12303b0380ac667f65989bc254fa0682066 |
 
 > Fill commit hashes after all versions are tagged:
 > ```bash
