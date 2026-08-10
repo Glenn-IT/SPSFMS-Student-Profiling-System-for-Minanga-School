@@ -14,6 +14,10 @@ $secQuestions = [
   "What city were you born in?",
   "What is the name of your elementary school?",
 ];
+$currentQ = $dbUser['sec_question'] ?? '';
+if ($currentQ && !in_array($currentQ, $secQuestions)) {
+  $secQuestions[] = $currentQ;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -225,17 +229,26 @@ $secQuestions = [
           <div class="card-body">
             <div class="row g-3">
               <div class="col-md-7">
-                <label class="form-label fw-semibold">Security Question</label>
-                <select id="sec-q" class="form-select">
-                  <option value="">Select a security question</option>
-                  <?php 
-                  $currentQ = $dbUser['sec_question'] ?? '';
-                  foreach ($secQuestions as $q): 
-                    $selected = ($q === $currentQ) ? 'selected' : '';
-                  ?>
-                  <option value="<?= htmlspecialchars($q) ?>" <?= $selected ?>><?= htmlspecialchars($q) ?></option>
-                  <?php endforeach; ?>
-                </select>
+                <label class="form-label fw-semibold d-flex justify-content-between align-items-center">
+                  <span>Security Question</span>
+                  <small class="text-muted fw-normal" style="font-size:0.78rem;">Preset or custom question</small>
+                </label>
+                <div class="input-group">
+                  <select id="sec-q" class="form-select">
+                    <option value="">Select a security question</option>
+                    <?php 
+                    foreach ($secQuestions as $q): 
+                      $selected = ($q === $currentQ) ? 'selected' : '';
+                    ?>
+                    <option value="<?= htmlspecialchars($q) ?>" <?= $selected ?>><?= htmlspecialchars($q) ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                  <input type="text" id="sec-q-custom" class="form-control d-none" placeholder="Type or edit security question..." value="<?= htmlspecialchars($currentQ) ?>">
+                  <button type="button" class="btn btn-outline-primary" id="btn-toggle-sec-edit" onclick="toggleEditSecQuestion()" title="Edit security question text">
+                    <i class="fas fa-edit me-1"></i><span>Edit</span>
+                  </button>
+                </div>
+                <div class="form-text small" id="sec-q-help">Click <strong>Edit</strong> to customize or write your own question.</div>
               </div>
               <div class="col-md-5">
                 <label class="form-label fw-semibold">Your Answer</label>
@@ -408,12 +421,41 @@ async function changePassword() {
   }
 }
 
+function toggleEditSecQuestion() {
+  const select = document.getElementById('sec-q');
+  const custom = document.getElementById('sec-q-custom');
+  const btn = document.getElementById('btn-toggle-sec-edit');
+  const help = document.getElementById('sec-q-help');
+
+  if (custom.classList.contains('d-none')) {
+    if (select.value) {
+      custom.value = select.value;
+    }
+    select.classList.add('d-none');
+    custom.classList.remove('d-none');
+    custom.focus();
+    btn.innerHTML = '<i class="fas fa-list me-1"></i><span>List</span>';
+    btn.className = 'btn btn-outline-secondary';
+    if (help) help.innerHTML = 'Editing question text. Click <strong>List</strong> to pick from preset questions.';
+  } else {
+    custom.classList.add('d-none');
+    select.classList.remove('d-none');
+    btn.innerHTML = '<i class="fas fa-edit me-1"></i><span>Edit</span>';
+    btn.className = 'btn btn-outline-primary';
+    if (help) help.innerHTML = 'Click <strong>Edit</strong> to customize or write your own question.';
+  }
+}
+
 async function saveSecQuestion() {
-  const question = document.getElementById('sec-q').value;
+  const select = document.getElementById('sec-q');
+  const custom = document.getElementById('sec-q-custom');
+  const isCustomMode = !custom.classList.contains('d-none');
+
+  const question = isCustomMode ? custom.value.trim() : select.value.trim();
   const answer = document.getElementById('sec-a').value.trim();
 
   if (!question || !answer) {
-    showToast('Please select a security question and enter an answer.', 'error');
+    showToast('Please select or enter a security question and an answer.', 'error');
     return;
   }
 
