@@ -134,6 +134,28 @@ CREATE TABLE IF NOT EXISTS `announcements` (
 ");
 out('✔ Table <strong>announcements</strong> ready.', 'ok');
 
+$pdo->exec("
+CREATE TABLE IF NOT EXISTS `security_questions` (
+  `id`         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `question`   VARCHAR(255) NOT NULL UNIQUE,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+");
+out('✔ Table <strong>security_questions</strong> ready.', 'ok');
+
+$secQs = [
+  "What is the name of your first pet?",
+  "What is your mother's maiden name?",
+  "What city were you born in?",
+  "What is the name of your elementary school?"
+];
+$insSq = $pdo->prepare("INSERT IGNORE INTO `security_questions` (`question`) VALUES (?)");
+foreach ($secQs as $sq) {
+  $insSq->execute([$sq]);
+}
+out('✔ Default <strong>security questions</strong> seeded.', 'ok');
+
+
 // ── Seed Users ───────────────────────────────────────────────────────────────
 $existing = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
 if ($existing == 0) {

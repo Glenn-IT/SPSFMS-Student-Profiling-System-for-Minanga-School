@@ -14,6 +14,167 @@ async function loadComponent(selector, url) {
   } catch (e) { console.warn('Component load failed:', url, e); }
 }
 
+/* ─────────────────────────────────────────────────────────────
+   GLOBAL FULL-SCREEN LOADING OVERLAY SYSTEM
+   ───────────────────────────────────────────────────────────── */
+function injectLoadingOverlay() {
+  if (document.getElementById('refresh-loading-overlay')) return;
+
+  const style = document.createElement('style');
+  style.id = 'loading-overlay-styles';
+  style.textContent = `
+    .refresh-loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeInOverlay 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes fadeInOverlay {
+      from { opacity: 0; transform: scale(1.02); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .refresh-loading-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 2.5rem;
+      width: 90%;
+      max-width: 420px;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transform: scale(0.95);
+      animation: popInCard 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes popInCard {
+      to { transform: scale(1); }
+    }
+    .refresh-spinner-container {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+  `;
+  document.head.appendChild(style);
+
+  const overlay = document.createElement('div');
+  overlay.id = 'refresh-loading-overlay';
+  overlay.className = 'refresh-loading-overlay';
+  overlay.style.display = 'none';
+  overlay.innerHTML = `
+    <div class="refresh-loading-card">
+      <div class="refresh-spinner-container">
+        <div class="spinner-border text-primary" role="status" style="width: 3.5rem; height: 3.5rem; border-width: 0.28em;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+      <h5 class="fw-bold mt-2 mb-1" id="refresh-loading-title" style="color:#0f172a;">Processing...</h5>
+      <p class="text-muted small mb-3" id="refresh-loading-sub">Please wait while we complete your request...</p>
+      <div class="progress" style="height: 5px; border-radius: 4px; overflow: hidden; background: #e9ecef;">
+        <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 100%;"></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+let loadingStartTime = 0;
+let loadingTimeout = null;
+
+function showLoading(title = 'Processing...', subtitle = 'Please wait while we complete your request...') {
+  injectLoadingOverlay();
+  if (loadingTimeout) {
+    clearTimeout(loadingTimeout);
+    loadingTimeout = null;
+  }
+  loadingStartTime = Date.now();
+
+  const overlay = document.getElementById('refresh-loading-overlay');
+  const titleEl = document.getElementById('refresh-loading-title');
+  const subEl = document.getElementById('refresh-loading-sub');
+
+  if (titleEl && title) titleEl.textContent = title;
+  if (subEl && subtitle) subEl.textContent = subtitle;
+
+  if (overlay) {
+    overlay.style.display = 'flex';
+  }
+}
+
+function hideLoading(minDisplayMs = 800) {
+  const overlay = document.getElementById('refresh-loading-overlay');
+  if (!overlay) return;
+
+  const elapsed = Date.now() - loadingStartTime;
+  const remaining = Math.max(0, minDisplayMs - elapsed);
+
+  if (loadingTimeout) clearTimeout(loadingTimeout);
+
+  loadingTimeout = setTimeout(() => {
+    overlay.style.display = 'none';
+    loadingTimeout = null;
+  }, remaining);
+}
+
+function showRefreshLoading(titleMessage, subMessage) {
+  showLoading(titleMessage || 'Updating...', subMessage || 'Auto-refreshing page to apply changes...');
+}
+
+function hideRefreshLoading() {
+  hideLoading(0);
+}
+
+function triggerPageRefresh(successMessage, activeTabOrUrl) {
+  showRefreshLoading('Updating...', 'Auto refreshing page to apply changes...');
+  if (successMessage) {
+    sessionStorage.setItem('pendingToast', JSON.stringify({ message: successMessage, type: 'success' }));
+  }
+  setTimeout(() => {
+    if (activeTabOrUrl && activeTabOrUrl.includes('/')) {
+      window.location.href = activeTabOrUrl;
+    } else if (activeTabOrUrl) {
+      window.location.href = window.location.pathname + '?tab=' + activeTabOrUrl;
+    } else {
+      window.location.reload();
+    }
+  }, 900);
+}
+
+// Auto-initialize loading overlay and intercept form submissions / action buttons
+document.addEventListener('DOMContentLoaded', () => {
+  injectLoadingOverlay();
+
+  // Check for pending toast notification after refresh
+  const pendingToast = sessionStorage.getItem('pendingToast');
+  if (pendingToast) {
+    try {
+      const data = JSON.parse(pendingToast);
+      showToast(data.message, data.type || 'success');
+    } catch(e){}
+    sessionStorage.removeItem('pendingToast');
+  }
+
+  // Intercept form submissions globally for smooth loading feedback
+  document.body.addEventListener('submit', function(e) {
+    const form = e.target;
+    if (form && !form.hasAttribute('data-no-loading')) {
+      const customTitle = form.getAttribute('data-loading-title') || 'Processing Request...';
+      const customSub = form.getAttribute('data-loading-sub') || 'Please wait while your action is saved...';
+      showLoading(customTitle, customSub);
+    }
+  });
+});
+
 function setActiveNavLink(currentPage) {
   document.querySelectorAll('.nav-link, .sidebar-link').forEach(link => {
     link.classList.remove('active');
@@ -22,6 +183,7 @@ function setActiveNavLink(currentPage) {
     }
   });
 }
+
 
 function showDesktopOnlyWarning() {
   if (window.innerWidth < 1024) {

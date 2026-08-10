@@ -50,10 +50,21 @@ if (!in_array($role, ['admin','teacher','student'])) $role = 'admin';
       <label class="form-label">Select Your Question</label>
       <select id="fp-question" class="form-select">
         <option value="">— Choose a question —</option>
-        <option value="What is the name of your first pet?">What is the name of your first pet?</option>
-        <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
-        <option value="What city were you born in?">What city were you born in?</option>
-        <option value="What is the name of your elementary school?">What is the name of your elementary school?</option>
+        <?php
+        try {
+          $sqs = $pdo->query("SELECT question FROM security_questions ORDER BY id ASC")->fetchAll(PDO::FETCH_COLUMN);
+        } catch (Exception $e) {
+          $sqs = [
+            "What is the name of your first pet?",
+            "What is your mother's maiden name?",
+            "What city were you born in?",
+            "What is the name of your elementary school?"
+          ];
+        }
+        foreach ($sqs as $sq):
+        ?>
+        <option value="<?= htmlspecialchars($sq) ?>"><?= htmlspecialchars($sq) ?></option>
+        <?php endforeach; ?>
       </select>
     </div>
     <div class="mb-3">

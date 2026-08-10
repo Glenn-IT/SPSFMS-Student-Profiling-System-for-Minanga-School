@@ -175,6 +175,7 @@ function redirectByRole(string $role): void {
 
     document.getElementById('error-box').style.display = 'none';
     setLoading(true);
+    showLoading('Logging in...', 'Verifying your credentials...');
 
     try {
       const res  = await fetch(BASE + '/api/auth/login.php', {
@@ -185,9 +186,11 @@ function redirectByRole(string $role): void {
       const data = await res.json();
 
       if (data.ok) {
+        showLoading('Welcome Back!', 'Redirecting to your dashboard...');
         const dest = { admin: BASE+'/views/admin/dashboard.php', teacher: BASE+'/views/teacher/dashboard.php', student: BASE+'/views/student/dashboard.php' };
         window.location.replace(dest[data.role] || BASE+'/index.php');
       } else {
+        hideLoading();
         failCount++;
         sessionStorage.setItem(FAILCOUNT_KEY, String(failCount));
         setLoading(false);
@@ -198,10 +201,13 @@ function redirectByRole(string $role): void {
         }
       }
     } catch (err) {
+      hideLoading();
       setLoading(false);
       showError('Network error. Please try again.');
     }
   });
 </script>
+<script src="<?= BASE_URL ?>/assets/js/components.js"></script>
 </body>
 </html>
+
