@@ -5,13 +5,15 @@ $user = $_SESSION['user'] ?? [];
 $initial = $user ? strtoupper(substr($user['name'], 0, 1)) : 'A';
 
 $navItems = [
-  ['page'=>'dashboard', 'icon'=>'fa-tachometer-alt',  'label'=>'Dashboard',           'href'=>BASE_URL.'/views/admin/dashboard.php'],
-  ['page'=>'students',  'icon'=>'fa-users',            'label'=>'Student Management',  'href'=>BASE_URL.'/views/admin/students.php'],
-  ['page'=>'reports',   'icon'=>'fa-file-alt',         'label'=>'Reports',             'href'=>BASE_URL.'/views/admin/reports.php'],
-  ['page'=>'accounts',  'icon'=>'fa-user-cog',         'label'=>'Account Management',  'href'=>BASE_URL.'/views/admin/accounts.php'],
-  ['page'=>'analytics', 'icon'=>'fa-chart-line',       'label'=>'Analytics',           'href'=>BASE_URL.'/views/admin/analytics.php'],
-  ['page'=>'settings',  'icon'=>'fa-cog',              'label'=>'Settings',            'href'=>BASE_URL.'/views/admin/settings.php'],
+  ['page'=>'dashboard',     'icon'=>'fa-tachometer-alt',  'label'=>'Dashboard',           'href'=>BASE_URL.'/views/admin/dashboard.php'],
+  ['page'=>'students',      'icon'=>'fa-users',            'label'=>'Student Management',  'href'=>BASE_URL.'/views/admin/students.php'],
+  ['page'=>'reports',       'icon'=>'fa-file-alt',         'label'=>'Reports',             'href'=>BASE_URL.'/views/admin/reports.php'],
+  ['page'=>'accounts',      'icon'=>'fa-user-cog',         'label'=>'Account Management',  'href'=>BASE_URL.'/views/admin/accounts.php'],
+  ['page'=>'analytics',     'icon'=>'fa-chart-line',       'label'=>'Analytics',           'href'=>BASE_URL.'/views/admin/analytics.php'],
+  ['page'=>'settings',      'icon'=>'fa-cog',              'label'=>'Settings',            'href'=>BASE_URL.'/views/admin/settings.php'],
+  ['page'=>'sec_questions', 'icon'=>'fa-shield-alt',       'label'=>'Manage Security QT',  'href'=>BASE_URL.'/views/admin/security-questions.php'],
 ];
+
 ?>
 <aside class="sidebar">
   <div class="sidebar-brand">
