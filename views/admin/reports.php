@@ -53,11 +53,10 @@ if ($type) {
     <?php if (!$type): ?>
     <div class="row g-3 no-print">
       <?php foreach ([
-        ['enrollment','fa-list','Enrollment List','List of enrolled students with basic info','primary'],
-        ['masterlist','fa-id-card','Student Masterlist','Complete student records with all fields','secondary'],
+        ['masterlist','fa-id-card','Student Masterlist','Complete student records with all fields','primary'],
         ['gender','fa-venus-mars','Gender Summary','Gender breakdown by grade level','warning'],
       ] as [$t,$icon,$label,$desc,$color]): ?>
-      <div class="col-md-4">
+      <div class="col-md-6">
         <a href="?type=<?= $t ?>&sy=2025-2026" style="text-decoration:none;">
           <div class="card h-100" style="cursor:pointer;transition:.2s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.12)'" onmouseout="this.style.boxShadow=''">
             <div class="card-body text-center py-4">
@@ -108,9 +107,9 @@ if ($type) {
         <div class="report-header">
           <div style="font-size:.8rem;color:var(--gray-600);">Republic of the Philippines · Department of Education</div>
           <h5 class="fw-bold mt-1"><?= SCHOOL_NAME ?></h5>
-          <div style="font-size:.85rem;color:var(--gray-600);">Minanga, Cagayan de Oro City</div>
+          <div style="font-size:.85rem;color:var(--gray-600);"><?= SCHOOL_ADDRESS ?></div>
           <h4 class="mt-2">
-            <?= $type === 'enrollment' ? 'ENROLLMENT LIST' : ($type === 'masterlist' ? 'STUDENT MASTERLIST' : 'GENDER SUMMARY') ?>
+            <?= $type === 'gender' ? 'GENDER SUMMARY' : 'STUDENT MASTERLIST' ?>
           </h4>
           <div style="font-size:.82rem;">School Year <?= htmlspecialchars($sy) ?> <?= $grade ? '· '.$grade : '' ?></div>
         </div>

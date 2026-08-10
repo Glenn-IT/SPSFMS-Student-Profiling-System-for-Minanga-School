@@ -1,8 +1,10 @@
 <?php
 define('APP_NAME',    'SPSMIS');
 define('SCHOOL_NAME', 'Minanga Integrated School');
+define('SCHOOL_ADDRESS', 'Minanga, Piat, Cagayan');
 define('SCHOOL_YEAR', '2025-2026');
 define('BASE_URL',    '/SPSFMS-Student-Profiling-System-for-Minanga-School');
+
 
 define('GRADE_LEVELS', [
     'Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6',
