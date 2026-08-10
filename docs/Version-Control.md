@@ -77,7 +77,7 @@ Each version is a **permanent snapshot** in Git history.
 | v4.00 | v4.00 | 14e3ba9d61da29f182e817f59e2b220fe2f1e5ae |
 | v4.01 | v4.01 | db40f07a8f6af31e088f0b3ab0b9c1ef6f735be7 |
 | v5.00 | v5.00 | 8074a12303b0380ac667f65989bc254fa0682066 |
-| v6.00 | v6.00 | (pending commit) |
+| v6.00 | v6.00 | 90e993cb254fbf8d2271aed788932720b7079af6 |
 
 > Fill commit hashes after all versions are tagged:
 > ```bash
