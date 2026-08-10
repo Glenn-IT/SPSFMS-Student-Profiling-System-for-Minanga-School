@@ -175,12 +175,7 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
 
         <!-- Subsetting 3: Security Question -->
         <div class="card mb-3 shadow-sm border-0 subsetting-card" id="card-security">
-          <div class="card-header bg-white py-3 fw-bold d-flex justify-content-between align-items-center">
-            <span><i class="fas fa-shield-alt me-2" style="color:var(--primary);"></i>Security Question</span>
-            <button type="button" class="btn btn-sm btn-outline-primary fw-semibold" onclick="openSecQuestionsModal()">
-              <i class="fas fa-table me-1"></i>Manage Security Questions Table
-            </button>
-          </div>
+          <div class="card-header bg-white py-3 fw-bold"><i class="fas fa-shield-alt me-2" style="color:var(--primary);"></i>Security Question</div>
           <div class="card-body">
             <div class="row g-3">
               <div class="col-md-7">
@@ -199,7 +194,7 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
                     <?php endforeach; ?>
                   </select>
                 </div>
-                <div class="form-text small" id="sec-q-help">Select a question or click <strong>Manage Security Questions Table</strong> to edit or add questions.</div>
+                <div class="form-text small" id="sec-q-help">Select a security question for password recovery. To manage questions, go to <strong>Manage Security QT</strong> in the side menu.</div>
               </div>
               <div class="col-md-5">
                 <label class="form-label fw-semibold">Your Answer</label>
@@ -214,7 +209,6 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
           </div>
         </div>
 
-
         <!-- Danger Zone -->
         <div class="card border-danger shadow-sm subsetting-card" id="card-danger">
           <div class="card-header bg-danger bg-opacity-10 text-danger fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>Danger Zone</div>
@@ -228,53 +222,6 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
   </div>
 </div>
 
-<!-- Security Questions DataGridView Modal -->
-<div class="modal fade" id="secQuestionsModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content shadow-lg border-0">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title fw-bold"><i class="fas fa-table me-2"></i>Security Questions Table (DataGridView)</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body p-4">
-        <p class="text-muted small mb-3">Manage all available security questions in the system database table.</p>
-        
-        <!-- DataGridView Table -->
-        <div class="table-responsive mb-4" style="max-height: 320px; overflow-y: auto;">
-          <table class="table table-bordered table-hover align-middle mb-0" id="sec-questions-datagrid">
-            <thead class="table-light sticky-top">
-              <tr>
-                <th style="width:50px;" class="text-center">#</th>
-                <th>Sec Question</th>
-                <th class="text-center" style="width:180px;">Action</th>
-              </tr>
-            </thead>
-            <tbody id="sq-datagrid-tbody">
-              <tr><td colspan="3" class="text-center text-muted py-3"><i class="fas fa-spinner fa-spin me-2"></i>Loading security questions...</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Add/Edit Form below table -->
-        <div class="card border-0 bg-light p-3 rounded-3">
-          <label class="form-label fw-bold mb-2" id="sq-form-title"><i class="fas fa-plus-circle me-1 text-primary"></i>Add Security Question</label>
-          <div class="input-group">
-            <input type="text" id="sq-input-text" class="form-control" placeholder="Type a security question here...">
-            <button type="button" id="btn-save-sq-grid" class="btn btn-success px-4" onclick="saveSqFromGrid()">
-              <i class="fas fa-save me-1"></i>Save
-            </button>
-            <button type="button" id="btn-cancel-sq-grid" class="btn btn-secondary px-3 d-none ms-2" onclick="cancelSqEdit()">
-              <i class="fas fa-times me-1"></i>Cancel
-            </button>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer bg-light">
-        <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <script src="/SPSFMS-Student-Profiling-System-for-Minanga-School/assets/lib/bootstrap.bundle.min.js"></script>
 <script src="<?= BASE_URL ?>/assets/js/components.js"></script>
@@ -436,162 +383,9 @@ async function saveSecQuestion() {
     showToast('An error occurred while saving security question.', 'error');
   }
 }
-
-/* ─────────────────────────────────────────────────────────────
-   SECURITY QUESTIONS DATAGRIDVIEW MANAGEMENT FUNCTIONS
-   ───────────────────────────────────────────────────────────── */
-function openSecQuestionsModal() {
-  cancelSqEdit();
-  loadSecQuestionsGrid();
-  const modalEl = document.getElementById('secQuestionsModal');
-  const modal = new bootstrap.Modal(modalEl);
-  modal.show();
-}
-
-async function loadSecQuestionsGrid() {
-  const tbody = document.getElementById('sq-datagrid-tbody');
-  tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3"><i class="fas fa-spinner fa-spin me-2"></i>Loading security questions...</td></tr>';
-  
-  try {
-    const res = await fetch(BASE + '/api/security-questions/index.php');
-    const d = await res.json();
-    if (!d.ok || !d.data) {
-      tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger py-3">Failed to load questions table.</td></tr>';
-      return;
-    }
-
-    const items = d.data;
-    if (items.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">No security questions found in table.</td></tr>';
-    } else {
-      tbody.innerHTML = items.map((sq, idx) => {
-        const safeQ = sq.question.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-        return `
-          <tr>
-            <td class="text-center fw-bold">${idx + 1}</td>
-            <td>${sq.question}</td>
-            <td class="text-center">
-              <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="startEditSq(${sq.id}, '${safeQ}')">
-                <i class="fas fa-edit me-1"></i>Edit
-              </button>
-              <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteSq(${sq.id})">
-                <i class="fas fa-trash-alt me-1"></i>Delete
-              </button>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    // Also update the select dropdown in settings page
-    const select = document.getElementById('sec-q');
-    const currentVal = select.value;
-    select.innerHTML = '<option value="">Select a security question</option>';
-    items.forEach(item => {
-      const opt = document.createElement('option');
-      opt.value = item.question;
-      opt.textContent = item.question;
-      if (item.question === currentVal) opt.selected = true;
-      select.appendChild(opt);
-    });
-  } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger py-3">An error occurred while loading table.</td></tr>';
-  }
-}
-
-function startEditSq(id, questionText) {
-  editingSqId = id;
-  const input = document.getElementById('sq-input-text');
-  const title = document.getElementById('sq-form-title');
-  const btnSave = document.getElementById('btn-save-sq-grid');
-  const btnCancel = document.getElementById('btn-cancel-sq-grid');
-
-  input.value = questionText;
-  input.focus();
-  title.innerHTML = '<i class="fas fa-edit me-1 text-primary"></i>Edit Security Question';
-  btnSave.className = 'btn btn-primary px-4';
-  btnSave.innerHTML = '<i class="fas fa-save me-1"></i>Save Changes';
-  btnCancel.classList.remove('d-none');
-}
-
-function cancelSqEdit() {
-  editingSqId = null;
-  const input = document.getElementById('sq-input-text');
-  const title = document.getElementById('sq-form-title');
-  const btnSave = document.getElementById('btn-save-sq-grid');
-  const btnCancel = document.getElementById('btn-cancel-sq-grid');
-
-  input.value = '';
-  title.innerHTML = '<i class="fas fa-plus-circle me-1 text-primary"></i>Add Security Question';
-  btnSave.className = 'btn btn-success px-4';
-  btnSave.innerHTML = '<i class="fas fa-save me-1"></i>Save';
-  btnCancel.classList.add('d-none');
-}
-
-async function saveSqFromGrid() {
-  const input = document.getElementById('sq-input-text');
-  const question = input.value.trim();
-
-  if (!question) {
-    showToast('Please type a security question text.', 'error');
-    return;
-  }
-
-  const isEdit = editingSqId !== null;
-  showLoading(isEdit ? 'Updating Security Question...' : 'Saving Security Question...', 'Updating security questions table...');
-
-  try {
-    const payload = isEdit 
-      ? { action: 'edit', id: editingSqId, question }
-      : { action: 'add', question };
-
-    const res = await fetch(BASE + '/api/security-questions/index.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const d = await res.json();
-
-    hideLoading();
-    if (d.ok) {
-      showToast(d.message, 'success');
-      cancelSqEdit();
-      loadSecQuestionsGrid();
-    } else {
-      showToast(d.message || 'Failed to save security question.', 'error');
-    }
-  } catch (err) {
-    hideLoading();
-    showToast('An error occurred while saving security question.', 'error');
-  }
-}
-
-function deleteSq(id) {
-  confirmModal('Confirm Delete', 'Are you sure you want to delete this security question from the table?', async () => {
-    showLoading('Deleting Security Question...', 'Removing item from table...');
-    try {
-      const res = await fetch(BASE + '/api/security-questions/index.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete', id })
-      });
-      const d = await res.json();
-      hideLoading();
-      if (d.ok) {
-        showToast(d.message, 'success');
-        if (editingSqId === id) cancelSqEdit();
-        loadSecQuestionsGrid();
-      } else {
-        showToast(d.message || 'Failed to delete security question.', 'error');
-      }
-    } catch (err) {
-      hideLoading();
-      showToast('An error occurred while deleting security question.', 'error');
-    }
-  });
-}
 </script>
 </body>
 </html>
+
 
 
