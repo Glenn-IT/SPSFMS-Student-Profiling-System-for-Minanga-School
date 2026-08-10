@@ -8,12 +8,17 @@ $stmt->execute([$user['id']]);
 $dbUser = $stmt->fetch() ?: $user;
 
 $activePage = 'settings';
-$secQuestions = [
-  "What is the name of your first pet?",
-  "What is your mother's maiden name?",
-  "What city were you born in?",
-  "What is the name of your elementary school?",
-];
+try {
+  $sqStmt = $pdo->query("SELECT question FROM security_questions ORDER BY id ASC");
+  $secQuestions = $sqStmt->fetchAll(PDO::FETCH_COLUMN);
+} catch (Exception $e) {
+  $secQuestions = [
+    "What is the name of your first pet?",
+    "What is your mother's maiden name?",
+    "What city were you born in?",
+    "What is the name of your elementary school?",
+  ];
+}
 $currentQ = $dbUser['sec_question'] ?? '';
 if ($currentQ && !in_array($currentQ, $secQuestions)) {
   $secQuestions[] = $currentQ;
@@ -26,47 +31,6 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/theme.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin.css">
   <style>
-    .refresh-loading-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(15, 23, 42, 0.7);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      z-index: 99999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: fadeInOverlay 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    @keyframes fadeInOverlay {
-      from { opacity: 0; transform: scale(1.02); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    .refresh-loading-card {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 2.5rem;
-      width: 90%;
-      max-width: 420px;
-      text-align: center;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      transform: scale(0.95);
-      animation: popInCard 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    @keyframes popInCard {
-      to { transform: scale(1); }
-    }
-    .refresh-spinner-container {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 1rem;
-    }
     .subsetting-pill {
       font-weight: 600;
       font-size: 0.88rem;
@@ -96,22 +60,6 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
 <body>
 <div id="desktop-only-overlay"><i class="fas fa-desktop"></i><h4>Desktop Required</h4><p>Please use a computer (1024px+).</p></div>
 
-<!-- Full-screen Refresh Loading Overlay -->
-<div id="refresh-loading-overlay" class="refresh-loading-overlay" style="display:none;">
-  <div class="refresh-loading-card">
-    <div class="refresh-spinner-container">
-      <div class="spinner-border text-success" role="status" style="width: 3.5rem; height: 3.5rem; border-width: 0.28em;">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-    </div>
-    <h5 class="fw-bold mt-2 mb-1" id="refresh-loading-title" style="color:var(--dark);">Updating Settings...</h5>
-    <p class="text-muted small mb-3" id="refresh-loading-sub">Auto refreshing the page to apply changes...</p>
-    <div class="progress" style="height: 5px; border-radius: 4px; overflow: hidden; background: #e9ecef;">
-      <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 100%;"></div>
-    </div>
-  </div>
-</div>
-
 <?php include __DIR__ . '/../../includes/teacher-sidebar.php'; ?>
 
 <div class="app-wrapper">
@@ -128,10 +76,10 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
       </div>
       <div class="ms-auto">
         <div class="user-menu">
-          <div class="user-avatar" style="background:var(--secondary);color:#fff;"><?= strtoupper(substr($dbUser['name'],0,1)) ?></div>
+          <div class="user-avatar" style="background:var(--secondary-light);color:var(--secondary);"><?= strtoupper(substr($dbUser['name'],0,1)) ?></div>
           <div>
             <div class="user-name"><?= htmlspecialchars($dbUser['name']) ?></div>
-            <div class="user-role"><?= htmlspecialchars($dbUser['position']??'Teacher') ?></div>
+            <div class="user-role">Teacher</div>
           </div>
         </div>
       </div>
@@ -169,7 +117,7 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
             <div style="width:80px;height:80px;background:var(--secondary-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:var(--secondary);margin:0 auto 1rem;box-shadow:0 4px 12px rgba(52,168,83,0.15);"><?= strtoupper(substr($dbUser['name'],0,1)) ?></div>
             <h6 class="fw-bold mb-1" id="display-name"><?= htmlspecialchars($dbUser['name']) ?></h6>
             <div style="font-size:.85rem;color:var(--gray-600);" id="display-email"><?= htmlspecialchars($dbUser['email']) ?></div>
-            <span class="badge bg-success bg-opacity-15 text-success mt-3 px-3 py-2 rounded-pill"><?= htmlspecialchars($dbUser['position']??'Teacher') ?></span>
+            <span class="badge bg-success bg-opacity-15 text-success mt-3 px-3 py-2 rounded-pill">Teacher</span>
           </div>
         </div>
       </div>
@@ -231,7 +179,7 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
               <div class="col-md-7">
                 <label class="form-label fw-semibold d-flex justify-content-between align-items-center">
                   <span>Security Question</span>
-                  <small class="text-muted fw-normal" style="font-size:0.78rem;">Preset or custom question</small>
+                  <small class="text-muted fw-normal" style="font-size:0.78rem;">Choose from list</small>
                 </label>
                 <div class="input-group">
                   <select id="sec-q" class="form-select">
@@ -243,12 +191,8 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
                     <option value="<?= htmlspecialchars($q) ?>" <?= $selected ?>><?= htmlspecialchars($q) ?></option>
                     <?php endforeach; ?>
                   </select>
-                  <input type="text" id="sec-q-custom" class="form-control d-none" placeholder="Type or edit security question..." value="<?= htmlspecialchars($currentQ) ?>">
-                  <button type="button" class="btn btn-outline-secondary" id="btn-toggle-sec-edit" onclick="toggleEditSecQuestion()" title="Edit security question text">
-                    <i class="fas fa-edit me-1"></i><span>Edit</span>
-                  </button>
                 </div>
-                <div class="form-text small" id="sec-q-help">Click <strong>Edit</strong> to customize or write your own question.</div>
+                <div class="form-text small" id="sec-q-help">Select a security question for password recovery.</div>
               </div>
               <div class="col-md-5">
                 <label class="form-label fw-semibold">Your Answer</label>
@@ -333,27 +277,6 @@ function switchSubsetting(subsetting, updateHistory = true) {
   }
 }
 
-function showRefreshLoading(titleMessage, subMessage) {
-  const overlay = document.getElementById('refresh-loading-overlay');
-  const titleEl = document.getElementById('refresh-loading-title');
-  const subEl = document.getElementById('refresh-loading-sub');
-
-  if (titleEl && titleMessage) titleEl.textContent = titleMessage;
-  if (subEl && subMessage) subEl.textContent = subMessage;
-
-  if (overlay) {
-    overlay.style.display = 'flex';
-  }
-}
-
-function triggerPageRefresh(successMessage, activeTab) {
-  showRefreshLoading('Updating Settings...', 'Auto-refreshing whole page to apply updates...');
-  sessionStorage.setItem('pendingToast', JSON.stringify({ message: successMessage, type: 'success' }));
-  setTimeout(() => {
-    window.location.href = window.location.pathname + '?tab=' + activeTab;
-  }, 1000);
-}
-
 async function saveProfile() {
   const name = document.getElementById('p-name').value.trim();
   const email = document.getElementById('p-email').value.trim();
@@ -363,6 +286,7 @@ async function saveProfile() {
     return;
   }
 
+  showLoading('Saving Profile...', 'Updating profile information...');
   try {
     const res = await fetch(BASE + '/api/accounts/update-profile.php', {
       method: 'POST',
@@ -373,9 +297,11 @@ async function saveProfile() {
     if (d.ok) {
       triggerPageRefresh('Profile Information updated successfully!', 'profile');
     } else {
+      hideLoading();
       showToast(d.message || 'Failed to update profile.', 'error');
     }
   } catch (err) {
+    hideLoading();
     showToast('An error occurred while saving profile.', 'error');
   }
 }
@@ -400,6 +326,7 @@ async function changePassword() {
     return;
   }
 
+  showLoading('Updating Password...', 'Changing account password safely...');
   try {
     const res = await fetch(BASE + '/api/auth/change-password.php', {
       method: 'POST',
@@ -410,51 +337,26 @@ async function changePassword() {
     if (d.ok) {
       triggerPageRefresh('Password changed successfully!', 'password');
     } else {
+      hideLoading();
       showToast(d.message || 'Failed to change password.', 'error');
     }
   } catch (err) {
+    hideLoading();
     showToast('An error occurred while changing password.', 'error');
-  }
-}
-
-function toggleEditSecQuestion() {
-  const select = document.getElementById('sec-q');
-  const custom = document.getElementById('sec-q-custom');
-  const btn = document.getElementById('btn-toggle-sec-edit');
-  const help = document.getElementById('sec-q-help');
-
-  if (custom.classList.contains('d-none')) {
-    if (select.value) {
-      custom.value = select.value;
-    }
-    select.classList.add('d-none');
-    custom.classList.remove('d-none');
-    custom.focus();
-    btn.innerHTML = '<i class="fas fa-list me-1"></i><span>List</span>';
-    btn.className = 'btn btn-outline-secondary';
-    if (help) help.innerHTML = 'Editing question text. Click <strong>List</strong> to pick from preset questions.';
-  } else {
-    custom.classList.add('d-none');
-    select.classList.remove('d-none');
-    btn.innerHTML = '<i class="fas fa-edit me-1"></i><span>Edit</span>';
-    btn.className = 'btn btn-outline-secondary';
-    if (help) help.innerHTML = 'Click <strong>Edit</strong> to customize or write your own question.';
   }
 }
 
 async function saveSecQuestion() {
   const select = document.getElementById('sec-q');
-  const custom = document.getElementById('sec-q-custom');
-  const isCustomMode = !custom.classList.contains('d-none');
-
-  const question = isCustomMode ? custom.value.trim() : select.value.trim();
+  const question = select.value.trim();
   const answer = document.getElementById('sec-a').value.trim();
 
   if (!question || !answer) {
-    showToast('Please select or enter a security question and an answer.', 'error');
+    showToast('Please select a security question and enter an answer.', 'error');
     return;
   }
 
+  showLoading('Saving Security Question...', 'Updating your recovery question and answer...');
   try {
     const res = await fetch(BASE + '/api/accounts/update-security.php', {
       method: 'POST',
@@ -465,13 +367,16 @@ async function saveSecQuestion() {
     if (d.ok) {
       triggerPageRefresh('Security question saved successfully!', 'security');
     } else {
+      hideLoading();
       showToast(d.message || 'Failed to save security question.', 'error');
     }
   } catch (err) {
+    hideLoading();
     showToast('An error occurred while saving security question.', 'error');
   }
 }
 </script>
 </body>
 </html>
+
 

@@ -85,3 +85,17 @@ CREATE TABLE IF NOT EXISTS `announcements` (
   `audience`  ENUM('all','student','teacher') DEFAULT 'all',
   `posted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ─── Security Questions ───────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS `security_questions` (
+  `id`         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `question`   VARCHAR(255) NOT NULL UNIQUE,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO `security_questions` (`id`, `question`) VALUES
+(1, 'What is the name of your first pet?'),
+(2, 'What is your mother\'s maiden name?'),
+(3, 'What city were you born in?'),
+(4, 'What is the name of your elementary school?');
+

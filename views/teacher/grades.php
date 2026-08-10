@@ -133,46 +133,53 @@ async function loadGrades() {
     document.getElementById('no-student-msg').style.display = 'block';
     return;
   }
-  const res = await fetch(`${BASE}/api/grades/student.php?student_id=${studentId}&school_year=${sy}`);
-  const data = await res.json();
-  if (!data.ok) { showToast(data.message, 'error'); return; }
+  showLoading('Loading Student Grades...', 'Fetching academic record from database...');
+  try {
+    const res = await fetch(`${BASE}/api/grades/student.php?student_id=${studentId}&school_year=${sy}`);
+    const data = await res.json();
+    hideLoading();
+    if (!data.ok) { showToast(data.message, 'error'); return; }
 
-  currentStudent = data.student;
-  currentGrades  = data.grades;
+    currentStudent = data.student;
+    currentGrades  = data.grades;
 
-  document.getElementById('sf10-name').textContent = `${data.student.last_name}, ${data.student.first_name} ${data.student.middle_name||''}`;
-  document.getElementById('sf10-lrn').textContent  = data.student.lrn;
-  document.getElementById('sf10-grade').textContent   = data.student.grade_level;
-  document.getElementById('sf10-section').textContent = data.student.section;
-  document.getElementById('sf10-sy').textContent = sy;
+    document.getElementById('sf10-name').textContent = `${data.student.last_name}, ${data.student.first_name} ${data.student.middle_name||''}`;
+    document.getElementById('sf10-lrn').textContent  = data.student.lrn;
+    document.getElementById('sf10-grade').textContent   = data.student.grade_level;
+    document.getElementById('sf10-section').textContent = data.student.section;
+    document.getElementById('sf10-sy').textContent = sy;
 
-  const tbody = document.getElementById('grades-tbody');
-  tbody.innerHTML = '';
-  let gradeSum = 0, gradeCount = 0;
+    const tbody = document.getElementById('grades-tbody');
+    tbody.innerHTML = '';
+    let gradeSum = 0, gradeCount = 0;
 
-  data.subjects.forEach(subject => {
-    const g = data.grades[subject] || {};
-    const q1 = g.q1 ?? '', q2 = g.q2 ?? '', q3 = g.q3 ?? '', q4 = g.q4 ?? '';
-    const final = g.final_grade ?? '';
-    const remarks = g.remarks || '';
-    if (final !== '' && final !== null) { gradeSum += parseFloat(final); gradeCount++; }
-    const rmClass = remarks === 'Passed' ? 'remarks-passed' : (remarks === 'Failed' ? 'remarks-failed' : '');
-    tbody.innerHTML += `<tr data-subject="${subject}">
-      <td>${subject}</td>
-      <td><input type="number" class="grade-input q-input" data-q="q1" min="0" max="100" value="${q1}" onchange="recomputeRow(this)"></td>
-      <td><input type="number" class="grade-input q-input" data-q="q2" min="0" max="100" value="${q2}" onchange="recomputeRow(this)"></td>
-      <td><input type="number" class="grade-input q-input" data-q="q3" min="0" max="100" value="${q3}" onchange="recomputeRow(this)"></td>
-      <td><input type="number" class="grade-input q-input" data-q="q4" min="0" max="100" value="${q4}" onchange="recomputeRow(this)"></td>
-      <td class="fw-bold final-cell">${final !== '' ? final : '—'}</td>
-      <td class="${rmClass} remarks-cell">${remarks || '—'}</td>
-    </tr>`;
-  });
+    data.subjects.forEach(subject => {
+      const g = data.grades[subject] || {};
+      const q1 = g.q1 ?? '', q2 = g.q2 ?? '', q3 = g.q3 ?? '', q4 = g.q4 ?? '';
+      const final = g.final_grade ?? '';
+      const remarks = g.remarks || '';
+      if (final !== '' && final !== null) { gradeSum += parseFloat(final); gradeCount++; }
+      const rmClass = remarks === 'Passed' ? 'remarks-passed' : (remarks === 'Failed' ? 'remarks-failed' : '');
+      tbody.innerHTML += `<tr data-subject="${subject}">
+        <td>${subject}</td>
+        <td><input type="number" class="grade-input q-input" data-q="q1" min="0" max="100" value="${q1}" onchange="recomputeRow(this)"></td>
+        <td><input type="number" class="grade-input q-input" data-q="q2" min="0" max="100" value="${q2}" onchange="recomputeRow(this)"></td>
+        <td><input type="number" class="grade-input q-input" data-q="q3" min="0" max="100" value="${q3}" onchange="recomputeRow(this)"></td>
+        <td><input type="number" class="grade-input q-input" data-q="q4" min="0" max="100" value="${q4}" onchange="recomputeRow(this)"></td>
+        <td class="fw-bold final-cell">${final !== '' ? final : '—'}</td>
+        <td class="${rmClass} remarks-cell">${remarks || '—'}</td>
+      </tr>`;
+    });
 
-  const avg = gradeCount > 0 ? (gradeSum / gradeCount).toFixed(2) : '—';
-  document.getElementById('general-average').textContent = avg;
-  document.getElementById('general-remarks').textContent = avg !== '—' ? (parseFloat(avg) >= 75 ? 'Passed' : 'Failed') : '—';
-  document.getElementById('sf10-container').style.display = 'block';
-  document.getElementById('no-student-msg').style.display = 'none';
+    const avg = gradeCount > 0 ? (gradeSum / gradeCount).toFixed(2) : '—';
+    document.getElementById('general-average').textContent = avg;
+    document.getElementById('general-remarks').textContent = avg !== '—' ? (parseFloat(avg) >= 75 ? 'Passed' : 'Failed') : '—';
+    document.getElementById('sf10-container').style.display = 'block';
+    document.getElementById('no-student-msg').style.display = 'none';
+  } catch (err) {
+    hideLoading();
+    showToast('An error occurred while loading grades.', 'error');
+  }
 }
 
 function recomputeRow(input) {
@@ -207,24 +214,31 @@ async function saveAllGrades() {
   const sy        = document.getElementById('sy-select').value;
   if (!studentId || !currentStudent) { showToast('No student selected.', 'error'); return; }
 
-  const rows = document.querySelectorAll('#grades-tbody tr');
-  let saved = 0;
-  for (const row of rows) {
-    const subject = row.dataset.subject;
-    const inputs  = row.querySelectorAll('.q-input');
-    const q1 = inputs[0].value, q2 = inputs[1].value, q3 = inputs[2].value, q4 = inputs[3].value;
-    const payload = {
-      student_id: parseInt(studentId), school_year: sy,
-      grade_level: currentStudent.grade_level, section: currentStudent.section,
-      subject, q1, q2, q3, q4
-    };
-    const res = await fetch(BASE + '/api/grades/student.php', {
-      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
-    });
-    const r = await res.json();
-    if (r.ok) saved++;
+  showLoading('Saving Grades...', 'Updating student SF10 quarterly grades...');
+  try {
+    const rows = document.querySelectorAll('#grades-tbody tr');
+    let saved = 0;
+    for (const row of rows) {
+      const subject = row.dataset.subject;
+      const inputs  = row.querySelectorAll('.q-input');
+      const q1 = inputs[0].value, q2 = inputs[1].value, q3 = inputs[2].value, q4 = inputs[3].value;
+      const payload = {
+        student_id: parseInt(studentId), school_year: sy,
+        grade_level: currentStudent.grade_level, section: currentStudent.section,
+        subject, q1, q2, q3, q4
+      };
+      const res = await fetch(BASE + '/api/grades/student.php', {
+        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+      });
+      const r = await res.json();
+      if (r.ok) saved++;
+    }
+    hideLoading();
+    showToast(`Grades saved (${saved} subjects)!`, 'success');
+  } catch (err) {
+    hideLoading();
+    showToast('Failed to save grades.', 'error');
   }
-  showToast(`Grades saved (${saved} subjects)!`, 'success');
 }
 </script>
 </body>

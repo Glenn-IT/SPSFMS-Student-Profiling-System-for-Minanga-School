@@ -8,12 +8,19 @@ $stmt->execute([$user['id']]);
 $dbUser = $stmt->fetch() ?: $user;
 
 $activePage = 'settings';
-$secQuestions = [
-  "What is the name of your first pet?",
-  "What is your mother's maiden name?",
-  "What city were you born in?",
-  "What is the name of your elementary school?",
-];
+
+// Fetch security questions list dynamically from database
+try {
+  $sqStmt = $pdo->query("SELECT question FROM security_questions ORDER BY id ASC");
+  $secQuestions = $sqStmt->fetchAll(PDO::FETCH_COLUMN);
+} catch (Exception $e) {
+  $secQuestions = [
+    "What is the name of your first pet?",
+    "What is your mother's maiden name?",
+    "What city were you born in?",
+    "What is the name of your elementary school?",
+  ];
+}
 $currentQ = $dbUser['sec_question'] ?? '';
 if ($currentQ && !in_array($currentQ, $secQuestions)) {
   $secQuestions[] = $currentQ;
@@ -26,47 +33,6 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/theme.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin.css">
   <style>
-    .refresh-loading-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(15, 23, 42, 0.7);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      z-index: 99999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: fadeInOverlay 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    @keyframes fadeInOverlay {
-      from { opacity: 0; transform: scale(1.02); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    .refresh-loading-card {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 2.5rem;
-      width: 90%;
-      max-width: 420px;
-      text-align: center;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      transform: scale(0.95);
-      animation: popInCard 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    @keyframes popInCard {
-      to { transform: scale(1); }
-    }
-    .refresh-spinner-container {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 1rem;
-    }
     .subsetting-pill {
       font-weight: 600;
       font-size: 0.88rem;
@@ -95,22 +61,6 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
 </head>
 <body>
 <div id="desktop-only-overlay"><i class="fas fa-desktop"></i><h4>Desktop Required</h4><p>Please use a computer (1024px+).</p></div>
-
-<!-- Full-screen Refresh Loading Overlay -->
-<div id="refresh-loading-overlay" class="refresh-loading-overlay" style="display:none;">
-  <div class="refresh-loading-card">
-    <div class="refresh-spinner-container">
-      <div class="spinner-border text-primary" role="status" style="width: 3.5rem; height: 3.5rem; border-width: 0.28em;">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-    </div>
-    <h5 class="fw-bold mt-2 mb-1" id="refresh-loading-title" style="color:var(--dark);">Updating Settings...</h5>
-    <p class="text-muted small mb-3" id="refresh-loading-sub">Auto refreshing the page to apply changes...</p>
-    <div class="progress" style="height: 5px; border-radius: 4px; overflow: hidden; background: #e9ecef;">
-      <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 100%;"></div>
-    </div>
-  </div>
-</div>
 
 <?php include __DIR__ . '/../../includes/admin-sidebar.php'; ?>
 
@@ -225,13 +175,18 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
 
         <!-- Subsetting 3: Security Question -->
         <div class="card mb-3 shadow-sm border-0 subsetting-card" id="card-security">
-          <div class="card-header bg-white py-3 fw-bold"><i class="fas fa-shield-alt me-2" style="color:var(--primary);"></i>Security Question</div>
+          <div class="card-header bg-white py-3 fw-bold d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-shield-alt me-2" style="color:var(--primary);"></i>Security Question</span>
+            <button type="button" class="btn btn-sm btn-outline-primary fw-semibold" onclick="openSecQuestionsModal()">
+              <i class="fas fa-table me-1"></i>Manage Security Questions Table
+            </button>
+          </div>
           <div class="card-body">
             <div class="row g-3">
               <div class="col-md-7">
                 <label class="form-label fw-semibold d-flex justify-content-between align-items-center">
                   <span>Security Question</span>
-                  <small class="text-muted fw-normal" style="font-size:0.78rem;">Preset or custom question</small>
+                  <small class="text-muted fw-normal" style="font-size:0.78rem;">Choose from list</small>
                 </label>
                 <div class="input-group">
                   <select id="sec-q" class="form-select">
@@ -243,12 +198,8 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
                     <option value="<?= htmlspecialchars($q) ?>" <?= $selected ?>><?= htmlspecialchars($q) ?></option>
                     <?php endforeach; ?>
                   </select>
-                  <input type="text" id="sec-q-custom" class="form-control d-none" placeholder="Type or edit security question..." value="<?= htmlspecialchars($currentQ) ?>">
-                  <button type="button" class="btn btn-outline-primary" id="btn-toggle-sec-edit" onclick="toggleEditSecQuestion()" title="Edit security question text">
-                    <i class="fas fa-edit me-1"></i><span>Edit</span>
-                  </button>
                 </div>
-                <div class="form-text small" id="sec-q-help">Click <strong>Edit</strong> to customize or write your own question.</div>
+                <div class="form-text small" id="sec-q-help">Select a question or click <strong>Manage Security Questions Table</strong> to edit or add questions.</div>
               </div>
               <div class="col-md-5">
                 <label class="form-label fw-semibold">Your Answer</label>
@@ -263,6 +214,7 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
           </div>
         </div>
 
+
         <!-- Danger Zone -->
         <div class="card border-danger shadow-sm subsetting-card" id="card-danger">
           <div class="card-header bg-danger bg-opacity-10 text-danger fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>Danger Zone</div>
@@ -276,6 +228,54 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
   </div>
 </div>
 
+<!-- Security Questions DataGridView Modal -->
+<div class="modal fade" id="secQuestionsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold"><i class="fas fa-table me-2"></i>Security Questions Table (DataGridView)</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p class="text-muted small mb-3">Manage all available security questions in the system database table.</p>
+        
+        <!-- DataGridView Table -->
+        <div class="table-responsive mb-4" style="max-height: 320px; overflow-y: auto;">
+          <table class="table table-bordered table-hover align-middle mb-0" id="sec-questions-datagrid">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th style="width:50px;" class="text-center">#</th>
+                <th>Sec Question</th>
+                <th class="text-center" style="width:180px;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="sq-datagrid-tbody">
+              <tr><td colspan="3" class="text-center text-muted py-3"><i class="fas fa-spinner fa-spin me-2"></i>Loading security questions...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Add/Edit Form below table -->
+        <div class="card border-0 bg-light p-3 rounded-3">
+          <label class="form-label fw-bold mb-2" id="sq-form-title"><i class="fas fa-plus-circle me-1 text-primary"></i>Add Security Question</label>
+          <div class="input-group">
+            <input type="text" id="sq-input-text" class="form-control" placeholder="Type a security question here...">
+            <button type="button" id="btn-save-sq-grid" class="btn btn-success px-4" onclick="saveSqFromGrid()">
+              <i class="fas fa-save me-1"></i>Save
+            </button>
+            <button type="button" id="btn-cancel-sq-grid" class="btn btn-secondary px-3 d-none ms-2" onclick="cancelSqEdit()">
+              <i class="fas fa-times me-1"></i>Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="/SPSFMS-Student-Profiling-System-for-Minanga-School/assets/lib/bootstrap.bundle.min.js"></script>
 <script src="<?= BASE_URL ?>/assets/js/components.js"></script>
 <script>
@@ -283,6 +283,7 @@ const BASE = '<?= BASE_URL ?>';
 showDesktopOnlyWarning();
 
 let currentTab = 'profile';
+let editingSqId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   // Check if a toast notice is pending from pre-refresh action
@@ -337,27 +338,6 @@ function switchSubsetting(subsetting, updateHistory = true) {
   }
 }
 
-function showRefreshLoading(titleMessage, subMessage) {
-  const overlay = document.getElementById('refresh-loading-overlay');
-  const titleEl = document.getElementById('refresh-loading-title');
-  const subEl = document.getElementById('refresh-loading-sub');
-
-  if (titleEl && titleMessage) titleEl.textContent = titleMessage;
-  if (subEl && subMessage) subEl.textContent = subMessage;
-
-  if (overlay) {
-    overlay.style.display = 'flex';
-  }
-}
-
-function triggerPageRefresh(successMessage, activeTab) {
-  showRefreshLoading('Updating Settings...', 'Auto-refreshing whole page to apply updates...');
-  sessionStorage.setItem('pendingToast', JSON.stringify({ message: successMessage, type: 'success' }));
-  setTimeout(() => {
-    window.location.href = window.location.pathname + '?tab=' + activeTab;
-  }, 1000);
-}
-
 async function saveProfile() {
   const name = document.getElementById('p-name').value.trim();
   const email = document.getElementById('p-email').value.trim();
@@ -367,6 +347,7 @@ async function saveProfile() {
     return;
   }
 
+  showLoading('Saving Profile...', 'Updating your profile information...');
   try {
     const res = await fetch(BASE + '/api/accounts/update-profile.php', {
       method: 'POST',
@@ -377,9 +358,11 @@ async function saveProfile() {
     if (d.ok) {
       triggerPageRefresh('Profile Information updated successfully!', 'profile');
     } else {
+      hideLoading();
       showToast(d.message || 'Failed to update profile.', 'error');
     }
   } catch (err) {
+    hideLoading();
     showToast('An error occurred while saving profile.', 'error');
   }
 }
@@ -404,6 +387,7 @@ async function changePassword() {
     return;
   }
 
+  showLoading('Updating Password...', 'Changing account password safely...');
   try {
     const res = await fetch(BASE + '/api/auth/change-password.php', {
       method: 'POST',
@@ -414,51 +398,26 @@ async function changePassword() {
     if (d.ok) {
       triggerPageRefresh('Password changed successfully!', 'password');
     } else {
+      hideLoading();
       showToast(d.message || 'Failed to change password.', 'error');
     }
   } catch (err) {
+    hideLoading();
     showToast('An error occurred while changing password.', 'error');
-  }
-}
-
-function toggleEditSecQuestion() {
-  const select = document.getElementById('sec-q');
-  const custom = document.getElementById('sec-q-custom');
-  const btn = document.getElementById('btn-toggle-sec-edit');
-  const help = document.getElementById('sec-q-help');
-
-  if (custom.classList.contains('d-none')) {
-    if (select.value) {
-      custom.value = select.value;
-    }
-    select.classList.add('d-none');
-    custom.classList.remove('d-none');
-    custom.focus();
-    btn.innerHTML = '<i class="fas fa-list me-1"></i><span>List</span>';
-    btn.className = 'btn btn-outline-secondary';
-    if (help) help.innerHTML = 'Editing question text. Click <strong>List</strong> to pick from preset questions.';
-  } else {
-    custom.classList.add('d-none');
-    select.classList.remove('d-none');
-    btn.innerHTML = '<i class="fas fa-edit me-1"></i><span>Edit</span>';
-    btn.className = 'btn btn-outline-primary';
-    if (help) help.innerHTML = 'Click <strong>Edit</strong> to customize or write your own question.';
   }
 }
 
 async function saveSecQuestion() {
   const select = document.getElementById('sec-q');
-  const custom = document.getElementById('sec-q-custom');
-  const isCustomMode = !custom.classList.contains('d-none');
-
-  const question = isCustomMode ? custom.value.trim() : select.value.trim();
+  const question = select.value.trim();
   const answer = document.getElementById('sec-a').value.trim();
 
   if (!question || !answer) {
-    showToast('Please select or enter a security question and an answer.', 'error');
+    showToast('Please select a security question and enter an answer.', 'error');
     return;
   }
 
+  showLoading('Saving Security Question...', 'Updating your recovery question and answer...');
   try {
     const res = await fetch(BASE + '/api/accounts/update-security.php', {
       method: 'POST',
@@ -469,13 +428,170 @@ async function saveSecQuestion() {
     if (d.ok) {
       triggerPageRefresh('Security question saved successfully!', 'security');
     } else {
+      hideLoading();
       showToast(d.message || 'Failed to save security question.', 'error');
     }
   } catch (err) {
+    hideLoading();
     showToast('An error occurred while saving security question.', 'error');
   }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECURITY QUESTIONS DATAGRIDVIEW MANAGEMENT FUNCTIONS
+   ───────────────────────────────────────────────────────────── */
+function openSecQuestionsModal() {
+  cancelSqEdit();
+  loadSecQuestionsGrid();
+  const modalEl = document.getElementById('secQuestionsModal');
+  const modal = new bootstrap.Modal(modalEl);
+  modal.show();
+}
+
+async function loadSecQuestionsGrid() {
+  const tbody = document.getElementById('sq-datagrid-tbody');
+  tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3"><i class="fas fa-spinner fa-spin me-2"></i>Loading security questions...</td></tr>';
+  
+  try {
+    const res = await fetch(BASE + '/api/security-questions/index.php');
+    const d = await res.json();
+    if (!d.ok || !d.data) {
+      tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger py-3">Failed to load questions table.</td></tr>';
+      return;
+    }
+
+    const items = d.data;
+    if (items.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">No security questions found in table.</td></tr>';
+    } else {
+      tbody.innerHTML = items.map((sq, idx) => {
+        const safeQ = sq.question.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        return `
+          <tr>
+            <td class="text-center fw-bold">${idx + 1}</td>
+            <td>${sq.question}</td>
+            <td class="text-center">
+              <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="startEditSq(${sq.id}, '${safeQ}')">
+                <i class="fas fa-edit me-1"></i>Edit
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteSq(${sq.id})">
+                <i class="fas fa-trash-alt me-1"></i>Delete
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Also update the select dropdown in settings page
+    const select = document.getElementById('sec-q');
+    const currentVal = select.value;
+    select.innerHTML = '<option value="">Select a security question</option>';
+    items.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.question;
+      opt.textContent = item.question;
+      if (item.question === currentVal) opt.selected = true;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger py-3">An error occurred while loading table.</td></tr>';
+  }
+}
+
+function startEditSq(id, questionText) {
+  editingSqId = id;
+  const input = document.getElementById('sq-input-text');
+  const title = document.getElementById('sq-form-title');
+  const btnSave = document.getElementById('btn-save-sq-grid');
+  const btnCancel = document.getElementById('btn-cancel-sq-grid');
+
+  input.value = questionText;
+  input.focus();
+  title.innerHTML = '<i class="fas fa-edit me-1 text-primary"></i>Edit Security Question';
+  btnSave.className = 'btn btn-primary px-4';
+  btnSave.innerHTML = '<i class="fas fa-save me-1"></i>Save Changes';
+  btnCancel.classList.remove('d-none');
+}
+
+function cancelSqEdit() {
+  editingSqId = null;
+  const input = document.getElementById('sq-input-text');
+  const title = document.getElementById('sq-form-title');
+  const btnSave = document.getElementById('btn-save-sq-grid');
+  const btnCancel = document.getElementById('btn-cancel-sq-grid');
+
+  input.value = '';
+  title.innerHTML = '<i class="fas fa-plus-circle me-1 text-primary"></i>Add Security Question';
+  btnSave.className = 'btn btn-success px-4';
+  btnSave.innerHTML = '<i class="fas fa-save me-1"></i>Save';
+  btnCancel.classList.add('d-none');
+}
+
+async function saveSqFromGrid() {
+  const input = document.getElementById('sq-input-text');
+  const question = input.value.trim();
+
+  if (!question) {
+    showToast('Please type a security question text.', 'error');
+    return;
+  }
+
+  const isEdit = editingSqId !== null;
+  showLoading(isEdit ? 'Updating Security Question...' : 'Saving Security Question...', 'Updating security questions table...');
+
+  try {
+    const payload = isEdit 
+      ? { action: 'edit', id: editingSqId, question }
+      : { action: 'add', question };
+
+    const res = await fetch(BASE + '/api/security-questions/index.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const d = await res.json();
+
+    hideLoading();
+    if (d.ok) {
+      showToast(d.message, 'success');
+      cancelSqEdit();
+      loadSecQuestionsGrid();
+    } else {
+      showToast(d.message || 'Failed to save security question.', 'error');
+    }
+  } catch (err) {
+    hideLoading();
+    showToast('An error occurred while saving security question.', 'error');
+  }
+}
+
+function deleteSq(id) {
+  confirmModal('Confirm Delete', 'Are you sure you want to delete this security question from the table?', async () => {
+    showLoading('Deleting Security Question...', 'Removing item from table...');
+    try {
+      const res = await fetch(BASE + '/api/security-questions/index.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', id })
+      });
+      const d = await res.json();
+      hideLoading();
+      if (d.ok) {
+        showToast(d.message, 'success');
+        if (editingSqId === id) cancelSqEdit();
+        loadSecQuestionsGrid();
+      } else {
+        showToast(d.message || 'Failed to delete security question.', 'error');
+      }
+    } catch (err) {
+      hideLoading();
+      showToast('An error occurred while deleting security question.', 'error');
+    }
+  });
 }
 </script>
 </body>
 </html>
+
 

@@ -87,24 +87,31 @@ showDesktopOnlyWarning();
 async function toggleStatus(id, newStatus) {
   const label = newStatus === 'active' ? 'activate' : 'deactivate';
   confirmModal('Confirm', `Are you sure you want to ${label} this account?`, async () => {
-    const res = await fetch(BASE + '/api/accounts/toggle.php', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ id, status: newStatus })
-    });
-    const data = await res.json();
-    if (!data.ok) { showToast(data.message, 'error'); return; }
-    const badge = document.getElementById('badge-'+id);
-    const btn   = document.getElementById('btn-'+id);
-    if (newStatus === 'active') {
-      badge.textContent = 'Active'; badge.className = 'badge bg-success bg-opacity-15 text-success fw-semibold status-badge';
-      btn.className = 'btn btn-sm btn-outline-danger'; btn.innerHTML = '<i class="fas fa-ban"></i> Deactivate';
-      btn.onclick = () => toggleStatus(id, 'inactive');
-    } else {
-      badge.textContent = 'Inactive'; badge.className = 'badge bg-danger bg-opacity-15 text-danger fw-semibold status-badge';
-      btn.className = 'btn btn-sm btn-outline-success'; btn.innerHTML = '<i class="fas fa-check"></i> Activate';
-      btn.onclick = () => toggleStatus(id, 'active');
+    showLoading('Updating Account Status...', `Please wait while we ${label} account #${id}...`);
+    try {
+      const res = await fetch(BASE + '/api/accounts/toggle.php', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ id, status: newStatus })
+      });
+      const data = await res.json();
+      hideLoading();
+      if (!data.ok) { showToast(data.message, 'error'); return; }
+      const badge = document.getElementById('badge-'+id);
+      const btn   = document.getElementById('btn-'+id);
+      if (newStatus === 'active') {
+        badge.textContent = 'Active'; badge.className = 'badge bg-success bg-opacity-15 text-success fw-semibold status-badge';
+        btn.className = 'btn btn-sm btn-outline-danger'; btn.innerHTML = '<i class="fas fa-ban"></i> Deactivate';
+        btn.onclick = () => toggleStatus(id, 'inactive');
+      } else {
+        badge.textContent = 'Inactive'; badge.className = 'badge bg-danger bg-opacity-15 text-danger fw-semibold status-badge';
+        btn.className = 'btn btn-sm btn-outline-success'; btn.innerHTML = '<i class="fas fa-check"></i> Activate';
+        btn.onclick = () => toggleStatus(id, 'active');
+      }
+      showToast(`Account ${label}d successfully.`, 'success');
+    } catch (err) {
+      hideLoading();
+      showToast('Failed to update account status.', 'error');
     }
-    showToast(`Account ${label}d.`, 'success');
   });
 }
 </script>

@@ -345,14 +345,19 @@ async function saveStudent() {
   saveBtn.disabled = true;
   const originalLabel = saveBtn.innerHTML;
   saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+  showLoading(id ? 'Updating Student...' : 'Adding Student...', 'Saving student details to database...');
   try {
     const url = id ? BASE+'/api/students/manage.php?id='+id : BASE+'/api/students/index.php';
     const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
     const result = await res.json();
+    hideLoading();
     if (!result.ok) { showToast(result.message,'error'); return; }
-    showToast(id ? 'Student updated!':'Student added!','success');
+    showToast(id ? 'Student updated successfully!':'Student added successfully!','success');
     studentModal.hide();
     loadStudents();
+  } catch (err) {
+    hideLoading();
+    showToast('An error occurred while saving student.', 'error');
   } finally {
     saveBtn.disabled = false;
     saveBtn.innerHTML = originalLabel;
