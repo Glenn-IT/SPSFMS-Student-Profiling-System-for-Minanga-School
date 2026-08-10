@@ -69,6 +69,7 @@ $students = $stmt->fetchAll();
         <div style="text-align:center;margin-bottom:1.25rem;border-bottom:2px solid var(--secondary);padding-bottom:.75rem;">
           <div style="font-size:.75rem;color:var(--gray-600);">Republic of the Philippines · Department of Education</div>
           <h5 class="fw-bold mt-1"><?= SCHOOL_NAME ?></h5>
+          <div style="font-size:.82rem;color:var(--gray-600);"><?= SCHOOL_ADDRESS ?></div>
           <h4 class="mt-1">CLASS GRADE SUMMARY REPORT</h4>
           <div style="font-size:.82rem;"><?= htmlspecialchars($grade) ?> | S.Y. <?= htmlspecialchars($sy) ?></div>
           <div style="font-size:.78rem;color:var(--gray-600);">Prepared by: <?= htmlspecialchars($user['name']) ?></div>

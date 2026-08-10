@@ -141,7 +141,7 @@ if ($existing == 0) {
     $users = [
         ['admin',   'admin',      password_hash('admin123',   PASSWORD_BCRYPT), 'Maria L. Reyes',           'admin@minanga.edu.ph',                    'School Administrator',            null,           null,       null,    'active', 'What is the name of your first pet?',       'Bantay'],
         ['teacher', 'teacher',    password_hash('teacher123', PASSWORD_BCRYPT), 'Ricardo G. Santos',        'rsantos@minanga.edu.ph',                  'Grade 7 Adviser / Math Teacher',  null,           null,       null,    'active', "What is your mother's maiden name?",       'Dela Cruz'],
-        ['teacher', 'teacher2',   password_hash('teacher123', PASSWORD_BCRYPT), 'Josephine A. Villanueva',  'jvillanueva@minanga.edu.ph',              'Grade 1 Adviser / Filipino Teacher',null,          null,       null,    'active', 'What city were you born in?',               'Cagayan de Oro'],
+        ['teacher', 'teacher2',   password_hash('teacher123', PASSWORD_BCRYPT), 'Josephine A. Villanueva',  'jvillanueva@minanga.edu.ph',              'Grade 1 Adviser / Filipino Teacher',null,          null,       null,    'active', 'What city were you born in?',               'Piat'],
         ['student', 'student2025',password_hash('student123', PASSWORD_BCRYPT), 'Juan P. Dela Cruz',        'juan.delacruz@student.minanga.edu.ph',    null,                              '123456789001', 'Grade 7',  'Rizal', 'active', 'What is the name of your elementary school?','Minanga Elementary'],
     ];
     foreach ($users as $u) $ins->execute($u);
@@ -154,7 +154,7 @@ if ($existing == 0) {
 $existingSt = $pdo->query("SELECT COUNT(*) FROM students")->fetchColumn();
 if ($existingSt == 0) {
     $ins = $pdo->prepare("INSERT INTO students (lrn,grade_level,section,first_name,middle_name,last_name,sex,birthdate,age,mother_tongue,religion,address,mother_name,father_name,guardian_name,guardian_relation,contact,email,school_year,status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-    $sy = '2025-2026'; $addr = 'Minanga, Cagayan de Oro';
+    $sy = '2025-2026'; $addr = 'Minanga, Piat, Cagayan';
     $students = [
       // Grade 1 — Mabini
       ['100000000001','Grade 1','Mabini','Ana','B.','Garcia','Female','2018-03-12',7,'Cebuano','Roman Catholic','Purok 1, '.$addr,'Luz B. Garcia','Roberto Garcia','Luz B. Garcia','Mother','09171234001','ana.garcia@student.minanga.edu.ph',$sy,'active'],
