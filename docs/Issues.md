@@ -1,9 +1,6 @@
-# Issues Log
-
-Logout
-
-- if i click the logout and click the back button of the chrome it goes back to recent page it should stay on the logout it should not go back to logined
-
-Login
-
-- can you add feature that if the user is inputed wrong cred for 3 attempts it will lock the login button and wait for 15 seconds before it will enable
+1. Fix duplication of data the system should accept duplicate data ok
+2. Change the Contact Number to Contact No.
+3. Contact Number - should not accept letters must be 11 digit number PH base
+   Names- should not accept numbers
+   Bday- should accept future dates (disable)
+   Religion- drop-down Menu give the major religions only ok
