@@ -44,7 +44,7 @@ $gradeJson = json_encode(GRADE_LEVELS);
           <div class="col-md-5">
             <label class="form-label mb-1">Search</label>
             <div class="search-bar"><i class="fas fa-search"></i>
-              <input type="text" id="search-input" class="form-control" placeholder="Search by name, username, or advisory...">
+              <input type="text" id="search-input" class="form-control" placeholder="Search by name, username, grade, or section...">
             </div>
           </div>
           <div class="col-md-3">
@@ -71,7 +71,7 @@ $gradeJson = json_encode(GRADE_LEVELS);
           <table class="table table-modern mb-0">
             <thead>
               <tr>
-                <th>#</th><th>Name</th><th>Username</th><th>Advisory Grade</th><th>Advisory Subject</th><th>Status</th><th class="text-center">Actions</th>
+                <th>#</th><th>Name</th><th>Username</th><th>Grade</th><th>Advisory Section</th><th>Status</th><th class="text-center">Actions</th>
               </tr>
             </thead>
             <tbody id="teachers-tbody">
@@ -99,14 +99,14 @@ $gradeJson = json_encode(GRADE_LEVELS);
         </div>
         <div class="row g-2 mb-3">
           <div class="col-6">
-            <label class="form-label">Advisory Grade <span class="text-danger">*</span></label>
-            <select id="at-grade" class="form-select" onchange="loadSubjectsFor('at-subject','at-grade')">
+            <label class="form-label">Grade <span class="text-danger">*</span></label>
+            <select id="at-grade" class="form-select" onchange="loadSectionsFor('at-section','at-grade')">
               <option value="">— Select Grade —</option>
             </select>
           </div>
           <div class="col-6">
-            <label class="form-label">Advisory Subject <span class="text-danger">*</span></label>
-            <select id="at-subject" class="form-select" disabled>
+            <label class="form-label">Advisory Section <span class="text-danger">*</span></label>
+            <select id="at-section" class="form-select" disabled>
               <option value="">— Select Grade first —</option>
             </select>
           </div>
@@ -165,14 +165,14 @@ $gradeJson = json_encode(GRADE_LEVELS);
         </div>
         <div class="row g-2 mb-3">
           <div class="col-6">
-            <label class="form-label">Advisory Grade <span class="text-danger">*</span></label>
-            <select id="et-grade" class="form-select" onchange="loadSubjectsFor('et-subject','et-grade')">
+            <label class="form-label">Grade <span class="text-danger">*</span></label>
+            <select id="et-grade" class="form-select" onchange="loadSectionsFor('et-section','et-grade')">
               <option value="">— Select Grade —</option>
             </select>
           </div>
           <div class="col-6">
-            <label class="form-label">Advisory Subject <span class="text-danger">*</span></label>
-            <select id="et-subject" class="form-select" disabled>
+            <label class="form-label">Advisory Section <span class="text-danger">*</span></label>
+            <select id="et-section" class="form-select" disabled>
               <option value="">— Select Grade first —</option>
             </select>
           </div>
@@ -221,40 +221,61 @@ let addTeacherModal, editModal;
   GRADE_LEVELS.forEach(g => sel.innerHTML += `<option value="${g}">${g}</option>`);
 });
 
-/* ── Grade → Subject cascading loader (shared) ── */
-function gradeTypeFor(grade) {
-  const n = parseInt(grade.replace('Grade ',''));
-  if (n <= 6)  return 'elementary';
-  if (n <= 10) return 'jhs';
-  return 'shs';
-}
+const DEFAULT_SECTIONS = {
+  'Grade 1': ['Rizal', 'Mabini'],
+  'Grade 2': ['Bonifacio', 'Mabini'],
+  'Grade 3': ['Mabini', 'Rizal'],
+  'Grade 4': ['Bonifacio', 'Aguinaldo'],
+  'Grade 5': ['Bonifacio', 'Del Pilar'],
+  'Grade 6': ['Bonifacio', 'Silang'],
+  'Grade 7': ['Rizal', 'Mabini'],
+  'Grade 8': ['Luna', 'Rizal'],
+  'Grade 9': ['Luna', 'Bonifacio'],
+  'Grade 10': ['Mabini', 'Rizal'],
+  'Grade 11': ['STEM', 'ABM', 'HUMSS', 'GAS', 'TVL'],
+  'Grade 12': ['STEM', 'ABM', 'HUMSS', 'GAS', 'TVL']
+};
 
-async function loadSubjectsFor(subjectSelId, gradeSelId, preselect = '') {
+async function loadSectionsFor(sectionSelId, gradeSelId, preselect = '') {
   const gradeVal = document.getElementById(gradeSelId).value;
-  const subjSel  = document.getElementById(subjectSelId);
-  subjSel.innerHTML = '<option value="">Loading...</option>';
-  subjSel.disabled  = true;
+  const secSel   = document.getElementById(sectionSelId);
+  secSel.innerHTML = '<option value="">Loading...</option>';
+  secSel.disabled  = true;
 
   if (!gradeVal) {
-    subjSel.innerHTML = '<option value="">— Select Grade first —</option>';
+    secSel.innerHTML = '<option value="">— Select Grade first —</option>';
     return;
   }
 
+  let list = [];
   try {
-    const type = gradeTypeFor(gradeVal);
-    const res  = await fetch(`${BASE}/api/subjects/index.php?grade_type=${type}`);
+    const res  = await fetch(`${BASE}/api/sections/index.php?grade_level=${encodeURIComponent(gradeVal)}`);
     const data = await res.json();
-    subjSel.innerHTML = '<option value="">— Select Subject —</option>';
-    data.subjects.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s.name; opt.textContent = s.name;
-      if (s.name === preselect) opt.selected = true;
-      subjSel.appendChild(opt);
-    });
-    subjSel.disabled = false;
-  } catch {
-    subjSel.innerHTML = '<option value="">Error loading subjects</option>';
+    if (data.ok && data.sections && data.sections.length > 0) {
+      list = data.sections.map(s => s.section_name);
+    }
+  } catch (e) {
+    console.error(e);
   }
+
+  const defs = DEFAULT_SECTIONS[gradeVal] || ['Rizal', 'Mabini', 'Bonifacio', 'Luna', 'STEM', 'ABM', 'HUMSS'];
+  defs.forEach(d => {
+    if (!list.includes(d)) list.push(d);
+  });
+
+  if (preselect && !list.includes(preselect)) {
+    list.push(preselect);
+  }
+
+  secSel.innerHTML = '<option value="">— Select Advisory Section —</option>';
+  list.forEach(secName => {
+    const opt = document.createElement('option');
+    opt.value = secName;
+    opt.textContent = secName;
+    if (secName === preselect) opt.selected = true;
+    secSel.appendChild(opt);
+  });
+  secSel.disabled = false;
 }
 
 /* ══ ADD TEACHER ══ */
@@ -262,8 +283,8 @@ function openAddTeacherModal() {
   if (!addTeacherModal) addTeacherModal = new bootstrap.Modal(document.getElementById('addTeacherModal'));
   ['at-name','at-username','at-email','at-password','at-confirm'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('at-grade').value    = '';
-  document.getElementById('at-subject').innerHTML = '<option value="">— Select Grade first —</option>';
-  document.getElementById('at-subject').disabled  = true;
+  document.getElementById('at-section').innerHTML = '<option value="">— Select Grade first —</option>';
+  document.getElementById('at-section').disabled  = true;
   document.getElementById('at-error').classList.add('d-none');
   document.getElementById('at-submit-btn').disabled = false;
   document.getElementById('at-submit-btn').innerHTML = '<i class="fas fa-user-plus me-1"></i> Add Teacher';
@@ -274,7 +295,7 @@ async function submitAddTeacher() {
   document.getElementById('at-error').classList.add('d-none');
   const name            = document.getElementById('at-name').value.trim();
   const advisory_grade  = document.getElementById('at-grade').value;
-  const advisory_subject= document.getElementById('at-subject').value;
+  const advisory_subject= document.getElementById('at-section').value;
   const username        = document.getElementById('at-username').value.trim();
   const email           = document.getElementById('at-email').value.trim();
   const password        = document.getElementById('at-password').value;
@@ -282,7 +303,7 @@ async function submitAddTeacher() {
 
   if (!name)             return showError('at-error','Full name is required.');
   if (!advisory_grade)   return showError('at-error','Please select a grade level.');
-  if (!advisory_subject) return showError('at-error','Please select a subject.');
+  if (!advisory_subject) return showError('at-error','Please select an advisory section.');
   if (!username || !email || !password || !confirm) return showError('at-error','Please fill in all required fields.');
   if (password.length < 6) return showError('at-error','Password must be at least 6 characters.');
   if (password !== confirm) return showError('at-error','Passwords do not match.');
@@ -399,13 +420,13 @@ async function openEditModal(id) {
   document.getElementById('et-save-btn').disabled = false;
   document.getElementById('et-save-btn').innerHTML = '<i class="fas fa-save me-1"></i> Save Changes';
 
-  // Set grade and load subjects
+  // Set grade and load sections
   document.getElementById('et-grade').value = t.advisory_grade || '';
   if (t.advisory_grade) {
-    await loadSubjectsFor('et-subject', 'et-grade', t.advisory_subject || '');
+    await loadSectionsFor('et-section', 'et-grade', t.advisory_subject || '');
   } else {
-    document.getElementById('et-subject').innerHTML = '<option value="">— Select Grade first —</option>';
-    document.getElementById('et-subject').disabled = true;
+    document.getElementById('et-section').innerHTML = '<option value="">— Select Grade first —</option>';
+    document.getElementById('et-section').disabled = true;
   }
 
   editModal.show();
@@ -417,13 +438,15 @@ async function saveTeacher() {
   const name            = document.getElementById('et-name').value.trim();
   const email           = document.getElementById('et-email').value.trim();
   const advisory_grade  = document.getElementById('et-grade').value;
-  const advisory_subject= document.getElementById('et-subject').value;
+  const advisory_subject= document.getElementById('et-section').value;
   const newPw           = document.getElementById('et-new-pw').value;
   const confirmPw       = document.getElementById('et-confirm-pw').value;
 
   if (!name || !email)   return showError('et-error','Name and email are required.');
   if (!advisory_grade)   return showError('et-error','Please select a grade level.');
-  if (!advisory_subject) return showError('et-error','Please select a subject.');
+  if (!advisory_subject) return showError('et-error','Please select an advisory section.');
+  if (newPw && newPw.length < 6) return showError('et-error','New password must be at least 6 characters.');
+  if (newPw && newPw !== confirmPw) return showError('et-error','Passwords do not match.');
   if (newPw && newPw.length < 6) return showError('et-error','New password must be at least 6 characters.');
   if (newPw && newPw !== confirmPw) return showError('et-error','Passwords do not match.');
 

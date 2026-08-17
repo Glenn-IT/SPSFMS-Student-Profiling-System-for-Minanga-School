@@ -38,7 +38,7 @@ if ($method === 'PUT') {
         http_response_code(400); echo json_encode(['ok'=>false,'message'=>'Invalid email.']); exit;
     }
     if (!$advisoryGrade || !$advisorySubject) {
-        http_response_code(400); echo json_encode(['ok'=>false,'message'=>'Advisory grade and subject are required.']); exit;
+        http_response_code(400); echo json_encode(['ok'=>false,'message'=>'Grade level and advisory section are required.']); exit;
     }
 
     // Check email uniqueness (exclude self)
@@ -49,15 +49,16 @@ if ($method === 'PUT') {
     }
 
     // Duplicate advisory check (exclude self)
-    $dup = $pdo->prepare("SELECT id FROM users WHERE role='teacher' AND advisory_grade=? AND advisory_subject=? AND id!=? LIMIT 1");
+    $dup = $pdo->prepare("SELECT id, name FROM users WHERE role='teacher' AND advisory_grade=? AND advisory_subject=? AND id!=? LIMIT 1");
     $dup->execute([$advisoryGrade, $advisorySubject, $id]);
-    if ($dup->fetch()) {
+    $existingAdvisor = $dup->fetch();
+    if ($existingAdvisor) {
         http_response_code(409);
-        echo json_encode(['ok'=>false,'message'=>"Another teacher is already assigned to {$advisoryGrade} - {$advisorySubject}."]);
+        echo json_encode(['ok'=>false,'message'=>"The section '{$advisorySubject}' in {$advisoryGrade} is already assigned to advisor '" . $existingAdvisor['name'] . "'."]);
         exit;
     }
 
-    $position = $advisoryGrade . ' - ' . $advisorySubject;
+    $position = $advisoryGrade . ' - Section ' . $advisorySubject;
     $pdo->prepare("UPDATE users SET name=?, email=?, position=?, advisory_grade=?, advisory_subject=? WHERE id=? AND role='teacher'")
         ->execute([$name, $email, $position, $advisoryGrade, $advisorySubject, $id]);
 
