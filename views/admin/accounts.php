@@ -27,7 +27,9 @@ $inactive = $total - $active;
       <div class="ms-auto"><div class="user-menu"><div class="user-avatar"><?= strtoupper(substr($user['name'],0,1)) ?></div><div><div class="user-name"><?= htmlspecialchars($user['name']) ?></div><div class="user-role">Administrator</div></div></div></div>
     </nav>
 
-    <div class="page-header"><h3>Account Management</h3><p>Manage user accounts and access status</p></div>
+    <div class="page-header">
+      <h3>Account Management</h3><p>Manage user accounts and access status</p>
+    </div>
 
     <div class="row g-3 mb-4">
       <div class="col-md-4"><div class="stat-card blue"><div class="stat-icon"><i class="fas fa-users"></i></div><div><div class="stat-value"><?= $total ?></div><div class="stat-label">Total Accounts</div></div></div></div>
@@ -78,12 +80,92 @@ $inactive = $total - $active;
   </div>
 </div>
 
+<!-- ── Create Account Modal ── -->
+<div class="modal fade" id="createAccountModal" tabindex="-1" aria-labelledby="createAccountModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createAccountModalLabel"><i class="fas fa-user-plus me-2"></i>Create Account</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Role toggle -->
+        <div class="mb-3">
+          <label class="form-label">Account Role</label>
+          <div class="d-flex gap-2">
+            <button type="button" id="role-teacher-btn" class="btn btn-primary flex-fill" onclick="setRole('teacher')">
+              <i class="fas fa-chalkboard-teacher me-1"></i> Teacher
+            </button>
+            <button type="button" id="role-student-btn" class="btn btn-light flex-fill" onclick="setRole('student')">
+              <i class="fas fa-user-graduate me-1"></i> Student
+            </button>
+          </div>
+          <input type="hidden" id="ca-role" value="teacher">
+        </div>
+
+        <hr class="my-2">
+
+        <!-- Teacher fields -->
+        <div id="teacher-fields">
+          <div class="mb-3">
+            <label class="form-label">Full Name <span class="text-danger">*</span></label>
+            <input type="text" id="ca-name" class="form-control" placeholder="e.g. Juan Dela Cruz">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Position / Advisory <span class="text-danger">*</span></label>
+            <input type="text" id="ca-position" class="form-control" placeholder="e.g. Grade 7 Adviser">
+          </div>
+        </div>
+
+        <!-- Student fields -->
+        <div id="student-fields" style="display:none;">
+          <div class="mb-3">
+            <label class="form-label">Student LRN <span class="text-danger">*</span></label>
+            <input type="text" id="ca-lrn" class="form-control" placeholder="12-digit LRN">
+            <div class="form-text">Student's name will be pulled automatically from their profile.</div>
+          </div>
+        </div>
+
+        <!-- Common fields -->
+        <div class="mb-3">
+          <label class="form-label">Username <span class="text-danger">*</span></label>
+          <input type="text" id="ca-username" class="form-control" placeholder="Login username" autocomplete="off">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Email <span class="text-danger">*</span></label>
+          <input type="email" id="ca-email" class="form-control" placeholder="email@example.com">
+        </div>
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="form-label">Password <span class="text-danger">*</span></label>
+            <input type="password" id="ca-password" class="form-control" placeholder="Min. 6 characters" autocomplete="new-password">
+          </div>
+          <div class="col-6">
+            <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
+            <input type="password" id="ca-confirm" class="form-control" placeholder="Repeat password">
+          </div>
+        </div>
+
+        <div id="ca-error" class="alert alert-danger mt-3 d-none" style="font-size:.85rem;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="ca-submit-btn" onclick="submitCreateAccount()">
+          <i class="fas fa-user-plus me-1"></i> Create Account
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="/SPSFMS-Student-Profiling-System-for-Minanga-School/assets/lib/bootstrap.bundle.min.js"></script>
 <script src="<?= BASE_URL ?>/assets/js/components.js"></script>
 <script>
 const BASE = '<?= BASE_URL ?>';
 showDesktopOnlyWarning();
 
+/* ── Toggle activate/deactivate ── */
 async function toggleStatus(id, newStatus) {
   const label = newStatus === 'active' ? 'activate' : 'deactivate';
   confirmModal('Confirm', `Are you sure you want to ${label} this account?`, async () => {
@@ -113,6 +195,115 @@ async function toggleStatus(id, newStatus) {
       showToast('Failed to update account status.', 'error');
     }
   });
+}
+
+/* ── Create Account modal ── */
+let caModal;
+
+function openCreateModal() {
+  if (!caModal) caModal = new bootstrap.Modal(document.getElementById('createAccountModal'));
+  ['ca-name','ca-position','ca-lrn','ca-username','ca-email','ca-password','ca-confirm']
+    .forEach(id => document.getElementById(id).value = '');
+  document.getElementById('ca-error').classList.add('d-none');
+  document.getElementById('ca-submit-btn').disabled = false;
+  document.getElementById('ca-submit-btn').innerHTML = '<i class="fas fa-user-plus me-1"></i> Create Account';
+  setRole('teacher');
+  caModal.show();
+}
+
+function setRole(role) {
+  document.getElementById('ca-role').value = role;
+  const isTeacher = role === 'teacher';
+  document.getElementById('teacher-fields').style.display = isTeacher ? '' : 'none';
+  document.getElementById('student-fields').style.display = isTeacher ? 'none' : '';
+  document.getElementById('role-teacher-btn').className = 'btn flex-fill ' + (isTeacher ? 'btn-primary' : 'btn-light');
+  document.getElementById('role-student-btn').className = 'btn flex-fill ' + (!isTeacher ? 'btn-primary' : 'btn-light');
+}
+
+function showCaError(msg) {
+  const el = document.getElementById('ca-error');
+  el.textContent = msg;
+  el.classList.remove('d-none');
+}
+
+async function submitCreateAccount() {
+  document.getElementById('ca-error').classList.add('d-none');
+
+  const role     = document.getElementById('ca-role').value;
+  const username = document.getElementById('ca-username').value.trim();
+  const email    = document.getElementById('ca-email').value.trim();
+  const password = document.getElementById('ca-password').value;
+  const confirm  = document.getElementById('ca-confirm').value;
+  const name     = document.getElementById('ca-name').value.trim();
+  const position = document.getElementById('ca-position').value.trim();
+  const lrn      = document.getElementById('ca-lrn').value.trim();
+
+  if (!username || !email || !password || !confirm) return showCaError('Please fill in all required fields.');
+  if (password.length < 6) return showCaError('Password must be at least 6 characters.');
+  if (password !== confirm) return showCaError('Passwords do not match.');
+  if (role === 'teacher' && (!name || !position)) return showCaError('Full name and position are required for teachers.');
+  if (role === 'student' && !lrn) return showCaError('LRN is required for student accounts.');
+
+  const btn = document.getElementById('ca-submit-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Creating...';
+
+  try {
+    const res = await fetch(BASE + '/api/accounts/create.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role, username, email, password, name, position, lrn })
+    });
+    const data = await res.json();
+
+    if (!data.ok) {
+      showCaError(data.message);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-user-plus me-1"></i> Create Account';
+      return;
+    }
+
+    const u = data.user;
+    const roleColors = { admin: 'primary', teacher: 'success', student: 'warning' };
+    const color = roleColors[u.role] ?? 'secondary';
+    const tbody = document.getElementById('accounts-tbody');
+    const rowCount = tbody.querySelectorAll('tr').length + 1;
+
+    const tr = document.createElement('tr');
+    tr.id = 'row-' + u.id;
+    tr.innerHTML = `
+      <td>${rowCount}</td>
+      <td><strong>${escHtml(u.name)}</strong></td>
+      <td><span style="font-family:monospace;font-size:.82rem;">${escHtml(u.username)}</span></td>
+      <td><span class="badge bg-${color} bg-opacity-15 text-${color} fw-semibold text-capitalize">${u.role}</span></td>
+      <td style="font-size:.82rem;">${escHtml(u.position || '—')}</td>
+      <td><span class="badge bg-success bg-opacity-15 text-success fw-semibold status-badge" id="badge-${u.id}">Active</span></td>
+      <td class="text-center">
+        <button class="btn btn-sm btn-outline-danger" id="btn-${u.id}" onclick="toggleStatus(${u.id}, 'inactive')">
+          <i class="fas fa-ban"></i> Deactivate
+        </button>
+      </td>`;
+    tbody.appendChild(tr);
+
+    const totalEl = document.querySelector('.stat-card.blue .stat-value');
+    const activeEl = document.querySelector('.stat-card.green .stat-value');
+    if (totalEl) totalEl.textContent = parseInt(totalEl.textContent) + 1;
+    if (activeEl) activeEl.textContent = parseInt(activeEl.textContent) + 1;
+
+    caModal.hide();
+    showToast(`Account for ${u.name} created successfully!`, 'success');
+
+  } catch (err) {
+    showCaError('An unexpected error occurred. Please try again.');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-user-plus me-1"></i> Create Account';
+  }
+}
+
+function escHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str ?? '';
+  return d.innerHTML;
 }
 </script>
 </body>
