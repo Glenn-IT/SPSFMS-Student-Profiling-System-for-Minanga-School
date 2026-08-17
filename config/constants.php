@@ -12,20 +12,42 @@ define('GRADE_LEVELS', [
     'Grade 11','Grade 12'
 ]);
 
-define('SECTION_MAP', [
-    'Grade 1'  => ['Mabini'],
-    'Grade 2'  => ['Mabini'],
-    'Grade 3'  => ['Mabini'],
-    'Grade 4'  => ['Bonifacio'],
-    'Grade 5'  => ['Bonifacio'],
-    'Grade 6'  => ['Bonifacio'],
-    'Grade 7'  => ['Rizal'],
-    'Grade 8'  => ['Luna'],
-    'Grade 9'  => ['Luna'],
-    'Grade 10' => ['Mabini'],
-    'Grade 11' => ['STEM','ABM','HUMSS'],
-    'Grade 12' => ['STEM','ABM','HUMSS'],
-]);
+function getDynamicSectionMap(): array {
+    $map = [];
+    foreach (GRADE_LEVELS as $g) { $map[$g] = []; }
+
+    if (isset($GLOBALS['pdo']) && $GLOBALS['pdo'] instanceof PDO) {
+        try {
+            $stmt = $GLOBALS['pdo']->query("SELECT grade_level, section_name FROM sections ORDER BY id ASC");
+            $rows = $stmt->fetchAll();
+            if (!empty($rows)) {
+                foreach ($rows as $r) {
+                    if (isset($map[$r['grade_level']])) {
+                        $map[$r['grade_level']][] = $r['section_name'];
+                    }
+                }
+                return $map;
+            }
+        } catch (Exception $e) {}
+    }
+
+    return [
+        'Grade 1'  => ['Mabini'],
+        'Grade 2'  => ['Mabini'],
+        'Grade 3'  => ['Mabini'],
+        'Grade 4'  => ['Bonifacio'],
+        'Grade 5'  => ['Bonifacio'],
+        'Grade 6'  => ['Bonifacio'],
+        'Grade 7'  => ['Rizal'],
+        'Grade 8'  => ['Luna'],
+        'Grade 9'  => ['Luna'],
+        'Grade 10' => ['Mabini'],
+        'Grade 11' => ['STEM','ABM','HUMSS'],
+        'Grade 12' => ['STEM','ABM','HUMSS'],
+    ];
+}
+
+define('SECTION_MAP', getDynamicSectionMap());
 
 define('SUBJECTS_ELEM', [
     'Filipino','English','Mathematics','Science',
