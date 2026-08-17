@@ -8,7 +8,6 @@ $navItems = [
   ['page'=>'dashboard',     'icon'=>'fa-tachometer-alt',       'label'=>'Dashboard',            'href'=>BASE_URL.'/views/admin/dashboard.php'],
   ['page'=>'students',      'icon'=>'fa-users',                'label'=>'Student Management',   'href'=>BASE_URL.'/views/admin/students.php'],
   ['page'=>'teachers',      'icon'=>'fa-chalkboard-teacher',   'label'=>'Teacher Management',   'href'=>BASE_URL.'/views/admin/teachers.php'],
-  ['page'=>'subjects',      'icon'=>'fa-book-open',            'label'=>'Subject Management',   'href'=>BASE_URL.'/views/admin/subjects.php'],
   ['page'=>'sections',      'icon'=>'fa-th-large',             'label'=>'Section Management',   'href'=>BASE_URL.'/views/admin/sections.php'],
   ['page'=>'reports',       'icon'=>'fa-file-alt',             'label'=>'Reports',              'href'=>BASE_URL.'/views/admin/reports.php'],
   ['page'=>'accounts',      'icon'=>'fa-user-cog',             'label'=>'Account Management',   'href'=>BASE_URL.'/views/admin/accounts.php'],
