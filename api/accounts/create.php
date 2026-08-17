@@ -58,19 +58,20 @@ $position   = null;
 if ($role === 'teacher') {
     if (!$advisoryGrade || !$advisorySubject) {
         http_response_code(400);
-        echo json_encode(['ok' => false, 'message' => 'Advisory grade and subject are required for teachers.']);
+        echo json_encode(['ok' => false, 'message' => 'Grade level and advisory section are required for teachers.']);
         exit;
     }
 
     // Build readable position string
-    $position = $advisoryGrade . ' - ' . $advisorySubject;
+    $position = $advisoryGrade . ' - Section ' . $advisorySubject;
 
     // ── Duplicate advisory check ──────────────────────────────────────────────
-    $dup = $pdo->prepare("SELECT id FROM users WHERE role='teacher' AND advisory_grade=? AND advisory_subject=? LIMIT 1");
+    $dup = $pdo->prepare("SELECT id, name FROM users WHERE role='teacher' AND advisory_grade=? AND advisory_subject=? LIMIT 1");
     $dup->execute([$advisoryGrade, $advisorySubject]);
-    if ($dup->fetch()) {
+    $existingAdvisor = $dup->fetch();
+    if ($existingAdvisor) {
         http_response_code(409);
-        echo json_encode(['ok' => false, 'message' => "A teacher is already assigned to {$advisoryGrade} - {$advisorySubject}."]);
+        echo json_encode(['ok' => false, 'message' => "The section '{$advisorySubject}' in {$advisoryGrade} is already assigned to advisor '" . $existingAdvisor['name'] . "'."]);
         exit;
     }
 
