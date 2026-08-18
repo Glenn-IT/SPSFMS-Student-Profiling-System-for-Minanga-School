@@ -55,18 +55,34 @@ if ($stmt->fetch()) {
 
 $name = null;
 $position = null;
+$advisoryGrade = null;
+$advisorySubject = null;
 $lrn = null;
 $gradeLevel = null;
 $section = null;
 
 if ($role === 'teacher') {
-    $name     = trim($data['name'] ?? '');
-    $position = trim($data['position'] ?? '');
-    if (!$name || !$position) {
+    $name            = trim($data['name'] ?? '');
+    $advisoryGrade   = trim($data['advisory_grade'] ?? '');
+    $advisorySubject = trim($data['advisory_subject'] ?? '');
+
+    if (!$name || !$advisoryGrade || !$advisorySubject) {
         http_response_code(400);
-        echo json_encode(['ok' => false, 'message' => 'Please enter your full name and position.']);
+        echo json_encode(['ok' => false, 'message' => 'Please fill in your name, grade level, and advisory section.']);
         exit;
     }
+
+    // Duplicate advisory check
+    $dup = $pdo->prepare("SELECT id, name FROM users WHERE role='teacher' AND advisory_grade=? AND advisory_subject=? LIMIT 1");
+    $dup->execute([$advisoryGrade, $advisorySubject]);
+    $existingAdvisor = $dup->fetch();
+    if ($existingAdvisor) {
+        http_response_code(409);
+        echo json_encode(['ok' => false, 'message' => "The section '{$advisorySubject}' in {$advisoryGrade} is already assigned to advisor '" . $existingAdvisor['name'] . "'."]);
+        exit;
+    }
+
+    $position = $advisoryGrade . ' - Section ' . $advisorySubject;
 } else {
     $lrn = trim($data['lrn'] ?? '');
     if (!$lrn) {
@@ -97,7 +113,7 @@ if ($role === 'teacher') {
     $section    = $student['section'];
 }
 
-$stmt = $pdo->prepare('INSERT INTO users (role, username, password, name, email, position, lrn, grade_level, section, status, sec_question, sec_answer) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
+$stmt = $pdo->prepare('INSERT INTO users (role, username, password, name, email, position, advisory_grade, advisory_subject, lrn, grade_level, section, status, sec_question, sec_answer) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
 $stmt->execute([
     $role,
     $username,
@@ -105,6 +121,8 @@ $stmt->execute([
     $name,
     $email,
     $position,
+    $advisoryGrade,
+    $advisorySubject,
     $lrn,
     $gradeLevel,
     $section,

@@ -3,6 +3,8 @@ require_once __DIR__ . '/../../includes/auth_check.php';
 $user = requireAuth('admin');
 $activePage = 'reports';
 
+$sigData = getSignatories($pdo, $user);
+
 $type    = $_GET['type']    ?? '';
 $grade   = $_GET['grade']   ?? '';
 $section = $_GET['section'] ?? '';
@@ -37,9 +39,11 @@ $sectionMapJson = json_encode(SECTION_MAP);
       .sidebar,.top-navbar { display:none !important; }
       .main-content { margin:0 !important; }
       .signatories { margin-top: 3rem; }
+      .report-header-logo { max-height: 95px !important; display: inline-block !important; vertical-align: top !important; }
     }
-    .report-header { text-align:center; margin-bottom:1.5rem; }
-    .report-header h4 { font-weight:700; color:#1a1a2e; }
+    .report-header { text-align: center; margin-bottom: 1.75rem; }
+    .report-header h3 { font-weight: 800; color: #000; letter-spacing: 0.5px; }
+    .report-header-logo { height: 95px; width: auto; object-fit: contain; flex-shrink: 0; }
 
     /* Signatories */
     .signatories {
@@ -119,7 +123,7 @@ $sectionMapJson = json_encode(SECTION_MAP);
       <div class="card-body">
         <div class="row g-2 align-items-end">
           <!-- Grade Level -->
-          <div class="col-md-3">
+          <div class="col-md-2">
             <label class="form-label mb-1">Grade Level</label>
             <select id="grade-select" class="form-select">
               <option value="">All Grades</option>
@@ -150,14 +154,20 @@ $sectionMapJson = json_encode(SECTION_MAP);
             </select>
           </div>
           <!-- Live Search -->
-          <div class="col-md-3">
+          <div class="col-md-2">
             <label class="form-label mb-1">
               Search
               <span id="search-spinner" class="ms-1">
                 <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
               </span>
             </label>
-            <input type="text" id="live-search" class="form-control" placeholder="Name or LRN — results update live..." value="<?= htmlspecialchars($search) ?>">
+            <input type="text" id="live-search" class="form-control" placeholder="Search..." value="<?= htmlspecialchars($search) ?>">
+          </div>
+          <!-- Signatories Settings Shortcut -->
+          <div class="col-md-2">
+            <a href="<?= BASE_URL ?>/views/admin/signatories.php" class="btn btn-outline-secondary w-100" title="Configure Report Signatories">
+              <i class="fas fa-file-signature me-1"></i>Signatories
+            </a>
           </div>
           <!-- Actions -->
           <div class="col-md-1">
@@ -173,16 +183,21 @@ $sectionMapJson = json_encode(SECTION_MAP);
     <!-- Report Output -->
     <div class="card">
       <div class="card-body">
-        <div class="report-header">
-          <div style="font-size:.8rem;color:var(--gray-600);">Republic of the Philippines · Department of Education</div>
-          <h5 class="fw-bold mt-1"><?= SCHOOL_NAME ?></h5>
-          <div style="font-size:.85rem;color:var(--gray-600);"><?= SCHOOL_ADDRESS ?></div>
-          <h4 class="mt-2" id="report-title">
-            <?= $type === 'gender' ? 'GENDER SUMMARY' : 'STUDENT MASTERLIST' ?>
-          </h4>
-          <div style="font-size:.82rem;" id="report-subtitle">
-            School Year <span id="report-sy"><?= htmlspecialchars($sy) ?></span>
-            <?= $grade ? '· '.$grade : '' ?>
+        <div class="report-header text-center mb-4">
+          <div class="d-inline-flex align-items-start justify-content-center gap-4">
+            <img src="<?= BASE_URL ?>/img/MIS-Logo.jpg" alt="School Logo" class="report-header-logo" style="margin-top: 4px;">
+            <div class="text-center">
+              <div style="font-size:.95rem;color:#222;font-weight:400;margin-bottom:.2rem;">Republic of the Philippines · Department of Education</div>
+              <div style="font-size:1.15rem;color:#000;font-weight:700;margin-bottom:.2rem;"><?= SCHOOL_NAME ?></div>
+              <div style="font-size:.95rem;color:#333;font-weight:400;margin-bottom:1.75rem;"><?= SCHOOL_ADDRESS ?></div>
+
+              <h3 class="text-center text-uppercase text-dark fw-bold mb-1" id="report-title" style="letter-spacing:0.5px;">
+                <?= $type === 'gender' ? 'GENDER SUMMARY' : 'STUDENT MASTERLIST' ?>
+              </h3>
+              <div style="font-size:.95rem;color:#333;" class="text-center" id="report-subtitle">
+                School Year <span id="report-sy"><?= htmlspecialchars($sy) ?></span><?= $grade ? ' · '.$grade : '' ?>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -240,17 +255,19 @@ $sectionMapJson = json_encode(SECTION_MAP);
           </table>
         </div>
 
+        <?php endif; ?>
+
         <!-- Signatories -->
         <div class="signatories" id="signatories-block">
           <div class="signatory-block">
             <div class="sig-label">Prepared by</div>
-            <div class="sig-name"><?= htmlspecialchars($user['name']) ?></div>
-            <div class="sig-position"><?= htmlspecialchars($user['position'] ?? 'Administrator') ?></div>
+            <div class="sig-name"><?= htmlspecialchars($sigData['prepared_by_name']) ?></div>
+            <div class="sig-position"><?= htmlspecialchars($sigData['prepared_by_title']) ?></div>
           </div>
           <div class="signatory-block">
             <div class="sig-label">Noted by</div>
-            <div class="sig-name">&nbsp;</div>
-            <div class="sig-position">School Head / Principal</div>
+            <div class="sig-name"><?= htmlspecialchars($sigData['noted_by_name'] ?: ' ') ?></div>
+            <div class="sig-position"><?= htmlspecialchars($sigData['noted_by_title']) ?></div>
           </div>
           <div class="signatory-block">
             <div class="sig-label">Date Generated</div>
@@ -259,10 +276,8 @@ $sectionMapJson = json_encode(SECTION_MAP);
           </div>
         </div>
 
-        <?php endif; ?>
-
         <div style="font-size:.75rem;color:var(--gray-400);text-align:right;margin-top:1rem;" class="no-print">
-          Generated: <?= date('F j, Y \a\t g:i A') ?> · <?= htmlspecialchars($user['name']) ?>
+          Generated: <?= date('F j, Y \a\t g:i A') ?> · <?= htmlspecialchars($sigData['prepared_by_name']) ?>
         </div>
       </div>
     </div>

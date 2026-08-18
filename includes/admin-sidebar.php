@@ -10,6 +10,7 @@ $navItems = [
   ['page'=>'teachers',      'icon'=>'fa-chalkboard-teacher',   'label'=>'Teacher Management',   'href'=>BASE_URL.'/views/admin/teachers.php'],
   ['page'=>'sections',      'icon'=>'fa-th-large',             'label'=>'Section Management',   'href'=>BASE_URL.'/views/admin/sections.php'],
   ['page'=>'reports',       'icon'=>'fa-file-alt',             'label'=>'Reports',              'href'=>BASE_URL.'/views/admin/reports.php'],
+  ['page'=>'signatories',   'icon'=>'fa-file-signature',        'label'=>'Report Signatories',   'href'=>BASE_URL.'/views/admin/signatories.php'],
   ['page'=>'accounts',      'icon'=>'fa-user-cog',             'label'=>'Account Management',   'href'=>BASE_URL.'/views/admin/accounts.php'],
   ['page'=>'analytics',     'icon'=>'fa-chart-line',           'label'=>'Analytics',            'href'=>BASE_URL.'/views/admin/analytics.php'],
   ['page'=>'settings',      'icon'=>'fa-cog',                  'label'=>'Settings',             'href'=>BASE_URL.'/views/admin/settings.php'],

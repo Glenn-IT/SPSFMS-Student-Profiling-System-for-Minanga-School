@@ -3,6 +3,8 @@ require_once __DIR__ . '/../../includes/auth_check.php';
 $user = requireAuth('teacher');
 $activePage = 'reports';
 
+$sigData = getSignatories($pdo, $user);
+
 $grade   = $_GET['grade']   ?? 'Grade 7';
 $section = $_GET['section'] ?? 'Rizal';
 $sy      = $_GET['sy']      ?? '2025-2026';
@@ -24,7 +26,21 @@ $students = $stmt->fetchAll();
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/theme.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin.css">
   <style>
-    @media print { .no-print { display:none !important; } .sidebar,.top-navbar { display:none !important; } .main-content { margin:0 !important; } }
+    @media print {
+      .no-print { display:none !important; }
+      .sidebar,.top-navbar { display:none !important; }
+      .main-content { margin:0 !important; }
+      .signatories { margin-top: 3rem; }
+      .report-header-logo { max-height: 95px !important; display: inline-block !important; vertical-align: top !important; }
+    }
+    .report-header { text-align: center; margin-bottom: 1.75rem; border-bottom: 2px solid var(--secondary); padding-bottom: 1rem; }
+    .report-header h3 { font-weight: 800; color: #000; letter-spacing: 0.5px; }
+    .report-header-logo { height: 95px; width: auto; object-fit: contain; flex-shrink: 0; }
+    .signatories { margin-top: 2.5rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
+    .signatory-block { text-align: center; }
+    .signatory-block .sig-label { font-size: .72rem; color: var(--gray-600); text-transform: uppercase; letter-spacing: .5px; margin-bottom: .25rem; }
+    .signatory-block .sig-name { font-weight: 700; font-size: .85rem; border-top: 1.5px solid var(--dark,#222); padding-top: .35rem; margin-top: 2rem; }
+    .signatory-block .sig-position { font-size: .75rem; color: var(--gray-600); }
   </style>
 </head>
 <body>
@@ -66,13 +82,19 @@ $students = $stmt->fetchAll();
 
     <div class="card">
       <div class="card-body">
-        <div style="text-align:center;margin-bottom:1.25rem;border-bottom:2px solid var(--secondary);padding-bottom:.75rem;">
-          <div style="font-size:.75rem;color:var(--gray-600);">Republic of the Philippines · Department of Education</div>
-          <h5 class="fw-bold mt-1"><?= SCHOOL_NAME ?></h5>
-          <div style="font-size:.82rem;color:var(--gray-600);"><?= SCHOOL_ADDRESS ?></div>
-          <h4 class="mt-1">CLASS GRADE SUMMARY REPORT</h4>
-          <div style="font-size:.82rem;"><?= htmlspecialchars($grade) ?> | S.Y. <?= htmlspecialchars($sy) ?></div>
-          <div style="font-size:.78rem;color:var(--gray-600);">Prepared by: <?= htmlspecialchars($user['name']) ?></div>
+        <div class="report-header text-center mb-4" style="border-bottom:2px solid var(--secondary);padding-bottom:1rem;">
+          <div class="d-inline-flex align-items-start justify-content-center gap-4">
+            <img src="<?= BASE_URL ?>/img/MIS-Logo.jpg" alt="School Logo" class="report-header-logo" style="margin-top: 4px;">
+            <div class="text-center">
+              <div style="font-size:.95rem;color:#222;font-weight:400;margin-bottom:.2rem;">Republic of the Philippines · Department of Education</div>
+              <div style="font-size:1.15rem;color:#000;font-weight:700;margin-bottom:.2rem;"><?= SCHOOL_NAME ?></div>
+              <div style="font-size:.95rem;color:#333;font-weight:400;margin-bottom:1.75rem;"><?= SCHOOL_ADDRESS ?></div>
+
+              <h3 class="text-center text-uppercase text-dark fw-bold mb-1" style="letter-spacing:0.5px;">CLASS GRADE SUMMARY REPORT</h3>
+              <div style="font-size:.95rem;color:#333;" class="text-center"><?= htmlspecialchars($grade) ?> | S.Y. <?= htmlspecialchars($sy) ?></div>
+              <div style="font-size:.85rem;color:var(--gray-600);" class="text-center mt-1">Prepared by: <?= htmlspecialchars($user['name']) ?></div>
+            </div>
+          </div>
         </div>
 
         <div class="table-responsive">
@@ -98,8 +120,28 @@ $students = $stmt->fetchAll();
             </tbody>
           </table>
         </div>
-        <div style="font-size:.72rem;color:var(--gray-400);text-align:right;margin-top:.75rem;">
-          Generated: <?= date('F j, Y \a\t g:i A') ?>
+
+        <!-- Signatories -->
+        <div class="signatories" id="signatories-block">
+          <div class="signatory-block">
+            <div class="sig-label">Prepared by</div>
+            <div class="sig-name"><?= htmlspecialchars($user['name']) ?></div>
+            <div class="sig-position"><?= htmlspecialchars($user['position'] ?? 'Class Adviser') ?></div>
+          </div>
+          <div class="signatory-block">
+            <div class="sig-label">Noted by</div>
+            <div class="sig-name"><?= htmlspecialchars($sigData['noted_by_name'] ?: ' ') ?></div>
+            <div class="sig-position"><?= htmlspecialchars($sigData['noted_by_title']) ?></div>
+          </div>
+          <div class="signatory-block">
+            <div class="sig-label">Date Generated</div>
+            <div class="sig-name"><?= date('F j, Y') ?></div>
+            <div class="sig-position"><?= date('g:i A') ?></div>
+          </div>
+        </div>
+
+        <div style="font-size:.72rem;color:var(--gray-400);text-align:right;margin-top:.75rem;" class="no-print">
+          Generated: <?= date('F j, Y \a\t g:i A') ?> · <?= htmlspecialchars($user['name']) ?>
         </div>
       </div>
     </div>

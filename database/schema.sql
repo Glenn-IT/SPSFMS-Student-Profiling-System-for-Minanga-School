@@ -99,3 +99,21 @@ INSERT IGNORE INTO `security_questions` (`id`, `question`) VALUES
 (3, 'What city were you born in?'),
 (4, 'What is the name of your elementary school?');
 
+-- ─── Report Signatories ──────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS `report_signatories` (
+  `id`                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `prepared_by_type`    ENUM('teacher','custom') NOT NULL DEFAULT 'teacher',
+  `prepared_by_user_id` INT UNSIGNED DEFAULT NULL,
+  `prepared_by_name`    VARCHAR(150) DEFAULT NULL,
+  `prepared_by_title`   VARCHAR(150) DEFAULT NULL,
+  `noted_by_type`       ENUM('teacher','custom') NOT NULL DEFAULT 'custom',
+  `noted_by_user_id`    INT UNSIGNED DEFAULT NULL,
+  `noted_by_name`       VARCHAR(150) DEFAULT NULL,
+  `noted_by_title`      VARCHAR(150) DEFAULT 'School Head / Principal',
+  `updated_at`          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO `report_signatories` (`id`, `prepared_by_type`, `noted_by_type`, `noted_by_title`) VALUES
+(1, 'teacher', 'custom', 'School Head / Principal');
+
+

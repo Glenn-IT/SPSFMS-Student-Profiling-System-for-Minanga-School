@@ -76,17 +76,27 @@ $cfg = [
   <form id="register-form" novalidate>
     <?php if ($role === 'teacher'): ?>
       <div class="mb-3">
-        <label class="form-label">Full Name</label>
+        <label class="form-label">Full Name <span class="text-danger">*</span></label>
         <div class="input-group">
           <span class="input-group-text bg-white"><i class="fas fa-user" style="color:var(--gray-400);font-size:.85rem;"></i></span>
           <input type="text" id="name" class="form-control" placeholder="Juan Dela Cruz" required>
         </div>
       </div>
-      <div class="mb-3">
-        <label class="form-label">Position</label>
-        <div class="input-group">
-          <span class="input-group-text bg-white"><i class="fas fa-briefcase" style="color:var(--gray-400);font-size:.85rem;"></i></span>
-          <input type="text" id="position" class="form-control" placeholder="e.g. Grade 5 Adviser" required>
+      <div class="row g-2 mb-3">
+        <div class="col-6">
+          <label class="form-label">Grade <span class="text-danger">*</span></label>
+          <select id="advisory_grade" class="form-select" onchange="loadSectionsFor('advisory_subject','advisory_grade')" required>
+            <option value="">— Grade —</option>
+            <?php foreach (GRADE_LEVELS as $g): ?>
+            <option value="<?= htmlspecialchars($g) ?>"><?= htmlspecialchars($g) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="col-6">
+          <label class="form-label">Advisory Section <span class="text-danger">*</span></label>
+          <select id="advisory_subject" class="form-select" disabled required>
+            <option value="">— Select Grade —</option>
+          </select>
         </div>
       </div>
     <?php else: ?>
@@ -178,6 +188,58 @@ $cfg = [
   const BASE = '<?= BASE_URL ?>';
   const ROLE = '<?= $role ?>';
 
+  const DEFAULT_SECTIONS = {
+    'Grade 1': ['Rizal', 'Mabini'],
+    'Grade 2': ['Bonifacio', 'Mabini'],
+    'Grade 3': ['Mabini', 'Rizal'],
+    'Grade 4': ['Bonifacio', 'Aguinaldo'],
+    'Grade 5': ['Bonifacio', 'Del Pilar'],
+    'Grade 6': ['Bonifacio', 'Silang'],
+    'Grade 7': ['Rizal', 'Mabini'],
+    'Grade 8': ['Luna', 'Rizal'],
+    'Grade 9': ['Luna', 'Bonifacio'],
+    'Grade 10': ['Mabini', 'Rizal'],
+    'Grade 11': ['STEM', 'ABM', 'HUMSS', 'GAS', 'TVL'],
+    'Grade 12': ['STEM', 'ABM', 'HUMSS', 'GAS', 'TVL']
+  };
+
+  async function loadSectionsFor(sectionSelId, gradeSelId) {
+    const gradeVal = document.getElementById(gradeSelId).value;
+    const secSel   = document.getElementById(sectionSelId);
+    secSel.innerHTML = '<option value="">Loading...</option>';
+    secSel.disabled  = true;
+
+    if (!gradeVal) {
+      secSel.innerHTML = '<option value="">— Select Grade first —</option>';
+      return;
+    }
+
+    let list = [];
+    try {
+      const res  = await fetch(`${BASE}/api/sections/index.php?grade_level=${encodeURIComponent(gradeVal)}`);
+      const data = await res.json();
+      if (data.ok && data.sections && data.sections.length > 0) {
+        list = data.sections.map(s => s.section_name);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    const defs = DEFAULT_SECTIONS[gradeVal] || ['Rizal', 'Mabini', 'Bonifacio', 'Luna', 'STEM', 'ABM', 'HUMSS'];
+    defs.forEach(d => {
+      if (!list.includes(d)) list.push(d);
+    });
+
+    secSel.innerHTML = '<option value="">— Select Advisory Section —</option>';
+    list.forEach(secName => {
+      const opt = document.createElement('option');
+      opt.value = secName;
+      opt.textContent = secName;
+      secSel.appendChild(opt);
+    });
+    secSel.disabled = false;
+  }
+
   function togglePw(inputId, eyeId) {
     const pw  = document.getElementById(inputId);
     const eye = document.getElementById(eyeId);
@@ -218,8 +280,17 @@ $cfg = [
     };
 
     if (ROLE === 'teacher') {
-      payload.name = document.getElementById('name').value.trim();
-      payload.position = document.getElementById('position').value.trim();
+      const name = document.getElementById('name').value.trim();
+      const advisory_grade = document.getElementById('advisory_grade').value;
+      const advisory_subject = document.getElementById('advisory_subject').value;
+
+      if (!name) return showError('Full name is required.');
+      if (!advisory_grade) return showError('Please select a grade level.');
+      if (!advisory_subject) return showError('Please select an advisory section.');
+
+      payload.name = name;
+      payload.advisory_grade = advisory_grade;
+      payload.advisory_subject = advisory_subject;
     } else {
       payload.lrn = document.getElementById('lrn').value.trim();
     }

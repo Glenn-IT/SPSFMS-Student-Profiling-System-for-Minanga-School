@@ -155,6 +155,29 @@ foreach ($secQs as $sq) {
 }
 out('✔ Default <strong>security questions</strong> seeded.', 'ok');
 
+$pdo->exec("
+CREATE TABLE IF NOT EXISTS `report_signatories` (
+  `id`                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `prepared_by_type`    ENUM('teacher','custom') NOT NULL DEFAULT 'teacher',
+  `prepared_by_user_id` INT UNSIGNED DEFAULT NULL,
+  `prepared_by_name`    VARCHAR(150) DEFAULT NULL,
+  `prepared_by_title`   VARCHAR(150) DEFAULT NULL,
+  `noted_by_type`       ENUM('teacher','custom') NOT NULL DEFAULT 'custom',
+  `noted_by_user_id`    INT UNSIGNED DEFAULT NULL,
+  `noted_by_name`       VARCHAR(150) DEFAULT NULL,
+  `noted_by_title`      VARCHAR(150) DEFAULT 'School Head / Principal',
+  `updated_at`          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+");
+out('✔ Table <strong>report_signatories</strong> ready.', 'ok');
+
+$rsCount = $pdo->query("SELECT COUNT(*) FROM `report_signatories`")->fetchColumn();
+if ($rsCount == 0) {
+    $pdo->exec("INSERT INTO `report_signatories` (`id`, `prepared_by_type`, `noted_by_type`, `noted_by_title`) VALUES (1, 'teacher', 'custom', 'School Head / Principal')");
+    out('✔ Default <strong>report signatories</strong> seeded.', 'ok');
+}
+
+
 
 // ── Seed Users ───────────────────────────────────────────────────────────────
 $existing = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
