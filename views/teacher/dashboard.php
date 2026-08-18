@@ -3,12 +3,31 @@ require_once __DIR__ . '/../../includes/auth_check.php';
 $user = requireAuth('teacher');
 $activePage = 'dashboard';
 
-// Advisory class — Grade 7 Rizal for teacher-001, Grade 1 Mabini for teacher-002
-$advisoryGrade   = (strpos($user['position'] ?? '', 'Grade 7') !== false) ? 'Grade 7' : 'Grade 1';
-$advisorySection = ($advisoryGrade === 'Grade 7') ? 'Rizal' : 'Mabini';
+// Fetch fresh user profile details to ensure up-to-date advisory assignment
+$uStmt = $pdo->prepare("SELECT * FROM users WHERE id = ? LIMIT 1");
+$uStmt->execute([$user['id']]);
+$freshUser = $uStmt->fetch() ?: $user;
 
-$classStmt = $pdo->prepare("SELECT s.*, COUNT(g.id) as graded_subjects FROM students s LEFT JOIN grades g ON g.student_id=s.id AND g.school_year='2025-2026' WHERE s.grade_level=? AND s.section=? AND s.status='active' GROUP BY s.id ORDER BY s.last_name");
-$classStmt->execute([$advisoryGrade, $advisorySection]);
+$advisoryGrade   = $freshUser['advisory_grade']   ?? '';
+$advisorySection = $freshUser['advisory_subject'] ?? '';
+
+// Fallback parsing from position string if advisory columns are empty
+if (!$advisoryGrade && !empty($freshUser['position'])) {
+    if (preg_match('/(Grade\s+\d+)\s*-\s*Section\s*(.+)/i', $freshUser['position'], $m)) {
+        $advisoryGrade   = trim($m[1]);
+        $advisorySection = trim($m[2]);
+    } elseif (preg_match('/(Grade\s+\d+)\s*(.+)/i', $freshUser['position'], $m)) {
+        $advisoryGrade   = trim($m[1]);
+        $advisorySection = trim($m[2]);
+    }
+}
+if (!$advisoryGrade)   $advisoryGrade   = 'Grade 1';
+if (!$advisorySection) $advisorySection = 'Mabini';
+
+$sy = SCHOOL_YEAR;
+
+$classStmt = $pdo->prepare("SELECT s.*, COUNT(g.id) as graded_subjects FROM students s LEFT JOIN grades g ON g.student_id=s.id AND g.school_year=? WHERE s.grade_level=? AND s.section=? AND s.status='active' GROUP BY s.id ORDER BY s.last_name");
+$classStmt->execute([$sy, $advisoryGrade, $advisorySection]);
 $classStudents = $classStmt->fetchAll();
 
 $totalStudents = count($classStudents);

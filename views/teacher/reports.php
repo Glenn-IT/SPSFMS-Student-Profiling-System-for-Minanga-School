@@ -5,9 +5,29 @@ $activePage = 'reports';
 
 $sigData = getSignatories($pdo, $user);
 
-$grade   = $_GET['grade']   ?? 'Grade 7';
-$section = $_GET['section'] ?? 'Rizal';
-$sy      = $_GET['sy']      ?? '2025-2026';
+// Fetch fresh user profile details to resolve advisory class defaults
+$uStmt = $pdo->prepare("SELECT * FROM users WHERE id = ? LIMIT 1");
+$uStmt->execute([$user['id']]);
+$freshUser = $uStmt->fetch() ?: $user;
+
+$myGrade   = $freshUser['advisory_grade']   ?? '';
+$mySection = $freshUser['advisory_subject'] ?? '';
+
+if (!$myGrade && !empty($freshUser['position'])) {
+    if (preg_match('/(Grade\s+\d+)\s*-\s*Section\s*(.+)/i', $freshUser['position'], $m)) {
+        $myGrade   = trim($m[1]);
+        $mySection = trim($m[2]);
+    } elseif (preg_match('/(Grade\s+\d+)\s*(.+)/i', $freshUser['position'], $m)) {
+        $myGrade   = trim($m[1]);
+        $mySection = trim($m[2]);
+    }
+}
+if (!$myGrade)   $myGrade   = 'Grade 1';
+if (!$mySection) $mySection = 'Mabini';
+
+$grade   = $_GET['grade']   ?? $myGrade;
+$section = $_GET['section'] ?? $mySection;
+$sy      = $_GET['sy']      ?? SCHOOL_YEAR;
 
 $stmt = $pdo->prepare("SELECT s.id, s.last_name, s.first_name, s.middle_name, s.lrn, s.sex,
     AVG(g.final_grade) as avg_grade,

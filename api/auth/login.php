@@ -36,14 +36,16 @@ if ($role !== 'any' && $user['role'] !== $role) {
 }
 
 $_SESSION['user'] = [
-    'id'          => $user['id'],
-    'role'        => $user['role'],
-    'name'        => $user['name'],
-    'email'       => $user['email'],
-    'position'    => $user['position'],
-    'lrn'         => $user['lrn'],
-    'grade_level' => $user['grade_level'],
-    'section'     => $user['section'],
+    'id'               => $user['id'],
+    'role'             => $user['role'],
+    'name'             => $user['name'],
+    'email'            => $user['email'],
+    'position'         => $user['position'],
+    'advisory_grade'   => $user['advisory_grade'] ?? null,
+    'advisory_subject' => $user['advisory_subject'] ?? null,
+    'lrn'              => $user['lrn'],
+    'grade_level'      => $user['grade_level'],
+    'section'          => $user['section'],
 ];
 
 echo json_encode(['ok' => true, 'role' => $user['role'], 'name' => $user['name']]);
