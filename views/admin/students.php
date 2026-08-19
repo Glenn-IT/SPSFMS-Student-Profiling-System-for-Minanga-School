@@ -80,7 +80,7 @@ $sectionJson  = json_encode(SECTION_MAP);
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table table-modern mb-0">
-            <thead><tr><th>#</th><th>LRN</th><th>Full Name</th><th>Grade</th><th>Section</th><th>Sex</th><th>Age</th><th>Contact</th><th class="text-center">Actions</th></tr></thead>
+            <thead><tr><th>#</th><th>LRN</th><th>Full Name</th><th>Grade</th><th>Section</th><th>Sex</th><th>Age</th><th>Contact No.</th><th class="text-center">Actions</th></tr></thead>
             <tbody id="students-tbody"><tr><td colspan="9" class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Loading...</td></tr></tbody>
           </table>
         </div>
@@ -387,7 +387,7 @@ function viewStudent(id) {
       ${field('Mother',s.mother_name)}
       ${field('Father',s.father_name)}
       ${field('Guardian',s.guardian_name?(s.guardian_name+' ('+s.guardian_relation+')'):'—')}
-      ${field('Contact',s.contact)}
+      ${field('Contact No.',s.contact)}
       ${field('Email',`<span style="font-size:.82rem">${s.email||'—'}</span>`)}
     </div>`;
   viewModal.show();

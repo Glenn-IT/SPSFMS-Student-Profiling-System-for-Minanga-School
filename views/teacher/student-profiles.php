@@ -64,7 +64,7 @@ $students = $stmt->fetchAll();
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table table-modern mb-0">
-            <thead><tr><th>#</th><th>LRN</th><th>Full Name</th><th>Grade</th><th>Section</th><th>Sex</th><th>Contact</th><th class="text-center">View</th></tr></thead>
+            <thead><tr><th>#</th><th>LRN</th><th>Full Name</th><th>Grade</th><th>Section</th><th>Sex</th><th>Contact No.</th><th class="text-center">View</th></tr></thead>
             <tbody>
               <?php if (empty($students)): ?>
               <tr><td colspan="8" class="text-center py-4 text-muted">No students found.</td></tr>
@@ -121,7 +121,7 @@ function viewStudent(s) {
       <div class="col-12"><div style="background:var(--gray-100);border-radius:8px;padding:.6rem .8rem;"><div style="font-size:.72rem;color:var(--gray-600);">Address</div><div class="fw-semibold">${s.address||'—'}</div></div></div>
       ${field('Mother',s.mother_name)} ${field('Father',s.father_name)}
       ${field('Guardian',s.guardian_name?(s.guardian_name+' ('+s.guardian_relation+')'):'—')}
-      ${field('Contact',s.contact)} ${field('Email','<span style="font-size:.82rem">'+s.email+'</span>')}
+      ${field('Contact No.',s.contact)} ${field('Email','<span style="font-size:.82rem">'+s.email+'</span>')}
     </div>`;
   viewModal.show();
 }

@@ -27,14 +27,19 @@ $inactive = $total - $active;
       <div class="ms-auto"><div class="user-menu"><div class="user-avatar"><?= strtoupper(substr($user['name'],0,1)) ?></div><div><div class="user-name"><?= htmlspecialchars($user['name']) ?></div><div class="user-role">Administrator</div></div></div></div>
     </nav>
 
-    <div class="page-header">
-      <h3>Account Management</h3><p>Manage user accounts and access status</p>
+    <div class="page-header d-flex align-items-start justify-content-between">
+      <div>
+        <h3>Account Management</h3><p class="mb-0">Manage user accounts and access status</p>
+      </div>
+      <button class="btn btn-primary" onclick="openCreateModal()">
+        <i class="fas fa-user-plus me-2"></i>Create Account
+      </button>
     </div>
 
     <div class="row g-3 mb-4">
-      <div class="col-md-4"><div class="stat-card blue"><div class="stat-icon"><i class="fas fa-users"></i></div><div><div class="stat-value"><?= $total ?></div><div class="stat-label">Total Accounts</div></div></div></div>
-      <div class="col-md-4"><div class="stat-card green"><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div><div class="stat-value"><?= $active ?></div><div class="stat-label">Active</div></div></div></div>
-      <div class="col-md-4"><div class="stat-card red"><div class="stat-icon"><i class="fas fa-ban"></i></div><div><div class="stat-value"><?= $inactive ?></div><div class="stat-label">Inactive</div></div></div></div>
+      <div class="col-md-4"><div class="stat-card blue"><div class="stat-icon"><i class="fas fa-users"></i></div><div><div class="stat-value" id="stat-total"><?= $total ?></div><div class="stat-label">Total Accounts</div></div></div></div>
+      <div class="col-md-4"><div class="stat-card green"><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div><div class="stat-value" id="stat-active"><?= $active ?></div><div class="stat-label">Active</div></div></div></div>
+      <div class="col-md-4"><div class="stat-card red"><div class="stat-icon"><i class="fas fa-ban"></i></div><div><div class="stat-value" id="stat-inactive"><?= $inactive ?></div><div class="stat-label">Inactive</div></div></div></div>
     </div>
 
     <div class="card">
@@ -163,7 +168,67 @@ $inactive = $total - $active;
 <script src="<?= BASE_URL ?>/assets/js/components.js"></script>
 <script>
 const BASE = '<?= BASE_URL ?>';
+const CURRENT_USER_ID = <?= (int)$user['id'] ?>;
 showDesktopOnlyWarning();
+
+/* ── Live Account & Stat Loader ── */
+async function loadAccounts() {
+  try {
+    const res = await fetch(BASE + '/api/accounts/index.php');
+    const data = await res.json();
+    if (!data.ok) return;
+
+    let total = data.users.length;
+    let active = 0;
+    let inactive = 0;
+
+    const roleColors = { admin: 'primary', teacher: 'success', student: 'warning' };
+    const tbody = document.getElementById('accounts-tbody');
+
+    tbody.innerHTML = data.users.map((u, i) => {
+      const color = roleColors[u.role] ?? 'secondary';
+      const isActive = u.status === 'active';
+      if (isActive) active++; else inactive++;
+
+      const actionBtn = (u.id == CURRENT_USER_ID)
+        ? '<span style="font-size:.78rem;color:var(--gray-400);">Current user</span>'
+        : `<button class="btn btn-sm ${isActive ? 'btn-outline-danger' : 'btn-outline-success'}" id="btn-${u.id}"
+             onclick="toggleStatus(${u.id}, '${isActive ? 'inactive' : 'active'}')">
+             <i class="fas ${isActive ? 'fa-ban' : 'fa-check'}"></i> ${isActive ? 'Deactivate' : 'Activate'}
+           </button>`;
+
+      return `
+        <tr id="row-${u.id}">
+          <td>${i + 1}</td>
+          <td><strong>${escHtml(u.name)}</strong></td>
+          <td><span style="font-family:monospace;font-size:.82rem;">${escHtml(u.username)}</span></td>
+          <td><span class="badge bg-${color} bg-opacity-15 text-${color} fw-semibold text-capitalize">${escHtml(u.role)}</span></td>
+          <td style="font-size:.82rem;">${escHtml(u.position || '—')}</td>
+          <td>
+            <span class="badge ${isActive ? 'bg-success' : 'bg-danger'} bg-opacity-15 text-${isActive ? 'success' : 'danger'} fw-semibold status-badge" id="badge-${u.id}">
+              ${isActive ? 'Active' : 'Inactive'}
+            </span>
+          </td>
+          <td class="text-center">${actionBtn}</td>
+        </tr>
+      `;
+    }).join('');
+
+    updateStatCards(total, active, inactive);
+  } catch (err) {
+    console.error('Failed to load live account data:', err);
+  }
+}
+
+function updateStatCards(total, active, inactive) {
+  const totalEl = document.getElementById('stat-total');
+  const activeEl = document.getElementById('stat-active');
+  const inactiveEl = document.getElementById('stat-inactive');
+
+  if (totalEl) totalEl.textContent = total;
+  if (activeEl) activeEl.textContent = active;
+  if (inactiveEl) inactiveEl.textContent = inactive;
+}
 
 /* ── Toggle activate/deactivate ── */
 async function toggleStatus(id, newStatus) {
@@ -178,18 +243,9 @@ async function toggleStatus(id, newStatus) {
       const data = await res.json();
       hideLoading();
       if (!data.ok) { showToast(data.message, 'error'); return; }
-      const badge = document.getElementById('badge-'+id);
-      const btn   = document.getElementById('btn-'+id);
-      if (newStatus === 'active') {
-        badge.textContent = 'Active'; badge.className = 'badge bg-success bg-opacity-15 text-success fw-semibold status-badge';
-        btn.className = 'btn btn-sm btn-outline-danger'; btn.innerHTML = '<i class="fas fa-ban"></i> Deactivate';
-        btn.onclick = () => toggleStatus(id, 'inactive');
-      } else {
-        badge.textContent = 'Inactive'; badge.className = 'badge bg-danger bg-opacity-15 text-danger fw-semibold status-badge';
-        btn.className = 'btn btn-sm btn-outline-success'; btn.innerHTML = '<i class="fas fa-check"></i> Activate';
-        btn.onclick = () => toggleStatus(id, 'active');
-      }
       showToast(`Account ${label}d successfully.`, 'success');
+      // Auto update live data and stat cards after loading ok
+      await loadAccounts();
     } catch (err) {
       hideLoading();
       showToast('Failed to update account status.', 'error');
@@ -263,35 +319,10 @@ async function submitCreateAccount() {
       return;
     }
 
-    const u = data.user;
-    const roleColors = { admin: 'primary', teacher: 'success', student: 'warning' };
-    const color = roleColors[u.role] ?? 'secondary';
-    const tbody = document.getElementById('accounts-tbody');
-    const rowCount = tbody.querySelectorAll('tr').length + 1;
-
-    const tr = document.createElement('tr');
-    tr.id = 'row-' + u.id;
-    tr.innerHTML = `
-      <td>${rowCount}</td>
-      <td><strong>${escHtml(u.name)}</strong></td>
-      <td><span style="font-family:monospace;font-size:.82rem;">${escHtml(u.username)}</span></td>
-      <td><span class="badge bg-${color} bg-opacity-15 text-${color} fw-semibold text-capitalize">${u.role}</span></td>
-      <td style="font-size:.82rem;">${escHtml(u.position || '—')}</td>
-      <td><span class="badge bg-success bg-opacity-15 text-success fw-semibold status-badge" id="badge-${u.id}">Active</span></td>
-      <td class="text-center">
-        <button class="btn btn-sm btn-outline-danger" id="btn-${u.id}" onclick="toggleStatus(${u.id}, 'inactive')">
-          <i class="fas fa-ban"></i> Deactivate
-        </button>
-      </td>`;
-    tbody.appendChild(tr);
-
-    const totalEl = document.querySelector('.stat-card.blue .stat-value');
-    const activeEl = document.querySelector('.stat-card.green .stat-value');
-    if (totalEl) totalEl.textContent = parseInt(totalEl.textContent) + 1;
-    if (activeEl) activeEl.textContent = parseInt(activeEl.textContent) + 1;
-
     caModal.hide();
-    showToast(`Account for ${u.name} created successfully!`, 'success');
+    showToast(`Account for ${data.user.name} created successfully!`, 'success');
+    // Auto update live data and stat cards
+    await loadAccounts();
 
   } catch (err) {
     showCaError('An unexpected error occurred. Please try again.');
@@ -305,6 +336,9 @@ function escHtml(str) {
   d.textContent = str ?? '';
   return d.innerHTML;
 }
+
+// Initial load
+loadAccounts();
 </script>
 </body>
 </html>

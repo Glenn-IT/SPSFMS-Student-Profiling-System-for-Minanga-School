@@ -227,7 +227,7 @@ $sectionMapJson = json_encode(SECTION_MAP);
             <thead>
               <tr>
                 <th>#</th><th>LRN</th><th>Full Name</th><th>Grade</th><th>Section</th><th>Sex</th><th>Age</th>
-                <th>Contact</th><th>Guardian</th>
+                <th>Contact No.</th><th>Guardian</th>
               </tr>
             </thead>
             <tbody id="masterlist-body">

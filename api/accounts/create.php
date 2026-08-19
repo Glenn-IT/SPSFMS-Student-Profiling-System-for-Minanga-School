@@ -56,25 +56,27 @@ $section    = null;
 $position   = null;
 
 if ($role === 'teacher') {
-    if (!$advisoryGrade || !$advisorySubject) {
+    if ((!$advisoryGrade || !$advisorySubject) && !empty($d['position'])) {
+        $position = trim($d['position']);
+    } else if (!$advisoryGrade || !$advisorySubject) {
         http_response_code(400);
-        echo json_encode(['ok' => false, 'message' => 'Grade level and advisory section are required for teachers.']);
+        echo json_encode(['ok' => false, 'message' => 'Full name and position are required for teachers.']);
         exit;
+    } else {
+        $position = $advisoryGrade . ' - Section ' . $advisorySubject;
     }
 
-    // Build readable position string
-    $position = $advisoryGrade . ' - Section ' . $advisorySubject;
-
-    // ── Duplicate advisory check ──────────────────────────────────────────────
-    $dup = $pdo->prepare("SELECT id, name FROM users WHERE role='teacher' AND advisory_grade=? AND advisory_subject=? LIMIT 1");
-    $dup->execute([$advisoryGrade, $advisorySubject]);
-    $existingAdvisor = $dup->fetch();
-    if ($existingAdvisor) {
-        http_response_code(409);
-        echo json_encode(['ok' => false, 'message' => "The section '{$advisorySubject}' in {$advisoryGrade} is already assigned to advisor '" . $existingAdvisor['name'] . "'."]);
-        exit;
+    if ($advisoryGrade && $advisorySubject) {
+        // ── Duplicate advisory check ──────────────────────────────────────────────
+        $dup = $pdo->prepare("SELECT id, name FROM users WHERE role='teacher' AND advisory_grade=? AND advisory_subject=? LIMIT 1");
+        $dup->execute([$advisoryGrade, $advisorySubject]);
+        $existingAdvisor = $dup->fetch();
+        if ($existingAdvisor) {
+            http_response_code(409);
+            echo json_encode(['ok' => false, 'message' => "The section '{$advisorySubject}' in {$advisoryGrade} is already assigned to advisor '" . $existingAdvisor['name'] . "'."]);
+            exit;
+        }
     }
-
 } else {
     // student — must link to an existing student record via LRN
     if (!$lrn) {
