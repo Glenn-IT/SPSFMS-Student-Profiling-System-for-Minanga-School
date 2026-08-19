@@ -22,6 +22,7 @@
 | v5.00 | Admin: Reports (new presentation cut - all Admin pages unlocked) | `views/admin/dashboard.php`, `views/admin/settings.php`, `views/admin/accounts.php`, `views/admin/analytics.php`, `views/admin/students.php`, `views/admin/reports.php` | all teacher; all student |
 | v6.00 | Admin: Settings Sub-settings & Auto-Refresh Loader + Location & Report Updates | `views/admin/dashboard.php`, `views/admin/settings.php`, `views/admin/accounts.php`, `views/admin/analytics.php`, `views/admin/students.php`, `views/admin/reports.php` | all teacher; all student |
 | v7.00 | Admin: All functions unlocked; Teacher: Dashboard + Student Profiles unlocked | All Admin pages; `views/teacher/dashboard.php`, `views/teacher/student-profiles.php` | grades, reports, settings (teacher); all student |
+| v7.10 | Admin: Account Management Live Stat Auto-Refresh + Contact No. Datagridview + Teacher Advisory-only Student Profiles | All Admin pages; `views/teacher/dashboard.php`, `views/teacher/student-profiles.php` | grades, reports, settings (teacher); all student |
 
 > **Note:** v2.00, v3.00, v4.00, v4.01, v5.00, and v6.00 are not continuations of `main` (which is already the full v1.10 system). They are separate presentation cuts. v2.00 is built on branch `v2.00-presentation`, created from the `v1.00` base (login/forgot/register unlocked) with only the admin dashboard and admin settings gates removed, plus the logout-modal fix cherry-picked forward. v3.00 is built on branch `v3.00-presentation`, created from `v2.00-presentation` with the recently-enrolled-students search feature cherry-picked forward, plus the admin account management gate removed. v4.00 is built on branch `v4.00-presentation`, created from `v3.00-presentation` with the admin analytics and student management gates removed. v4.01 is built on branch `v4.01-presentation`, created from `v4.00-presentation` with the name/contact input-validation fix (`views/admin/students.php`) cherry-picked forward from `main`. v5.00 is built on branch `v5.00-presentation`, created from `v4.01-presentation` with the admin reports gate removed. v6.00 is built on branch `v6.00-presentation`, created from `v5.00-presentation` with Admin Settings sub-settings tabs, auto-refresh loader, report updates, and Minanga, Piat location updates cherry-picked forward while preserving gating on teacher/student pages. To present any of these: `git checkout v2.00`, `git checkout v3.00`, `git checkout v4.00`, `git checkout v4.01`, `git checkout v5.00`, or `git checkout v6.00`. `main` is unaffected and remains the fully unlocked system.
 
@@ -81,6 +82,7 @@ Each version is a **permanent snapshot** in Git history.
 | v5.00 | v5.00 | 8074a12303b0380ac667f65989bc254fa0682066 |
 | v6.00 | v6.00 | 90e993cb254fbf8d2271aed788932720b7079af6 |
 | v7.00 | v7.00 | dc983adabbf6ff25d32c1e353ea456f334a2a5b1 |
+| v7.10 | v7.10 | cb1dd5b183f511f789831dbe5e4a241cde7c094d |
 
 > Fill commit hashes after all versions are tagged:
 > ```bash

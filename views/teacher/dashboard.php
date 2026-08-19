@@ -82,13 +82,19 @@ $pending = $totalStudents - $graded;
     </div>
 
     <div class="card">
-      <div class="card-header d-flex align-items-center justify-content-between">
+      <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
         <span><i class="fas fa-chalkboard me-2" style="color:var(--secondary);"></i>Advisory Class — <?= $advisoryGrade ?> <?= $advisorySection ?></span>
-        <a href="grades.php" class="btn btn-sm" style="background:var(--secondary);color:#fff;">Manage Grades</a>
+        <div class="d-flex align-items-center gap-2">
+          <div class="input-group input-group-sm" style="width:220px;">
+            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+            <input type="text" id="advisorySearch" class="form-control" placeholder="Search student...">
+          </div>
+          <a href="grades.php" class="btn btn-sm" style="background:var(--secondary);color:#fff;">Manage Grades</a>
+        </div>
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">
-          <table class="table table-modern mb-0">
+          <table class="table table-modern mb-0" id="advisoryTable">
             <thead><tr><th>#</th><th>LRN</th><th>Full Name</th><th>Sex</th><th>Age</th><th>Graded Subjects</th><th>Status</th></tr></thead>
             <tbody>
               <?php if (empty($classStudents)): ?>
@@ -110,6 +116,7 @@ $pending = $totalStudents - $graded;
                 <td><span class="badge-active">Active</span></td>
               </tr>
               <?php endforeach; endif; ?>
+              <tr id="advisoryNoMatch" class="d-none"><td colspan="7" class="text-center py-4 text-muted">No matching students found.</td></tr>
             </tbody>
           </table>
         </div>
@@ -120,6 +127,25 @@ $pending = $totalStudents - $graded;
 
 <script src="/SPSFMS-Student-Profiling-System-for-Minanga-School/assets/lib/bootstrap.bundle.min.js"></script>
 <script src="<?= BASE_URL ?>/assets/js/components.js"></script>
-<script>showDesktopOnlyWarning();</script>
+<script>
+showDesktopOnlyWarning();
+
+const advisorySearch = document.getElementById('advisorySearch');
+if (advisorySearch) {
+  const table = document.getElementById('advisoryTable');
+  const noMatchRow = document.getElementById('advisoryNoMatch');
+  const rows = Array.from(table.querySelectorAll('tbody tr')).filter(row => row !== noMatchRow);
+  advisorySearch.addEventListener('input', function () {
+    const term = this.value.trim().toLowerCase();
+    let visibleCount = 0;
+    rows.forEach(row => {
+      const match = row.textContent.toLowerCase().includes(term);
+      row.classList.toggle('d-none', !match);
+      if (match) visibleCount++;
+    });
+    if (noMatchRow) noMatchRow.classList.toggle('d-none', visibleCount !== 0 || rows.length === 0);
+  });
+}
+</script>
 </body>
 </html>

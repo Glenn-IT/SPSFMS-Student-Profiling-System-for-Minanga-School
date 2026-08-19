@@ -3,12 +3,46 @@ require_once __DIR__ . '/../../includes/auth_check.php';
 $user = requireAuth('teacher');
 $activePage = 'student-profiles';
 
-$grade   = $_GET['grade'] ?? '';
-$search  = $_GET['search'] ?? '';
-$where   = ['s.status = "active"'];
-$params  = [];
-if ($grade)  { $where[] = 's.grade_level = ?'; $params[] = $grade; }
-if ($search) { $where[] = '(s.first_name LIKE ? OR s.last_name LIKE ? OR s.lrn LIKE ?)'; array_push($params, "%$search%", "%$search%", "%$search%"); }
+// Fetch fresh teacher profile details to ensure up-to-date advisory assignment
+$uStmt = $pdo->prepare("SELECT * FROM users WHERE id = ? LIMIT 1");
+$uStmt->execute([$user['id']]);
+$freshUser = $uStmt->fetch() ?: $user;
+
+$advisoryGrade   = $freshUser['advisory_grade']   ?? '';
+$advisorySection = $freshUser['advisory_subject'] ?? '';
+
+// Fallback parsing from position string if advisory columns are empty
+if (!$advisoryGrade && !empty($freshUser['position'])) {
+    if (preg_match('/(Grade\s+\d+)\s*-\s*Section\s*(.+)/i', $freshUser['position'], $m)) {
+        $advisoryGrade   = trim($m[1]);
+        $advisorySection = trim($m[2]);
+    } elseif (preg_match('/(Grade\s+\d+)\s*(.+)/i', $freshUser['position'], $m)) {
+        $advisoryGrade   = trim($m[1]);
+        $advisorySection = trim($m[2]);
+    }
+}
+
+$search = $_GET['search'] ?? '';
+$where  = ['s.status = "active"'];
+$params = [];
+
+if ($advisoryGrade) {
+    $where[] = 's.grade_level = ?';
+    $params[] = $advisoryGrade;
+}
+if ($advisorySection) {
+    $where[] = 's.section = ?';
+    $params[] = $advisorySection;
+}
+if (!$advisoryGrade && !$advisorySection) {
+    $where[] = '1 = 0';
+}
+
+if ($search) {
+    $where[] = '(s.first_name LIKE ? OR s.last_name LIKE ? OR s.lrn LIKE ?)';
+    array_push($params, "%$search%", "%$search%", "%$search%");
+}
+
 $stmt = $pdo->prepare('SELECT * FROM students s WHERE '.implode(' AND ',$where).' ORDER BY s.last_name, s.first_name');
 $stmt->execute($params);
 $students = $stmt->fetchAll();
@@ -33,27 +67,29 @@ $students = $stmt->fetchAll();
       <div class="ms-auto"><div class="user-menu"><div class="user-avatar" style="background:var(--secondary);color:#fff;"><?= strtoupper(substr($user['name'],0,1)) ?></div><div><div class="user-name"><?= htmlspecialchars($user['name']) ?></div><div class="user-role">Teacher</div></div></div></div>
     </nav>
 
-    <div class="page-header"><h3>Student Profiles</h3><p>Read-only view of all student records</p></div>
+    <div class="page-header d-flex align-items-center justify-content-between">
+      <div>
+        <h3>Advisory Student Profiles</h3>
+        <p class="mb-0">Read-only student records for 
+          <?php if ($advisoryGrade && $advisorySection): ?>
+            <strong><?= htmlspecialchars($advisoryGrade) ?> — Section <?= htmlspecialchars($advisorySection) ?></strong>
+          <?php else: ?>
+            <span class="text-danger">No Advisory Class Assigned</span>
+          <?php endif; ?>
+        </p>
+      </div>
+    </div>
 
     <div class="card mb-3">
       <div class="card-body">
         <form method="get" class="row g-2 align-items-end">
-          <div class="col-md-5">
-            <label class="form-label mb-1">Search</label>
+          <div class="col-md-9">
+            <label class="form-label mb-1">Search Advisory Students</label>
             <div class="search-bar"><i class="fas fa-search"></i>
-              <input type="text" name="search" class="form-control" placeholder="Name or LRN..." value="<?= htmlspecialchars($search) ?>">
+              <input type="text" name="search" class="form-control" placeholder="Search name or LRN..." value="<?= htmlspecialchars($search) ?>">
             </div>
           </div>
-          <div class="col-md-4">
-            <label class="form-label mb-1">Grade Level</label>
-            <select name="grade" class="form-select">
-              <option value="">All Grade Levels</option>
-              <?php foreach (GRADE_LEVELS as $gl): ?>
-              <option value="<?= $gl ?>" <?= $grade===$gl?'selected':'' ?>><?= $gl ?></option>
-              <?php endforeach; ?>
-            </select>
-          </div>
-          <div class="col-md-2"><button class="btn btn-secondary w-100">Filter</button></div>
+          <div class="col-md-2"><button class="btn btn-secondary w-100">Search</button></div>
           <div class="col-md-1"><a href="student-profiles.php" class="btn btn-light w-100"><i class="fas fa-times"></i></a></div>
         </form>
       </div>
