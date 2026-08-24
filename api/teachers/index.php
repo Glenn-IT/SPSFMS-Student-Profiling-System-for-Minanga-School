@@ -12,10 +12,10 @@ $method = $_SERVER['REQUEST_METHOD'];
 if ($method === 'GET') {
     $search = trim($_GET['search'] ?? '');
     if ($search) {
-        $stmt = $pdo->prepare("SELECT id,name,username,email,position,advisory_grade,advisory_subject,status,created_at FROM users WHERE role='teacher' AND (name LIKE ? OR username LIKE ? OR position LIKE ?) ORDER BY name");
-        $stmt->execute(["%$search%","%$search%","%$search%"]);
+        $stmt = $pdo->prepare("SELECT id,name,username,email,position,advisory_grade,advisory_subject,teaching_subjects,status,created_at FROM users WHERE role='teacher' AND (name LIKE ? OR username LIKE ? OR position LIKE ? OR teaching_subjects LIKE ?) ORDER BY name");
+        $stmt->execute(["%$search%","%$search%","%$search%","%$search%"]);
     } else {
-        $stmt = $pdo->query("SELECT id,name,username,email,position,advisory_grade,advisory_subject,status,created_at FROM users WHERE role='teacher' ORDER BY name");
+        $stmt = $pdo->query("SELECT id,name,username,email,position,advisory_grade,advisory_subject,teaching_subjects,status,created_at FROM users WHERE role='teacher' ORDER BY name");
     }
     echo json_encode(['ok'=>true,'teachers'=>$stmt->fetchAll()]);
     exit;
@@ -23,13 +23,19 @@ if ($method === 'GET') {
 
 // PUT — update teacher profile
 if ($method === 'PUT') {
-    $d               = json_decode(file_get_contents('php://input'), true);
-    $id              = (int)($d['id'] ?? 0);
-    $name            = trim($d['name'] ?? '');
-    $email           = trim($d['email'] ?? '');
-    $advisoryGrade   = trim($d['advisory_grade'] ?? '');
-    $advisorySubject = trim($d['advisory_subject'] ?? '');
-    $newPw           = $d['new_password'] ?? '';
+    $d                = json_decode(file_get_contents('php://input'), true);
+    $id               = (int)($d['id'] ?? 0);
+    $name             = trim($d['name'] ?? '');
+    $email            = trim($d['email'] ?? '');
+    $advisoryGrade    = trim($d['advisory_grade'] ?? '');
+    $advisorySubject  = trim($d['advisory_subject'] ?? '');
+    $teachingSubjects = $d['teaching_subjects'] ?? '';
+    if (is_array($teachingSubjects)) {
+        $teachingSubjects = implode(', ', array_filter(array_map('trim', $teachingSubjects)));
+    } else {
+        $teachingSubjects = trim($teachingSubjects);
+    }
+    $newPw            = $d['new_password'] ?? '';
 
     if (!$id || !$name || !$email) {
         http_response_code(400); echo json_encode(['ok'=>false,'message'=>'id, name, and email required.']); exit;
@@ -59,15 +65,15 @@ if ($method === 'PUT') {
     }
 
     $position = $advisoryGrade . ' - Section ' . $advisorySubject;
-    $pdo->prepare("UPDATE users SET name=?, email=?, position=?, advisory_grade=?, advisory_subject=? WHERE id=? AND role='teacher'")
-        ->execute([$name, $email, $position, $advisoryGrade, $advisorySubject, $id]);
+    $pdo->prepare("UPDATE users SET name=?, email=?, position=?, advisory_grade=?, advisory_subject=?, teaching_subjects=? WHERE id=? AND role='teacher'")
+        ->execute([$name, $email, $position, $advisoryGrade, $advisorySubject, $teachingSubjects, $id]);
 
     if ($newPw !== '') {
         if (strlen($newPw) < 6) { echo json_encode(['ok'=>false,'message'=>'Password must be at least 6 characters.']); exit; }
         $pdo->prepare('UPDATE users SET password=? WHERE id=?')->execute([password_hash($newPw, PASSWORD_BCRYPT), $id]);
     }
 
-    $updated = $pdo->prepare('SELECT id,name,username,email,position,advisory_grade,advisory_subject,status FROM users WHERE id=?');
+    $updated = $pdo->prepare('SELECT id,name,username,email,position,advisory_grade,advisory_subject,teaching_subjects,status FROM users WHERE id=?');
     $updated->execute([$id]);
     echo json_encode(['ok'=>true,'message'=>'Teacher updated.','teacher'=>$updated->fetch()]);
     exit;

@@ -24,6 +24,12 @@ $name            = trim($d['name']       ?? '');
 $email           = trim($d['email']      ?? '');
 $advisoryGrade   = trim($d['advisory_grade']   ?? '');
 $advisorySubject = trim($d['advisory_subject']  ?? '');
+$teachingSubjects= $d['teaching_subjects']     ?? '';
+if (is_array($teachingSubjects)) {
+    $teachingSubjects = implode(', ', array_filter(array_map('trim', $teachingSubjects)));
+} else {
+    $teachingSubjects = trim($teachingSubjects);
+}
 $lrn             = trim($d['lrn']        ?? '');
 
 // ── Validate role ─────────────────────────────────────────────────────────────
@@ -115,8 +121,8 @@ if ($ck->fetch()) {
 
 // ── Insert ────────────────────────────────────────────────────────────────────
 $stmt = $pdo->prepare('INSERT INTO users
-    (role, username, password, name, email, position, advisory_grade, advisory_subject, lrn, grade_level, section, status)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,\'active\')');
+    (role, username, password, name, email, position, advisory_grade, advisory_subject, teaching_subjects, lrn, grade_level, section, status)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,\'active\')');
 $stmt->execute([
     $role,
     $username,
@@ -124,15 +130,16 @@ $stmt->execute([
     $name,
     $email,
     $position,
-    $advisoryGrade  ?: null,
+    $advisoryGrade   ?: null,
     $advisorySubject ?: null,
-    $lrn            ?: null,
+    $teachingSubjects?: null,
+    $lrn             ?: null,
     $gradeLevel,
     $section,
 ]);
 
 $newId   = $pdo->lastInsertId();
-$newUser = $pdo->prepare('SELECT id, role, username, name, email, position, advisory_grade, advisory_subject, status, created_at FROM users WHERE id = ?');
+$newUser = $pdo->prepare('SELECT id, role, username, name, email, position, advisory_grade, advisory_subject, teaching_subjects, status, created_at FROM users WHERE id = ?');
 $newUser->execute([$newId]);
 
 echo json_encode(['ok' => true, 'message' => 'Account created successfully.', 'user' => $newUser->fetch()]);

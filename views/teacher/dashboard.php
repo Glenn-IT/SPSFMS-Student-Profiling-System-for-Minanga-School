@@ -10,6 +10,8 @@ $freshUser = $uStmt->fetch() ?: $user;
 
 $advisoryGrade   = $freshUser['advisory_grade']   ?? '';
 $advisorySection = $freshUser['advisory_subject'] ?? '';
+$teachingSubjects= $freshUser['teaching_subjects']?? '';
+$teachingSubjectsList = array_filter(array_map('trim', explode(',', $teachingSubjects)));
 
 // Fallback parsing from position string if advisory columns are empty
 if (!$advisoryGrade && !empty($freshUser['position'])) {
@@ -63,21 +65,49 @@ $pending = $totalStudents - $graded;
 
     <div class="page-header">
       <h3>Welcome, <?= htmlspecialchars(explode(' ',$user['name'])[0]) ?>!</h3>
-      <p>Advisory Class: <strong><?= $advisoryGrade ?> — Section <?= $advisorySection ?></strong> · S.Y. <?= SCHOOL_YEAR ?></p>
+      <p class="mb-0">Advisory Class: <strong><?= $advisoryGrade ?> — Section <?= $advisorySection ?></strong> · S.Y. <?= SCHOOL_YEAR ?></p>
     </div>
 
     <div class="row g-3 mb-4">
-      <div class="col-md-4">
+      <div class="col-md-3">
         <div class="stat-card blue"><div class="stat-icon"><i class="fas fa-users"></i></div>
           <div><div class="stat-value"><?= $totalStudents ?></div><div class="stat-label">Total Students</div></div></div>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3">
         <div class="stat-card green"><div class="stat-icon"><i class="fas fa-check-circle"></i></div>
           <div><div class="stat-value"><?= $graded ?></div><div class="stat-label">Graded</div></div></div>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3">
         <div class="stat-card yellow"><div class="stat-icon"><i class="fas fa-clock"></i></div>
           <div><div class="stat-value"><?= $pending ?></div><div class="stat-label">Pending Grades</div></div></div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-card purple"><div class="stat-icon"><i class="fas fa-book-open"></i></div>
+          <div><div class="stat-value"><?= count($teachingSubjectsList) ?></div><div class="stat-label">Teaching Subjects</div></div></div>
+      </div>
+    </div>
+
+    <!-- Teaching Subjects Section -->
+    <div class="card mb-4">
+      <div class="card-header d-flex align-items-center justify-content-between py-3">
+        <span class="fw-bold" style="color:var(--dark);"><i class="fas fa-book-open me-2" style="color:#8e44ad;"></i>Teaching Subjects</span>
+        <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold"><?= count($teachingSubjectsList) ?> Assigned</span>
+      </div>
+      <div class="card-body">
+        <?php if (!empty($teachingSubjectsList)): ?>
+          <div class="d-flex flex-wrap gap-2">
+            <?php foreach ($teachingSubjectsList as $sub): ?>
+              <div class="d-flex align-items-center gap-2 px-3 py-2 bg-white border rounded-3 shadow-sm" style="font-size:.88rem; font-weight:600; border-left:3px solid #8e44ad !important;">
+                <i class="fas fa-journal-whills" style="color:#8e44ad;"></i>
+                <span><?= htmlspecialchars($sub) ?></span>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        <?php else: ?>
+          <div class="text-muted py-1" style="font-style:italic; font-size:.85rem;">
+            <i class="fas fa-info-circle me-1"></i> No teaching subjects assigned yet.
+          </div>
+        <?php endif; ?>
       </div>
     </div>
 

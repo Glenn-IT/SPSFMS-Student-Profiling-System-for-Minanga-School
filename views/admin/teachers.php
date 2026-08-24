@@ -10,6 +10,12 @@ $gradeJson = json_encode(GRADE_LEVELS);
   <?php $pageTitle = 'Teacher Management — Admin'; include __DIR__ . '/../../includes/head.php'; ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/theme.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin.css">
+  <style>
+    .custom-combobox .dropdown-menu { border-radius: 10px; border: 1px solid var(--gray-300); }
+    .custom-combobox .combobox-item:hover { background-color: var(--gray-100); }
+    .custom-combobox .combobox-item label { cursor: pointer; user-select: none; }
+    .custom-combobox .combobox-item input[type="checkbox"] { cursor: pointer; }
+  </style>
 </head>
 <body>
 <div id="desktop-only-overlay"><i class="fas fa-desktop"></i><h4>Desktop Required</h4><p>Please use a computer (1024px+).</p></div>
@@ -44,7 +50,7 @@ $gradeJson = json_encode(GRADE_LEVELS);
           <div class="col-md-5">
             <label class="form-label mb-1">Search</label>
             <div class="search-bar"><i class="fas fa-search"></i>
-              <input type="text" id="search-input" class="form-control" placeholder="Search by name, username, grade, or section...">
+              <input type="text" id="search-input" class="form-control" placeholder="Search by name, username, grade, section, or subject...">
             </div>
           </div>
           <div class="col-md-3">
@@ -71,11 +77,11 @@ $gradeJson = json_encode(GRADE_LEVELS);
           <table class="table table-modern mb-0">
             <thead>
               <tr>
-                <th>#</th><th>Name</th><th>Username</th><th>Grade</th><th>Advisory Section</th><th>Status</th><th class="text-center">Actions</th>
+                <th>#</th><th>Name</th><th>Username</th><th>Grade</th><th>Advisory Section</th><th>Teaching Subjects</th><th>Status</th><th class="text-center">Actions</th>
               </tr>
             </thead>
             <tbody id="teachers-tbody">
-              <tr><td colspan="7" class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Loading...</td></tr>
+              <tr><td colspan="8" class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Loading...</td></tr>
             </tbody>
           </table>
         </div>
@@ -109,6 +115,26 @@ $gradeJson = json_encode(GRADE_LEVELS);
             <select id="at-section" class="form-select" disabled>
               <option value="">— Select Grade first —</option>
             </select>
+          </div>
+        </div>
+        <!-- Teaching Subjects Combobox checklist (G7-G12) -->
+        <div class="mb-3">
+          <label class="form-label">Teaching Subjects <span class="text-muted fw-normal">(G7 – G12)</span></label>
+          <div class="dropdown custom-combobox" id="at-subjects-dropdown">
+            <button class="btn btn-outline-secondary w-100 text-start d-flex align-items-center justify-content-between combobox-toggle" type="button" id="at-subjects-btn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="background:#fff; border-color:var(--gray-300); min-height:38px;">
+              <span class="combobox-label text-truncate" id="at-subjects-label" style="color:var(--gray-600); font-size:.875rem;">Select subjects taught...</span>
+              <i class="fas fa-chevron-down ms-2 text-muted" style="font-size:.75rem;"></i>
+            </button>
+            <div class="dropdown-menu w-100 p-2 shadow-lg combobox-menu" style="max-height: 280px; overflow-y: auto; z-index: 1060;">
+              <div class="p-1 mb-2 sticky-top bg-white border-bottom pb-2">
+                <input type="text" class="form-control form-control-sm combobox-search" placeholder="Search subjects (Math, Science, MAPEH...)" oninput="filterComboboxSubjects(this, 'at')">
+                <div class="d-flex justify-content-between align-items-center mt-1 pt-1">
+                  <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" style="font-size:.75rem;" onclick="selectAllComboboxSubjects('at', true)">Select All</button>
+                  <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-danger" style="font-size:.75rem;" onclick="selectAllComboboxSubjects('at', false)">Clear All</button>
+                </div>
+              </div>
+              <div class="combobox-options-list" id="at-subjects-list"></div>
+            </div>
           </div>
         </div>
         <div class="mb-3">
@@ -175,6 +201,26 @@ $gradeJson = json_encode(GRADE_LEVELS);
             <select id="et-section" class="form-select" disabled>
               <option value="">— Select Grade first —</option>
             </select>
+          </div>
+        </div>
+        <!-- Teaching Subjects Combobox checklist (G7-G12) -->
+        <div class="mb-3">
+          <label class="form-label">Teaching Subjects <span class="text-muted fw-normal">(G7 – G12)</span></label>
+          <div class="dropdown custom-combobox" id="et-subjects-dropdown">
+            <button class="btn btn-outline-secondary w-100 text-start d-flex align-items-center justify-content-between combobox-toggle" type="button" id="et-subjects-btn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="background:#fff; border-color:var(--gray-300); min-height:38px;">
+              <span class="combobox-label text-truncate" id="et-subjects-label" style="color:var(--gray-600); font-size:.875rem;">Select subjects taught...</span>
+              <i class="fas fa-chevron-down ms-2 text-muted" style="font-size:.75rem;"></i>
+            </button>
+            <div class="dropdown-menu w-100 p-2 shadow-lg combobox-menu" style="max-height: 280px; overflow-y: auto; z-index: 1060;">
+              <div class="p-1 mb-2 sticky-top bg-white border-bottom pb-2">
+                <input type="text" class="form-control form-control-sm combobox-search" placeholder="Search subjects (Math, Science, MAPEH...)" oninput="filterComboboxSubjects(this, 'et')">
+                <div class="d-flex justify-content-between align-items-center mt-1 pt-1">
+                  <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" style="font-size:.75rem;" onclick="selectAllComboboxSubjects('et', true)">Select All</button>
+                  <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-danger" style="font-size:.75rem;" onclick="selectAllComboboxSubjects('et', false)">Clear All</button>
+                </div>
+              </div>
+              <div class="combobox-options-list" id="et-subjects-list"></div>
+            </div>
           </div>
         </div>
         <hr>
@@ -278,6 +324,112 @@ async function loadSectionsFor(sectionSelId, gradeSelId, preselect = '') {
   secSel.disabled = false;
 }
 
+const G7_G12_SUBJECTS = {
+  'Junior High School (Grade 7 – 10)': [
+    'Filipino', 'English', 'Mathematics', 'Science',
+    'Araling Panlipunan', 'Edukasyon sa Pagpapakatao',
+    'Technology and Livelihood Education', 'MAPEH'
+  ],
+  'Senior High School (Grade 11 – 12)': [
+    'Oral Communication', 'Reading and Writing', 'Komunikasyon at Pananaliksik',
+    '21st Century Literature', 'Contemporary Philippine Arts',
+    'Media and Information Literacy', 'General Mathematics',
+    'Statistics and Probability', 'Earth and Life Science',
+    'Physical Science', 'Introduction to Philosophy', 'Physical Education and Health'
+  ]
+};
+
+function renderComboboxOptions(prefix) {
+  const container = document.getElementById(`${prefix}-subjects-list`);
+  if (!container) return;
+  let html = '';
+  let idx = 0;
+  for (const [groupName, subjects] of Object.entries(G7_G12_SUBJECTS)) {
+    html += `<div class="combobox-group-label fw-bold text-uppercase text-muted px-2 py-1 mb-1 rounded" style="font-size:.68rem; background:#f1f5f9; letter-spacing:0.5px;">${groupName}</div>`;
+    subjects.forEach(sub => {
+      idx++;
+      const id = `${prefix}-sub-${idx}`;
+      html += `<div class="form-check px-4 py-1 combobox-item rounded" style="transition:background .15s;">
+        <input class="form-check-input subject-checkbox" type="checkbox" value="${escHtml(sub)}" id="${id}" onchange="updateComboboxLabel('${prefix}')">
+        <label class="form-check-label w-100 ms-1 cursor-pointer select-none" for="${id}" style="font-size:.85rem; cursor:pointer;">${escHtml(sub)}</label>
+      </div>`;
+    });
+  }
+  container.innerHTML = html;
+}
+
+function updateComboboxLabel(prefix) {
+  const checkboxes = document.querySelectorAll(`#${prefix}-subjects-list .subject-checkbox:checked`);
+  const labelEl = document.getElementById(`${prefix}-subjects-label`);
+  const selected = Array.from(checkboxes).map(cb => cb.value);
+
+  if (selected.length === 0) {
+    labelEl.innerHTML = '<span class="text-muted">Select subjects taught (G7–G12)...</span>';
+  } else if (selected.length <= 2) {
+    labelEl.innerHTML = selected.map(s => `<span class="badge bg-primary bg-opacity-10 text-primary me-1 fw-medium" style="font-size:.75rem;">${escHtml(s)}</span>`).join('');
+  } else {
+    labelEl.innerHTML = `<span class="badge bg-primary me-1">${selected.length} Selected</span> <span class="text-dark" style="font-size:.8rem;">(${escHtml(selected.slice(0,2).join(', '))} +${selected.length - 2} more)</span>`;
+  }
+}
+
+function setSelectedSubjects(prefix, subjectsList = '') {
+  let selected = [];
+  if (Array.isArray(subjectsList)) {
+    selected = subjectsList;
+  } else if (typeof subjectsList === 'string' && subjectsList.trim() !== '') {
+    selected = subjectsList.split(',').map(s => s.trim());
+  }
+  const checkboxes = document.querySelectorAll(`#${prefix}-subjects-list .subject-checkbox`);
+  checkboxes.forEach(cb => {
+    cb.checked = selected.includes(cb.value);
+  });
+  updateComboboxLabel(prefix);
+}
+
+function getSelectedSubjects(prefix) {
+  const checkboxes = document.querySelectorAll(`#${prefix}-subjects-list .subject-checkbox:checked`);
+  return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function filterComboboxSubjects(inputEl, prefix) {
+  const filter = inputEl.value.toLowerCase().trim();
+  const items = document.querySelectorAll(`#${prefix}-subjects-list .combobox-item`);
+  const groupLabels = document.querySelectorAll(`#${prefix}-subjects-list .combobox-group-label`);
+
+  items.forEach(item => {
+    const text = item.textContent.toLowerCase();
+    item.classList.toggle('d-none', !text.includes(filter));
+  });
+
+  groupLabels.forEach(label => {
+    let nextEl = label.nextElementSibling;
+    let hasVisible = false;
+    while (nextEl && !nextEl.classList.contains('combobox-group-label')) {
+      if (!nextEl.classList.contains('d-none')) {
+        hasVisible = true;
+        break;
+      }
+      nextEl = nextEl.nextElementSibling;
+    }
+    label.classList.toggle('d-none', !hasVisible);
+  });
+}
+
+function selectAllComboboxSubjects(prefix, checkAll) {
+  const checkboxes = document.querySelectorAll(`#${prefix}-subjects-list .subject-checkbox`);
+  checkboxes.forEach(cb => {
+    const parentItem = cb.closest('.combobox-item');
+    if (!parentItem || !parentItem.classList.contains('d-none')) {
+      cb.checked = checkAll;
+    }
+  });
+  updateComboboxLabel(prefix);
+}
+
+// Render options for Add and Edit modal comboboxes
+renderComboboxOptions('at');
+renderComboboxOptions('et');
+
 /* ══ ADD TEACHER ══ */
 function openAddTeacherModal() {
   if (!addTeacherModal) addTeacherModal = new bootstrap.Modal(document.getElementById('addTeacherModal'));
@@ -285,6 +437,7 @@ function openAddTeacherModal() {
   document.getElementById('at-grade').value    = '';
   document.getElementById('at-section').innerHTML = '<option value="">— Select Grade first —</option>';
   document.getElementById('at-section').disabled  = true;
+  setSelectedSubjects('at', []);
   document.getElementById('at-error').classList.add('d-none');
   document.getElementById('at-submit-btn').disabled = false;
   document.getElementById('at-submit-btn').innerHTML = '<i class="fas fa-user-plus me-1"></i> Add Teacher';
@@ -296,6 +449,7 @@ async function submitAddTeacher() {
   const name            = document.getElementById('at-name').value.trim();
   const advisory_grade  = document.getElementById('at-grade').value;
   const advisory_subject= document.getElementById('at-section').value;
+  const teaching_subjects= getSelectedSubjects('at');
   const username        = document.getElementById('at-username').value.trim();
   const email           = document.getElementById('at-email').value.trim();
   const password        = document.getElementById('at-password').value;
@@ -314,7 +468,7 @@ async function submitAddTeacher() {
   try {
     const res  = await fetch(`${BASE}/api/accounts/create.php`, {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ role:'teacher', name, advisory_grade, advisory_subject, username, email, password })
+      body: JSON.stringify({ role:'teacher', name, advisory_grade, advisory_subject, teaching_subjects, username, email, password })
     });
     const data = await res.json();
     if (!data.ok) {
@@ -344,7 +498,7 @@ async function loadTeachers() {
     renderTable();
   } catch {
     document.getElementById('teachers-tbody').innerHTML =
-      '<tr><td colspan="7" class="text-center text-danger py-3">Failed to load teachers.</td></tr>';
+      '<tr><td colspan="8" class="text-center text-danger py-3">Failed to load teachers.</td></tr>';
   }
 }
 
@@ -354,17 +508,31 @@ function renderTable() {
   const tbody = document.getElementById('teachers-tbody');
   document.getElementById('count-display').textContent = filtered.length;
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="fas fa-chalkboard-teacher"></i><p>No teachers found.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fas fa-chalkboard-teacher"></i><p>No teachers found.</p></div></td></tr>`;
     return;
   }
   tbody.innerHTML = filtered.map((t, i) => {
     const isActive = t.status === 'active';
+    let teachingSubStr = t.teaching_subjects || '';
+    let teachingBadges = '<span class="text-muted" style="font-size:.8rem;">—</span>';
+    if (teachingSubStr) {
+      let list = teachingSubStr.split(',').map(s=>s.trim()).filter(Boolean);
+      if (list.length > 0) {
+        if (list.length <= 2) {
+          teachingBadges = list.map(s => `<span class="badge bg-secondary bg-opacity-10 text-dark border me-1 fw-normal" style="font-size:.73rem;">${escHtml(s)}</span>`).join('');
+        } else {
+          teachingBadges = `<span class="badge bg-primary bg-opacity-15 text-primary fw-semibold me-1" style="font-size:.75rem;" title="${escHtml(list.join(', '))}">${list.length} Subjects</span>` +
+                           `<span class="text-muted" style="font-size:.78rem;" title="${escHtml(list.join(', '))}">${escHtml(list.slice(0,2).join(', '))}...</span>`;
+        }
+      }
+    }
     return `<tr id="teacher-row-${t.id}">
       <td>${i + 1}</td>
       <td><strong>${escHtml(t.name)}</strong></td>
       <td><span style="font-family:monospace;font-size:.82rem;">${escHtml(t.username)}</span></td>
       <td><span class="badge bg-primary bg-opacity-10 text-primary fw-semibold" style="font-size:.78rem;">${escHtml(t.advisory_grade || '—')}</span></td>
       <td style="font-size:.85rem;">${escHtml(t.advisory_subject || '—')}</td>
+      <td>${teachingBadges}</td>
       <td>
         <span class="badge ${isActive?'bg-success':'bg-danger'} bg-opacity-15 text-${isActive?'success':'danger'} fw-semibold" id="t-badge-${t.id}">
           ${isActive ? 'Active' : 'Inactive'}
@@ -416,6 +584,7 @@ async function openEditModal(id) {
   document.getElementById('et-email').value     = t.email || '';
   document.getElementById('et-new-pw').value    = '';
   document.getElementById('et-confirm-pw').value= '';
+  setSelectedSubjects('et', t.teaching_subjects || '');
   document.getElementById('et-error').classList.add('d-none');
   document.getElementById('et-save-btn').disabled = false;
   document.getElementById('et-save-btn').innerHTML = '<i class="fas fa-save me-1"></i> Save Changes';
@@ -439,14 +608,13 @@ async function saveTeacher() {
   const email           = document.getElementById('et-email').value.trim();
   const advisory_grade  = document.getElementById('et-grade').value;
   const advisory_subject= document.getElementById('et-section').value;
+  const teaching_subjects= getSelectedSubjects('et');
   const newPw           = document.getElementById('et-new-pw').value;
   const confirmPw       = document.getElementById('et-confirm-pw').value;
 
   if (!name || !email)   return showError('et-error','Name and email are required.');
   if (!advisory_grade)   return showError('et-error','Please select a grade level.');
   if (!advisory_subject) return showError('et-error','Please select an advisory section.');
-  if (newPw && newPw.length < 6) return showError('et-error','New password must be at least 6 characters.');
-  if (newPw && newPw !== confirmPw) return showError('et-error','Passwords do not match.');
   if (newPw && newPw.length < 6) return showError('et-error','New password must be at least 6 characters.');
   if (newPw && newPw !== confirmPw) return showError('et-error','Passwords do not match.');
 
@@ -456,7 +624,7 @@ async function saveTeacher() {
   try {
     const res  = await fetch(`${BASE}/api/teachers/index.php`, {
       method:'PUT', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ id, name, email, advisory_grade, advisory_subject, new_password: newPw })
+      body: JSON.stringify({ id, name, email, advisory_grade, advisory_subject, teaching_subjects, new_password: newPw })
     });
     const data = await res.json();
     if (!data.ok) {

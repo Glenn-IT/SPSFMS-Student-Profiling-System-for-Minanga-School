@@ -94,6 +94,8 @@ body {
 .stat-card.yellow .stat-icon { background: var(--warning-light); color: #b06a00; }
 .stat-card.red { border-left-color: var(--danger); }
 .stat-card.red .stat-icon { background: var(--danger-light); color: var(--danger); }
+.stat-card.purple { border-left-color: #8e44ad; }
+.stat-card.purple .stat-icon { background: #f3e8ff; color: #8e44ad; }
 
 /* ── Buttons ── */
 .btn { border-radius: var(--radius); font-size: 0.875rem; font-weight: 500; transition: all var(--transition); }
