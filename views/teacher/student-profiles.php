@@ -8,37 +8,37 @@ $uStmt = $pdo->prepare("SELECT * FROM users WHERE id = ? LIMIT 1");
 $uStmt->execute([$user['id']]);
 $freshUser = $uStmt->fetch() ?: $user;
 
-$advisoryGrade   = $freshUser['advisory_grade']   ?? '';
-$advisorySection = $freshUser['advisory_subject'] ?? '';
-
-// Fallback parsing from position string if advisory columns are empty
-if (!$advisoryGrade && !empty($freshUser['position'])) {
-    if (preg_match('/(Grade\s+\d+)\s*-\s*Section\s*(.+)/i', $freshUser['position'], $m)) {
-        $advisoryGrade   = trim($m[1]);
-        $advisorySection = trim($m[2]);
-    } elseif (preg_match('/(Grade\s+\d+)\s*(.+)/i', $freshUser['position'], $m)) {
-        $advisoryGrade   = trim($m[1]);
-        $advisorySection = trim($m[2]);
-    }
+// Get all advisory classes
+$myClasses = getTeacherAdvisoryClasses($pdo, $freshUser['id']);
+if (empty($myClasses)) {
+    $myClasses = [['grade_level' => 'Grade 1', 'section' => 'Mabini']];
 }
 
-$search = $_GET['search'] ?? '';
+$selectedClass = $_GET['class'] ?? 'all';
 $where  = ['s.status = "active"'];
 $params = [];
 
-if ($advisoryGrade) {
-    $where[] = 's.grade_level = ?';
-    $params[] = $advisoryGrade;
-}
-if ($advisorySection) {
-    $where[] = 's.section = ?';
-    $params[] = $advisorySection;
-}
-if (!$advisoryGrade && !$advisorySection) {
-    $where[] = '1 = 0';
+if ($selectedClass !== 'all' && is_numeric($selectedClass) && isset($myClasses[(int)$selectedClass])) {
+    $c = $myClasses[(int)$selectedClass];
+    $where[] = 's.grade_level = ? AND s.section = ?';
+    $params[] = $c['grade_level'];
+    $params[] = $c['section'];
+} else {
+    // Show all students across all assigned advisory classes
+    $classOr = [];
+    foreach ($myClasses as $c) {
+        $classOr[] = '(s.grade_level = ? AND s.section = ?)';
+        $params[] = $c['grade_level'];
+        $params[] = $c['section'];
+    }
+    if (!empty($classOr)) {
+        $where[] = '(' . implode(' OR ', $classOr) . ')';
+    } else {
+        $where[] = '1 = 0';
+    }
 }
 
-$stmt = $pdo->prepare('SELECT * FROM students s WHERE '.implode(' AND ',$where).' ORDER BY s.last_name, s.first_name');
+$stmt = $pdo->prepare('SELECT * FROM students s WHERE '.implode(' AND ',$where).' ORDER BY s.grade_level, s.section, s.last_name, s.first_name');
 $stmt->execute($params);
 $students = $stmt->fetchAll();
 ?>
@@ -62,17 +62,39 @@ $students = $stmt->fetchAll();
       <div class="ms-auto"><div class="user-menu"><div class="user-avatar" style="background:var(--secondary);color:#fff;"><?= strtoupper(substr($user['name'],0,1)) ?></div><div><div class="user-name"><?= htmlspecialchars($user['name']) ?></div><div class="user-role">Teacher</div></div></div></div>
     </nav>
 
-    <div class="page-header d-flex align-items-center justify-content-between">
-      <div>
-        <h3>Advisory Student Profiles</h3>
-        <p class="mb-0">Read-only student records for 
-          <?php if ($advisoryGrade && $advisorySection): ?>
-            <strong><?= htmlspecialchars($advisoryGrade) ?> — Section <?= htmlspecialchars($advisorySection) ?></strong>
-          <?php else: ?>
-            <span class="text-danger">No Advisory Class Assigned</span>
-          <?php endif; ?>
-        </p>
+    <div class="page-header d-flex flex-column gap-2">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+          <h3 class="mb-1">Advisory Student Profiles</h3>
+          <p class="mb-0 text-muted">Read-only student records for your assigned advisory classes</p>
+        </div>
+        <div>
+          <span class="badge bg-secondary bg-opacity-10 text-dark border px-3 py-2 fw-semibold" style="font-size:.82rem;">
+            <i class="fas fa-chalkboard-teacher me-1" style="color:var(--secondary);"></i>
+            <?= count($myClasses) ?> Advisory <?= count($myClasses) === 1 ? 'Class' : 'Classes' ?>
+          </span>
+        </div>
       </div>
+
+      <!-- Multiple Advisory Classes Switcher Tabs -->
+      <?php if (count($myClasses) > 1): ?>
+        <div class="p-2 bg-white rounded-3 border shadow-sm mt-2">
+          <div class="d-flex align-items-center flex-wrap gap-2">
+            <span class="text-muted fw-bold small me-1 ps-1"><i class="fas fa-filter me-1 text-success"></i>Filter by Class:</span>
+            <a href="?class=all" class="btn btn-sm <?= $selectedClass === 'all' ? 'btn-success text-white fw-bold shadow-sm' : 'btn-light border text-dark' ?>" style="border-radius: 20px; font-size: .84rem; padding: 4px 12px;">
+              <i class="fas fa-users me-1"></i>All My Classes
+            </a>
+            <?php foreach ($myClasses as $idx => $cls):
+              $isAct = ($selectedClass === (string)$idx);
+            ?>
+              <a href="?class=<?= $idx ?>" class="btn btn-sm <?= $isAct ? 'btn-success text-white fw-bold shadow-sm' : 'btn-light border text-dark' ?>" style="border-radius: 20px; font-size: .84rem; padding: 4px 12px;">
+                <i class="fas fa-chalkboard me-1 <?= $isAct ? 'text-white' : 'text-success' ?>"></i>
+                <?= htmlspecialchars($cls['grade_level']) ?> — <?= htmlspecialchars($cls['section']) ?>
+              </a>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      <?php endif; ?>
     </div>
 
     <div class="card mb-3">
@@ -92,7 +114,14 @@ $students = $stmt->fetchAll();
     </div>
 
     <div class="card">
-      <div class="card-header"><i class="fas fa-users me-2" style="color:var(--secondary);"></i>Students (<span id="record-count"><?= count($students) ?></span> records)</div>
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="fas fa-users me-2" style="color:var(--secondary);"></i>Students (<span id="record-count"><?= count($students) ?></span> records)</span>
+        <?php if ($selectedClass !== 'all' && is_numeric($selectedClass) && isset($myClasses[(int)$selectedClass])): ?>
+          <span class="badge bg-success bg-opacity-15 text-success fw-semibold">
+            <?= htmlspecialchars($myClasses[(int)$selectedClass]['grade_level']) ?> - <?= htmlspecialchars($myClasses[(int)$selectedClass]['section']) ?>
+          </span>
+        <?php endif; ?>
+      </div>
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table table-modern mb-0">

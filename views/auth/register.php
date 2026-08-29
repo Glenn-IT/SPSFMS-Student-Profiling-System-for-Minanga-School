@@ -82,22 +82,17 @@ $cfg = [
           <input type="text" id="name" class="form-control" placeholder="Juan Dela Cruz" required>
         </div>
       </div>
-      <div class="row g-2 mb-3">
-        <div class="col-6">
-          <label class="form-label">Grade <span class="text-danger">*</span></label>
-          <select id="advisory_grade" class="form-select" onchange="loadSectionsFor('advisory_subject','advisory_grade')" required>
-            <option value="">— Grade —</option>
-            <?php foreach (GRADE_LEVELS as $g): ?>
-            <option value="<?= htmlspecialchars($g) ?>"><?= htmlspecialchars($g) ?></option>
-            <?php endforeach; ?>
-          </select>
+      <div class="mb-3 p-3 bg-light rounded-3 border">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <label class="form-label mb-0 fw-semibold text-dark">
+            <i class="fas fa-chalkboard text-primary me-1"></i>Advisory Classes <span class="text-danger">*</span>
+            <small class="text-muted fw-normal ms-1">(1 to 3 classes)</small>
+          </label>
+          <button type="button" class="btn btn-sm btn-outline-primary" id="reg-add-class-btn" onclick="addRegClassRow()">
+            <i class="fas fa-plus me-1"></i>Add Class
+          </button>
         </div>
-        <div class="col-6">
-          <label class="form-label">Advisory Section <span class="text-danger">*</span></label>
-          <select id="advisory_subject" class="form-select" disabled required>
-            <option value="">— Select Grade —</option>
-          </select>
-        </div>
+        <div id="reg-classes-container" class="d-flex flex-column gap-2"></div>
       </div>
     <?php else: ?>
       <div class="mb-3">
@@ -199,9 +194,27 @@ $cfg = [
     'Grade 8': ['Luna', 'Rizal'],
     'Grade 9': ['Luna', 'Bonifacio'],
     'Grade 10': ['Mabini', 'Rizal'],
-    'Grade 11': ['STEM', 'ABM', 'HUMSS', 'GAS', 'TVL'],
-    'Grade 12': ['STEM', 'ABM', 'HUMSS', 'GAS', 'TVL']
+    'Grade 11': ['STEM', 'ABM', 'HUMSS', 'GAS', 'TVL - ICT', 'TVL - HE'],
+    'Grade 12': ['STEM', 'ABM', 'HUMSS', 'GAS', 'TVL - ICT', 'TVL - HE']
   };
+
+  async function fetchSections(gradeVal) {
+    if (!gradeVal) return [];
+    let dbList = [];
+    try {
+      const res  = await fetch(`${BASE}/api/sections/index.php?grade_level=${encodeURIComponent(gradeVal)}`);
+      const data = await res.json();
+      if (data.ok && data.sections && data.sections.length > 0) {
+        dbList = data.sections.map(s => s.section_name);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    if (dbList.length > 0) {
+      return dbList;
+    }
+    return DEFAULT_SECTIONS[gradeVal] ? [...DEFAULT_SECTIONS[gradeVal]] : [];
+  }
 
   async function loadSectionsFor(sectionSelId, gradeSelId) {
     const gradeVal = document.getElementById(gradeSelId).value;
@@ -214,23 +227,8 @@ $cfg = [
       return;
     }
 
-    let list = [];
-    try {
-      const res  = await fetch(`${BASE}/api/sections/index.php?grade_level=${encodeURIComponent(gradeVal)}`);
-      const data = await res.json();
-      if (data.ok && data.sections && data.sections.length > 0) {
-        list = data.sections.map(s => s.section_name);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-
-    const defs = DEFAULT_SECTIONS[gradeVal] || ['Rizal', 'Mabini', 'Bonifacio', 'Luna', 'STEM', 'ABM', 'HUMSS'];
-    defs.forEach(d => {
-      if (!list.includes(d)) list.push(d);
-    });
-
-    secSel.innerHTML = '<option value="">— Select Advisory Section —</option>';
+    const list = await fetchSections(gradeVal);
+    secSel.innerHTML = '<option value="">— Select Section —</option>';
     list.forEach(secName => {
       const opt = document.createElement('option');
       opt.value = secName;
@@ -238,6 +236,99 @@ $cfg = [
       secSel.appendChild(opt);
     });
     secSel.disabled = false;
+  }
+
+  /* ── Teacher Multiple Advisory Classes State ── */
+  let regClassState = [{ grade: '', section: '' }];
+
+  async function renderRegClassRows() {
+    const container = document.getElementById('reg-classes-container');
+    const addBtn    = document.getElementById('reg-add-class-btn');
+    if (!container) return;
+
+    if (addBtn) {
+      addBtn.disabled = regClassState.length >= 3;
+    }
+
+    container.innerHTML = '';
+    for (let idx = 0; idx < regClassState.length; idx++) {
+      const item = regClassState[idx];
+      const rowEl = document.createElement('div');
+      rowEl.className = 'row g-2 align-items-center bg-white p-2 rounded-2 border shadow-sm';
+
+      let gradeOptions = `<option value="">— Select Grade —</option>`;
+      GRADE_LEVELS.forEach(g => {
+        gradeOptions += `<option value="${g}" ${item.grade === g ? 'selected' : ''}>${g}</option>`;
+      });
+
+      let secDisabled = !item.grade ? 'disabled' : '';
+      let secOptions = !item.grade ? `<option value="">— Select Grade first —</option>` : `<option value="">— Select Section —</option>`;
+
+      rowEl.innerHTML = `
+        <div class="col-12 col-md-5">
+          <label class="form-label mb-1 small text-muted">Class ${idx + 1} Grade</label>
+          <select class="form-select form-select-sm reg-grade-sel" onchange="onRegGradeChange(${idx}, this.value)">
+            ${gradeOptions}
+          </select>
+        </div>
+        <div class="col-10 col-md-6">
+          <label class="form-label mb-1 small text-muted">Section</label>
+          <select class="form-select form-select-sm reg-section-sel" ${secDisabled} onchange="onRegSectionChange(${idx}, this.value)">
+            ${secOptions}
+          </select>
+        </div>
+        <div class="col-2 col-md-1 text-end d-flex align-items-end justify-content-end">
+          ${regClassState.length > 1 ? `
+            <button type="button" class="btn btn-outline-danger btn-sm p-1 px-2" style="margin-top: 1.4rem;" onclick="removeRegClassRow(${idx})" title="Remove class">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          ` : `<div style="width:24px;"></div>`}
+        </div>
+      `;
+
+      container.appendChild(rowEl);
+
+      if (item.grade) {
+        const secSel = rowEl.querySelector('.reg-section-sel');
+        fetchSections(item.grade).then(secList => {
+          if (item.section && !secList.includes(item.section)) secList.push(item.section);
+          secSel.innerHTML = `<option value="">— Select Section —</option>` +
+            secList.map(s => `<option value="${s}" ${item.section === s ? 'selected' : ''}>${s}</option>`).join('');
+          secSel.disabled = false;
+        });
+      }
+    }
+  }
+
+  function onRegGradeChange(idx, val) {
+    if (regClassState[idx]) {
+      regClassState[idx].grade = val;
+      regClassState[idx].section = '';
+    }
+    renderRegClassRows();
+  }
+
+  function onRegSectionChange(idx, val) {
+    if (regClassState[idx]) {
+      regClassState[idx].section = val;
+    }
+  }
+
+  function addRegClassRow() {
+    if (regClassState.length >= 3) return;
+    regClassState.push({ grade: '', section: '' });
+    renderRegClassRows();
+  }
+
+  function removeRegClassRow(idx) {
+    if (regClassState.length > 1) {
+      regClassState.splice(idx, 1);
+      renderRegClassRows();
+    }
+  }
+
+  if (ROLE === 'teacher') {
+    renderRegClassRows();
   }
 
   function togglePw(inputId, eyeId) {
@@ -281,16 +372,28 @@ $cfg = [
 
     if (ROLE === 'teacher') {
       const name = document.getElementById('name').value.trim();
-      const advisory_grade = document.getElementById('advisory_grade').value;
-      const advisory_subject = document.getElementById('advisory_subject').value;
+      const advisory_classes = [];
+      for (const item of regClassState) {
+        if (item.grade || item.section) {
+          advisory_classes.push({ grade_level: (item.grade||'').trim(), section: (item.section||'').trim() });
+        }
+      }
 
       if (!name) return showError('Full name is required.');
-      if (!advisory_grade) return showError('Please select a grade level.');
-      if (!advisory_subject) return showError('Please select an advisory section.');
+      if (!advisory_classes.length) return showError('Please assign at least one advisory class.');
+      for (let i = 0; i < advisory_classes.length; i++) {
+        if (!advisory_classes[i].grade_level) return showError(`Please select grade level for Class ${i+1}.`);
+        if (!advisory_classes[i].section) return showError(`Please select advisory section for Class ${i+1}.`);
+      }
+      const seen = {};
+      for (const c of advisory_classes) {
+        const k = c.grade_level + '|' + c.section;
+        if (seen[k]) return showError(`Duplicate advisory class selected: ${c.grade_level} - ${c.section}.`);
+        seen[k] = true;
+      }
 
       payload.name = name;
-      payload.advisory_grade = advisory_grade;
-      payload.advisory_subject = advisory_subject;
+      payload.advisory_classes = advisory_classes;
     } else {
       payload.lrn = document.getElementById('lrn').value.trim();
     }

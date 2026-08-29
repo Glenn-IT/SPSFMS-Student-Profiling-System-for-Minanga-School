@@ -8,23 +8,31 @@ $uStmt = $pdo->prepare("SELECT * FROM users WHERE id = ? LIMIT 1");
 $uStmt->execute([$user['id']]);
 $freshUser = $uStmt->fetch() ?: $user;
 
-$advisoryGrade   = $freshUser['advisory_grade']   ?? '';
-$advisorySection = $freshUser['advisory_subject'] ?? '';
-$teachingSubjects= $freshUser['teaching_subjects']?? '';
-$teachingSubjectsList = array_filter(array_map('trim', explode(',', $teachingSubjects)));
+// Get all advisory classes assigned to teacher
+$myClasses = getTeacherAdvisoryClasses($pdo, $freshUser['id']);
+if (empty($myClasses)) {
+    $myClasses = [['grade_level' => 'Grade 1', 'section' => 'Mabini']];
+}
 
-// Fallback parsing from position string if advisory columns are empty
-if (!$advisoryGrade && !empty($freshUser['position'])) {
-    if (preg_match('/(Grade\s+\d+)\s*-\s*Section\s*(.+)/i', $freshUser['position'], $m)) {
-        $advisoryGrade   = trim($m[1]);
-        $advisorySection = trim($m[2]);
-    } elseif (preg_match('/(Grade\s+\d+)\s*(.+)/i', $freshUser['position'], $m)) {
-        $advisoryGrade   = trim($m[1]);
-        $advisorySection = trim($m[2]);
+// Determine active advisory class from GET param (?class=index or ?grade=...&section=...)
+$selectedClassIndex = 0;
+if (isset($_GET['class']) && is_numeric($_GET['class'])) {
+    $cIdx = (int)$_GET['class'];
+    if (isset($myClasses[$cIdx])) {
+        $selectedClassIndex = $cIdx;
+    }
+} elseif (!empty($_GET['grade']) && !empty($_GET['section'])) {
+    foreach ($myClasses as $idx => $cls) {
+        if ($cls['grade_level'] === $_GET['grade'] && $cls['section'] === $_GET['section']) {
+            $selectedClassIndex = $idx;
+            break;
+        }
     }
 }
-if (!$advisoryGrade)   $advisoryGrade   = 'Grade 1';
-if (!$advisorySection) $advisorySection = 'Mabini';
+
+$activeClass     = $myClasses[$selectedClassIndex] ?? $myClasses[0];
+$advisoryGrade   = $activeClass['grade_level'];
+$advisorySection = $activeClass['section'];
 
 $sy = SCHOOL_YEAR;
 
@@ -63,15 +71,47 @@ $pending = $totalStudents - $graded;
       </div>
     </nav>
 
-    <div class="page-header">
-      <h3>Welcome, <?= htmlspecialchars(explode(' ',$user['name'])[0]) ?>!</h3>
-      <p class="mb-0">Advisory Class: <strong><?= $advisoryGrade ?> — Section <?= $advisorySection ?></strong> · S.Y. <?= SCHOOL_YEAR ?></p>
+    <div class="page-header d-flex flex-column gap-2">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+          <h3 class="mb-1">Welcome, <?= htmlspecialchars(explode(' ',$user['name'])[0]) ?>!</h3>
+          <p class="mb-0 text-muted">
+            Currently viewing: <strong class="text-dark"><?= htmlspecialchars($advisoryGrade) ?> — Section <?= htmlspecialchars($advisorySection) ?></strong> · S.Y. <?= SCHOOL_YEAR ?>
+          </p>
+        </div>
+        <div>
+          <span class="badge bg-secondary bg-opacity-10 text-dark border px-3 py-2 fw-semibold" style="font-size:.82rem;">
+            <i class="fas fa-chalkboard-teacher me-1" style="color:var(--secondary);"></i>
+            <?= count($myClasses) ?> Advisory <?= count($myClasses) === 1 ? 'Class' : 'Classes' ?> Assigned
+          </span>
+        </div>
+      </div>
+
+      <!-- Multiple Advisory Classes Switcher Tabs / Buttons -->
+      <?php if (count($myClasses) > 1): ?>
+        <div class="p-2 bg-white rounded-3 border shadow-sm mt-2">
+          <div class="d-flex align-items-center flex-wrap gap-2">
+            <span class="text-muted fw-bold small me-1 ps-1"><i class="fas fa-exchange-alt me-1 text-success"></i>Switch Advisory Class:</span>
+            <?php foreach ($myClasses as $idx => $cls):
+              $isActive = ($idx === $selectedClassIndex);
+            ?>
+              <a href="?class=<?= $idx ?>" class="btn btn-sm <?= $isActive ? 'btn-success text-white fw-bold shadow-sm' : 'btn-light border text-dark' ?>" style="border-radius: 20px; font-size: .84rem; padding: 5px 14px; transition: all 0.2s;">
+                <i class="fas fa-chalkboard me-1 <?= $isActive ? 'text-white' : 'text-success' ?>"></i>
+                <?= htmlspecialchars($cls['grade_level']) ?> — Section <?= htmlspecialchars($cls['section']) ?>
+                <?php if ($isActive): ?>
+                  <span class="badge bg-white text-success ms-1" style="font-size: .68rem;">Active</span>
+                <?php endif; ?>
+              </a>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      <?php endif; ?>
     </div>
 
     <div class="row g-3 mb-4">
       <div class="col-md-3">
         <div class="stat-card blue"><div class="stat-icon"><i class="fas fa-users"></i></div>
-          <div><div class="stat-value"><?= $totalStudents ?></div><div class="stat-label">Total Students</div></div></div>
+          <div><div class="stat-value"><?= $totalStudents ?></div><div class="stat-label">Students (<?= htmlspecialchars($advisorySection) ?>)</div></div></div>
       </div>
       <div class="col-md-3">
         <div class="stat-card green"><div class="stat-icon"><i class="fas fa-check-circle"></i></div>
@@ -82,38 +122,17 @@ $pending = $totalStudents - $graded;
           <div><div class="stat-value"><?= $pending ?></div><div class="stat-label">Pending Grades</div></div></div>
       </div>
       <div class="col-md-3">
-        <div class="stat-card purple"><div class="stat-icon"><i class="fas fa-book-open"></i></div>
-          <div><div class="stat-value"><?= count($teachingSubjectsList) ?></div><div class="stat-label">Teaching Subjects</div></div></div>
-      </div>
-    </div>
-
-    <!-- Teaching Subjects Section -->
-    <div class="card mb-4">
-      <div class="card-header d-flex align-items-center justify-content-between py-3">
-        <span class="fw-bold" style="color:var(--dark);"><i class="fas fa-book-open me-2" style="color:#8e44ad;"></i>Teaching Subjects</span>
-        <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold"><?= count($teachingSubjectsList) ?> Assigned</span>
-      </div>
-      <div class="card-body">
-        <?php if (!empty($teachingSubjectsList)): ?>
-          <div class="d-flex flex-wrap gap-2">
-            <?php foreach ($teachingSubjectsList as $sub): ?>
-              <div class="d-flex align-items-center gap-2 px-3 py-2 bg-white border rounded-3 shadow-sm" style="font-size:.88rem; font-weight:600; border-left:3px solid #8e44ad !important;">
-                <i class="fas fa-journal-whills" style="color:#8e44ad;"></i>
-                <span><?= htmlspecialchars($sub) ?></span>
-              </div>
-            <?php endforeach; ?>
-          </div>
-        <?php else: ?>
-          <div class="text-muted py-1" style="font-style:italic; font-size:.85rem;">
-            <i class="fas fa-info-circle me-1"></i> No teaching subjects assigned yet.
-          </div>
-        <?php endif; ?>
+        <div class="stat-card purple"><div class="stat-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+          <div><div class="stat-value"><?= count($myClasses) ?></div><div class="stat-label">Advisory <?= count($myClasses) === 1 ? 'Class' : 'Classes' ?></div></div></div>
       </div>
     </div>
 
     <div class="card">
       <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <span><i class="fas fa-chalkboard me-2" style="color:var(--secondary);"></i>Advisory Class — <?= $advisoryGrade ?> <?= $advisorySection ?></span>
+        <div class="d-flex align-items-center gap-2">
+          <span><i class="fas fa-chalkboard me-2" style="color:var(--secondary);"></i>Advisory Class Roster — <strong><?= htmlspecialchars($advisoryGrade) ?> <?= htmlspecialchars($advisorySection) ?></strong></span>
+          <span class="badge bg-success bg-opacity-15 text-success fw-semibold" style="font-size:.75rem;"><?= $totalStudents ?> Students</span>
+        </div>
         <div class="d-flex align-items-center gap-2">
           <div class="input-group input-group-sm" style="width:220px;">
             <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
@@ -128,7 +147,7 @@ $pending = $totalStudents - $graded;
             <thead><tr><th>#</th><th>LRN</th><th>Full Name</th><th>Sex</th><th>Age</th><th>Graded Subjects</th><th>Status</th></tr></thead>
             <tbody>
               <?php if (empty($classStudents)): ?>
-              <tr><td colspan="7" class="text-center py-4 text-muted">No students in this class.</td></tr>
+              <tr><td colspan="7" class="text-center py-4 text-muted">No students enrolled in <?= htmlspecialchars($advisoryGrade) ?> - Section <?= htmlspecialchars($advisorySection) ?>.</td></tr>
               <?php else: foreach ($classStudents as $i => $s): ?>
               <tr>
                 <td><?= $i+1 ?></td>
@@ -179,3 +198,4 @@ if (advisorySearch) {
 </script>
 </body>
 </html>
+

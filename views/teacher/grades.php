@@ -3,7 +3,8 @@ require_once __DIR__ . '/../../includes/auth_check.php';
 $user = requireAuth('teacher');
 $activePage = 'grades';
 
-$studentList = $pdo->query("SELECT id,last_name,first_name,middle_name,lrn,grade_level,section FROM students WHERE status='active' ORDER BY grade_level,last_name,first_name")->fetchAll();
+$myClasses = getTeacherAdvisoryClasses($pdo, $user['id']);
+$studentList = $pdo->query("SELECT id,last_name,first_name,middle_name,lrn,grade_level,section FROM students WHERE status='active' ORDER BY grade_level,section,last_name,first_name")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -37,20 +38,33 @@ $studentList = $pdo->query("SELECT id,last_name,first_name,middle_name,lrn,grade
 
     <div class="page-header"><h3>Grade Management (SF10)</h3><p>Select a student to view or edit quarterly grades</p></div>
 
-    <!-- Student Selector -->
+    <!-- Student & Class Selector -->
     <div class="card mb-3">
       <div class="card-body">
         <div class="row g-2 align-items-end">
+          <?php if (!empty($myClasses)): ?>
+          <div class="col-md-3">
+            <label class="form-label">Advisory Class</label>
+            <select id="class-filter" class="form-select" onchange="filterStudentDropdown()">
+              <option value="">All My Classes</option>
+              <?php foreach ($myClasses as $idx => $cls): ?>
+              <option value="<?= htmlspecialchars($cls['grade_level'].'|'.$cls['section']) ?>"><?= htmlspecialchars($cls['grade_level'].' — '.$cls['section']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="col-md-4">
+          <?php else: ?>
           <div class="col-md-6">
+          <?php endif; ?>
             <label class="form-label">Select Student</label>
             <select id="student-select" class="form-select" onchange="loadGrades()">
               <option value="">— Choose a student —</option>
               <?php foreach ($studentList as $s): ?>
-              <option value="<?= $s['id'] ?>"><?= htmlspecialchars($s['last_name'].', '.$s['first_name'].' '.($s['middle_name']??'')) ?> (<?= $s['grade_level'] ?>)</option>
+              <option value="<?= $s['id'] ?>" data-class="<?= htmlspecialchars($s['grade_level'].'|'.$s['section']) ?>"><?= htmlspecialchars($s['last_name'].', '.$s['first_name'].' '.($s['middle_name']??'')) ?> (<?= $s['grade_level'] ?> - <?= $s['section'] ?>)</option>
               <?php endforeach; ?>
             </select>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-2">
             <label class="form-label">School Year</label>
             <select id="sy-select" class="form-select" onchange="loadGrades()">
               <option value="2025-2026">2025–2026</option>
@@ -124,6 +138,31 @@ const BASE = '<?= BASE_URL ?>';
 showDesktopOnlyWarning();
 let currentStudent = null;
 let currentGrades  = {};
+
+function filterStudentDropdown() {
+  const filter = document.getElementById('class-filter') ? document.getElementById('class-filter').value : '';
+  const sel = document.getElementById('student-select');
+  const options = sel.querySelectorAll('option');
+
+  let currentSelectedHidden = false;
+  options.forEach(opt => {
+    if (!opt.value) return; // Keep placeholder
+    const optClass = opt.dataset.class || '';
+    if (!filter || optClass === filter) {
+      opt.style.display = '';
+      opt.disabled = false;
+    } else {
+      opt.style.display = 'none';
+      opt.disabled = true;
+      if (opt.selected) currentSelectedHidden = true;
+    }
+  });
+
+  if (currentSelectedHidden) {
+    sel.value = '';
+    loadGrades();
+  }
+}
 
 async function loadGrades() {
   const studentId = document.getElementById('student-select').value;

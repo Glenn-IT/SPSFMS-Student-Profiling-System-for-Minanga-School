@@ -24,12 +24,6 @@ $name            = trim($d['name']       ?? '');
 $email           = trim($d['email']      ?? '');
 $advisoryGrade   = trim($d['advisory_grade']   ?? '');
 $advisorySubject = trim($d['advisory_subject']  ?? '');
-$teachingSubjects= $d['teaching_subjects']     ?? '';
-if (is_array($teachingSubjects)) {
-    $teachingSubjects = implode(', ', array_filter(array_map('trim', $teachingSubjects)));
-} else {
-    $teachingSubjects = trim($teachingSubjects);
-}
 $lrn             = trim($d['lrn']        ?? '');
 
 // ── Validate role ─────────────────────────────────────────────────────────────
@@ -60,28 +54,72 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 $gradeLevel = null;
 $section    = null;
 $position   = null;
+$advisoryClasses = [];
 
 if ($role === 'teacher') {
-    if ((!$advisoryGrade || !$advisorySubject) && !empty($d['position'])) {
-        $position = trim($d['position']);
-    } else if (!$advisoryGrade || !$advisorySubject) {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'message' => 'Full name and position are required for teachers.']);
-        exit;
-    } else {
-        $position = $advisoryGrade . ' - Section ' . $advisorySubject;
+    if (isset($d['advisory_classes']) && is_array($d['advisory_classes'])) {
+        foreach ($d['advisory_classes'] as $c) {
+            $g = trim($c['grade_level'] ?? '');
+            $s = trim($c['section'] ?? '');
+            if ($g && $s) {
+                $advisoryClasses[] = ['grade_level' => $g, 'section' => $s];
+            }
+        }
+    } else if ($advisoryGrade && $advisorySubject) {
+        $advisoryClasses[] = ['grade_level' => $advisoryGrade, 'section' => $advisorySubject];
     }
 
-    if ($advisoryGrade && $advisorySubject) {
-        // ── Duplicate advisory check ──────────────────────────────────────────────
-        $dup = $pdo->prepare("SELECT id, name FROM users WHERE role='teacher' AND advisory_grade=? AND advisory_subject=? LIMIT 1");
-        $dup->execute([$advisoryGrade, $advisorySubject]);
-        $existingAdvisor = $dup->fetch();
-        if ($existingAdvisor) {
-            http_response_code(409);
-            echo json_encode(['ok' => false, 'message' => "The section '{$advisorySubject}' in {$advisoryGrade} is already assigned to advisor '" . $existingAdvisor['name'] . "'."]);
+    if (empty($advisoryClasses) && !empty($d['position'])) {
+        $position = trim($d['position']);
+    } else if (empty($advisoryClasses)) {
+        http_response_code(400);
+        echo json_encode(['ok' => false, 'message' => 'At least one advisory class (grade level and section) is required for teachers.']);
+        exit;
+    } else {
+        if (count($advisoryClasses) > 3) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'message' => 'A teacher can handle a maximum of 3 advisory classes.']);
             exit;
         }
+
+        // Duplicate check within submitted classes
+        $seen = [];
+        foreach ($advisoryClasses as $c) {
+            $k = $c['grade_level'] . '|' . $c['section'];
+            if (isset($seen[$k])) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'message' => "Duplicate class selected: {$c['grade_level']} - {$c['section']}."]);
+                exit;
+            }
+            $seen[$k] = true;
+        }
+
+        // Check duplicate advisory against other teachers in teacher_classes
+        $dupStmt = $pdo->prepare("
+            SELECT tc.teacher_id, u.name
+            FROM teacher_classes tc
+            JOIN users u ON u.id = tc.teacher_id
+            WHERE tc.grade_level = ? AND tc.section = ?
+            LIMIT 1
+        ");
+
+        foreach ($advisoryClasses as $c) {
+            $dupStmt->execute([$c['grade_level'], $c['section']]);
+            $existingAdvisor = $dupStmt->fetch();
+            if ($existingAdvisor) {
+                http_response_code(409);
+                echo json_encode(['ok' => false, 'message' => "The section '{$c['section']}' in {$c['grade_level']} is already assigned to advisor '" . $existingAdvisor['name'] . "'."]);
+                exit;
+            }
+        }
+
+        $posParts = [];
+        foreach ($advisoryClasses as $c) {
+            $posParts[] = $c['grade_level'] . ' - Section ' . $c['section'];
+        }
+        $position = implode(', ', $posParts);
+        $advisoryGrade   = $advisoryClasses[0]['grade_level'];
+        $advisorySubject = $advisoryClasses[0]['section'];
     }
 } else {
     // student — must link to an existing student record via LRN
@@ -121,8 +159,8 @@ if ($ck->fetch()) {
 
 // ── Insert ────────────────────────────────────────────────────────────────────
 $stmt = $pdo->prepare('INSERT INTO users
-    (role, username, password, name, email, position, advisory_grade, advisory_subject, teaching_subjects, lrn, grade_level, section, status)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,\'active\')');
+    (role, username, password, name, email, position, advisory_grade, advisory_subject, lrn, grade_level, section, status)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,\'active\')');
 $stmt->execute([
     $role,
     $username,
@@ -132,14 +170,23 @@ $stmt->execute([
     $position,
     $advisoryGrade   ?: null,
     $advisorySubject ?: null,
-    $teachingSubjects?: null,
     $lrn             ?: null,
     $gradeLevel,
     $section,
 ]);
 
-$newId   = $pdo->lastInsertId();
-$newUser = $pdo->prepare('SELECT id, role, username, name, email, position, advisory_grade, advisory_subject, teaching_subjects, status, created_at FROM users WHERE id = ?');
-$newUser->execute([$newId]);
+$newId = (int)$pdo->lastInsertId();
 
-echo json_encode(['ok' => true, 'message' => 'Account created successfully.', 'user' => $newUser->fetch()]);
+if ($role === 'teacher' && !empty($advisoryClasses)) {
+    syncTeacherAdvisoryClasses($pdo, $newId, $advisoryClasses);
+}
+
+$newUser = $pdo->prepare('SELECT id, role, username, name, email, position, advisory_grade, advisory_subject, status, created_at FROM users WHERE id = ?');
+$newUser->execute([$newId]);
+$userData = $newUser->fetch();
+if ($role === 'teacher') {
+    $userData['advisory_classes'] = getTeacherAdvisoryClasses($pdo, $newId);
+}
+
+echo json_encode(['ok' => true, 'message' => 'Account created successfully.', 'user' => $userData]);
+

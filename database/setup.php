@@ -75,6 +75,20 @@ CREATE TABLE IF NOT EXISTS `users` (
 out('✔ Table <strong>users</strong> ready.', 'ok');
 
 $pdo->exec("
+CREATE TABLE IF NOT EXISTS `teacher_classes` (
+  `id`          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `teacher_id`  INT UNSIGNED NOT NULL,
+  `grade_level` VARCHAR(20) NOT NULL,
+  `section`     VARCHAR(50) NOT NULL,
+  `created_at`  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`teacher_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  UNIQUE KEY `uq_teacher_grade_sec` (`teacher_id`, `grade_level`, `section`),
+  UNIQUE KEY `uq_section_adviser` (`grade_level`, `section`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+");
+out('✔ Table <strong>teacher_classes</strong> ready.', 'ok');
+
+$pdo->exec("
 CREATE TABLE IF NOT EXISTS `students` (
   `id`               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `lrn`              VARCHAR(20) NOT NULL,

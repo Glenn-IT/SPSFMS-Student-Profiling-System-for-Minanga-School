@@ -60,29 +60,76 @@ $advisorySubject = null;
 $lrn = null;
 $gradeLevel = null;
 $section = null;
+$advisoryClasses = [];
 
 if ($role === 'teacher') {
-    $name            = trim($data['name'] ?? '');
-    $advisoryGrade   = trim($data['advisory_grade'] ?? '');
-    $advisorySubject = trim($data['advisory_subject'] ?? '');
+    $name = trim($data['name'] ?? '');
+    if (isset($data['advisory_classes']) && is_array($data['advisory_classes'])) {
+        foreach ($data['advisory_classes'] as $c) {
+            $g = trim($c['grade_level'] ?? '');
+            $s = trim($c['section'] ?? '');
+            if ($g && $s) {
+                $advisoryClasses[] = ['grade_level' => $g, 'section' => $s];
+            }
+        }
+    } else {
+        $ag = trim($data['advisory_grade'] ?? '');
+        $as = trim($data['advisory_subject'] ?? '');
+        if ($ag && $as) {
+            $advisoryClasses[] = ['grade_level' => $ag, 'section' => $as];
+        }
+    }
 
-    if (!$name || !$advisoryGrade || !$advisorySubject) {
+    if (!$name || empty($advisoryClasses)) {
         http_response_code(400);
-        echo json_encode(['ok' => false, 'message' => 'Please fill in your name, grade level, and advisory section.']);
+        echo json_encode(['ok' => false, 'message' => 'Please fill in your name and at least one advisory class (grade & section).']);
         exit;
     }
 
-    // Duplicate advisory check
-    $dup = $pdo->prepare("SELECT id, name FROM users WHERE role='teacher' AND advisory_grade=? AND advisory_subject=? LIMIT 1");
-    $dup->execute([$advisoryGrade, $advisorySubject]);
-    $existingAdvisor = $dup->fetch();
-    if ($existingAdvisor) {
-        http_response_code(409);
-        echo json_encode(['ok' => false, 'message' => "The section '{$advisorySubject}' in {$advisoryGrade} is already assigned to advisor '" . $existingAdvisor['name'] . "'."]);
+    if (count($advisoryClasses) > 3) {
+        http_response_code(400);
+        echo json_encode(['ok' => false, 'message' => 'A teacher can have at most 3 advisory classes.']);
         exit;
     }
 
-    $position = $advisoryGrade . ' - Section ' . $advisorySubject;
+    // Duplicate check within submitted list
+    $seen = [];
+    foreach ($advisoryClasses as $c) {
+        $k = $c['grade_level'] . '|' . $c['section'];
+        if (isset($seen[$k])) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'message' => "Duplicate class selected: {$c['grade_level']} - {$c['section']}."]);
+            exit;
+        }
+        $seen[$k] = true;
+    }
+
+    // Duplicate advisory check against OTHER teachers in teacher_classes
+    $dupStmt = $pdo->prepare("
+        SELECT tc.teacher_id, u.name
+        FROM teacher_classes tc
+        JOIN users u ON u.id = tc.teacher_id
+        WHERE tc.grade_level = ? AND tc.section = ?
+        LIMIT 1
+    ");
+
+    foreach ($advisoryClasses as $c) {
+        $dupStmt->execute([$c['grade_level'], $c['section']]);
+        $existingAdvisor = $dupStmt->fetch();
+        if ($existingAdvisor) {
+            http_response_code(409);
+            echo json_encode(['ok' => false, 'message' => "The section '{$c['section']}' in {$c['grade_level']} is already assigned to advisor '" . $existingAdvisor['name'] . "'."]);
+            exit;
+        }
+    }
+
+    $posParts = [];
+    foreach ($advisoryClasses as $c) {
+        $posParts[] = $c['grade_level'] . ' - Section ' . $c['section'];
+    }
+    $position = implode(', ', $posParts);
+    $advisoryGrade = $advisoryClasses[0]['grade_level'];
+    $advisorySubject = $advisoryClasses[0]['section'];
 } else {
     $lrn = trim($data['lrn'] ?? '');
     if (!$lrn) {
@@ -131,4 +178,11 @@ $stmt->execute([
     $secAnswer,
 ]);
 
+$newUserId = (int)$pdo->lastInsertId();
+
+if ($role === 'teacher' && !empty($advisoryClasses)) {
+    syncTeacherAdvisoryClasses($pdo, $newUserId, $advisoryClasses);
+}
+
 echo json_encode(['ok' => true, 'message' => 'Account created successfully. You can now log in.']);
+

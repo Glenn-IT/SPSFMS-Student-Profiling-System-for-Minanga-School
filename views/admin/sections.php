@@ -97,13 +97,33 @@ $gradeJson = json_encode(GRADE_LEVELS);
         <input type="hidden" id="sec-id">
         <div class="mb-3">
           <label class="form-label">Grade Level <span class="text-danger">*</span></label>
-          <select id="sec-grade" class="form-select">
+          <select id="sec-grade" class="form-select" onchange="onGradeChangeInModal()">
             <option value="">— Select Grade Level —</option>
           </select>
         </div>
+
+        <!-- Senior High School Strands Panel (Visible for Grade 11 & 12) -->
+        <div id="shs-strands-panel" class="mb-3 p-3 bg-light rounded-3 border d-none">
+          <label class="form-label mb-1 fw-semibold text-dark" style="font-size:.85rem;">
+            <i class="fas fa-graduation-cap text-primary me-1"></i>Senior High School Strands
+          </label>
+          <div class="text-muted mb-2" style="font-size:.78rem;">Click a strand to set the section name:</div>
+          <div class="d-flex flex-wrap gap-1 mb-2" id="shs-strand-buttons">
+            <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:.8rem;" onclick="setStrandSection('STEM')">STEM</button>
+            <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:.8rem;" onclick="setStrandSection('ABM')">ABM</button>
+            <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:.8rem;" onclick="setStrandSection('HUMSS')">HUMSS</button>
+            <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:.8rem;" onclick="setStrandSection('GAS')">GAS</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:.8rem;" onclick="setStrandSection('TVL - ICT')">TVL - ICT</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:.8rem;" onclick="setStrandSection('TVL - HE')">TVL - HE</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:.8rem;" onclick="setStrandSection('TVL - Agri-Fishery')">TVL - Agri-Fishery</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:.8rem;" onclick="setStrandSection('TVL - Industrial Arts')">TVL - Industrial Arts</button>
+          </div>
+        </div>
+
         <div class="mb-3">
-          <label class="form-label">Section Name <span class="text-danger">*</span></label>
+          <label class="form-label" id="sec-name-label">Section Name <span class="text-danger">*</span></label>
           <input type="text" id="sec-name" class="form-control" placeholder="e.g. Rizal, Mabini, STEM-A">
+          <div class="form-text text-muted" id="sec-name-help" style="font-size:.76rem;">Enter the section name or strand title.</div>
         </div>
         <div id="sec-error" class="alert alert-danger d-none" style="font-size:.85rem;"></div>
       </div>
@@ -138,6 +158,31 @@ let sectionModal;
   });
 });
 
+function onGradeChangeInModal() {
+  const grade = document.getElementById('sec-grade').value;
+  const panel = document.getElementById('shs-strands-panel');
+  const label = document.getElementById('sec-name-label');
+  const input = document.getElementById('sec-name');
+  const help  = document.getElementById('sec-name-help');
+
+  if (grade === 'Grade 11' || grade === 'Grade 12') {
+    panel.classList.remove('d-none');
+    label.innerHTML = `Strand / Section Name <span class="text-danger">*</span>`;
+    input.placeholder = 'e.g. STEM, ABM, HUMSS, TVL - ICT';
+    help.innerHTML = `<i class="fas fa-info-circle me-1"></i>Choose a Senior High School strand above or type a custom section name.`;
+  } else {
+    panel.classList.add('d-none');
+    label.innerHTML = `Section Name <span class="text-danger">*</span>`;
+    input.placeholder = 'e.g. Rizal, Mabini, Bonifacio';
+    help.innerHTML = `Enter the section name for ${escHtml(grade || 'this grade level')}.`;
+  }
+}
+
+function setStrandSection(strandName) {
+  document.getElementById('sec-name').value = strandName;
+  document.getElementById('sec-name').focus();
+}
+
 async function loadSections() {
   const grade = document.getElementById('filter-grade').value;
   const params = new URLSearchParams();
@@ -171,11 +216,20 @@ function renderTable() {
     return;
   }
 
-  tbody.innerHTML = filtered.map((s, i) => `
-    <tr id="sec-row-${s.id}">
+  tbody.innerHTML = filtered.map((s, i) => {
+    const isSHS = (s.grade_level === 'Grade 11' || s.grade_level === 'Grade 12');
+    const badgeType = isSHS
+      ? `<span class="badge bg-purple bg-opacity-10 text-purple border border-purple border-opacity-25 fw-semibold" style="font-size:.78rem; color:#6f42c1;"><i class="fas fa-graduation-cap me-1"></i>${escHtml(s.grade_level)}</span>`
+      : `<span class="badge bg-primary bg-opacity-10 text-primary fw-semibold" style="font-size:.78rem;">${escHtml(s.grade_level)}</span>`;
+
+    const sectionDisplay = isSHS
+      ? `<strong>${escHtml(s.section_name)}</strong> <span class="badge bg-secondary bg-opacity-10 text-muted ms-1 fw-normal" style="font-size:.72rem;">Strand</span>`
+      : `<strong>${escHtml(s.section_name)}</strong>`;
+
+    return `<tr id="sec-row-${s.id}">
       <td>${i + 1}</td>
-      <td><span class="badge bg-primary bg-opacity-10 text-primary fw-semibold" style="font-size:.78rem;">${escHtml(s.grade_level)}</span></td>
-      <td><strong>${escHtml(s.section_name)}</strong></td>
+      <td>${badgeType}</td>
+      <td>${sectionDisplay}</td>
       <td class="text-center">
         <button class="btn btn-sm btn-outline-secondary me-1" onclick="openEditModal(${s.id}, '${escHtml(s.grade_level)}', '${escHtml(s.section_name)}')" title="Edit">
           <i class="fas fa-edit"></i> Edit
@@ -184,8 +238,8 @@ function renderTable() {
           <i class="fas fa-trash"></i> Delete
         </button>
       </td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
 }
 
 function openAddModal() {
@@ -197,6 +251,7 @@ function openAddModal() {
   document.getElementById('sec-error').classList.add('d-none');
   document.getElementById('sec-submit-btn').disabled = false;
   document.getElementById('sec-submit-btn').innerHTML = '<i class="fas fa-save me-1"></i> Save Section';
+  onGradeChangeInModal();
   sectionModal.show();
 }
 
@@ -209,6 +264,7 @@ function openEditModal(id, grade, name) {
   document.getElementById('sec-error').classList.add('d-none');
   document.getElementById('sec-submit-btn').disabled = false;
   document.getElementById('sec-submit-btn').innerHTML = '<i class="fas fa-save me-1"></i> Save Changes';
+  onGradeChangeInModal();
   sectionModal.show();
 }
 
@@ -253,7 +309,9 @@ async function submitSection() {
 }
 
 async function deleteSection(id, name, grade) {
-  confirmModal('Delete Section', `Are you sure you want to delete section <strong>${escHtml(name)}</strong> (${escHtml(grade)})?`, async () => {
+  const isSHS = (grade === 'Grade 11' || grade === 'Grade 12');
+  const typeLabel = isSHS ? 'strand / section' : 'section';
+  confirmModal('Delete Section', `Are you sure you want to delete ${typeLabel} <strong>${escHtml(name)}</strong> (${escHtml(grade)}${isSHS ? ' - Senior High School' : ''})?`, async () => {
     showLoading('Deleting Section...', 'Please wait...');
     try {
       const res = await fetch(`${BASE}/api/sections/index.php`, {

@@ -77,11 +77,11 @@ $gradeJson = json_encode(GRADE_LEVELS);
           <table class="table table-modern mb-0">
             <thead>
               <tr>
-                <th>#</th><th>Name</th><th>Username</th><th>Grade</th><th>Advisory Section</th><th>Teaching Subjects</th><th>Status</th><th class="text-center">Actions</th>
+                <th>#</th><th>Name</th><th>Username</th><th>Advisory Classes</th><th>Status</th><th class="text-center">Actions</th>
               </tr>
             </thead>
             <tbody id="teachers-tbody">
-              <tr><td colspan="8" class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Loading...</td></tr>
+              <tr><td colspan="6" class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Loading...</td></tr>
             </tbody>
           </table>
         </div>
@@ -92,7 +92,7 @@ $gradeJson = json_encode(GRADE_LEVELS);
 
 <!-- ── Add Teacher Modal ── -->
 <div class="modal fade" id="addTeacherModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Add Teacher</h5>
@@ -103,47 +103,30 @@ $gradeJson = json_encode(GRADE_LEVELS);
           <label class="form-label">Full Name <span class="text-danger">*</span></label>
           <input type="text" id="at-name" class="form-control" placeholder="e.g. Juan Dela Cruz">
         </div>
-        <div class="row g-2 mb-3">
-          <div class="col-6">
-            <label class="form-label">Grade <span class="text-danger">*</span></label>
-            <select id="at-grade" class="form-select" onchange="loadSectionsFor('at-section','at-grade')">
-              <option value="">— Select Grade —</option>
-            </select>
-          </div>
-          <div class="col-6">
-            <label class="form-label">Advisory Section <span class="text-danger">*</span></label>
-            <select id="at-section" class="form-select" disabled>
-              <option value="">— Select Grade first —</option>
-            </select>
-          </div>
-        </div>
-        <!-- Teaching Subjects Combobox checklist (G7-G12) -->
-        <div class="mb-3">
-          <label class="form-label">Teaching Subjects <span class="text-muted fw-normal">(G7 – G12)</span></label>
-          <div class="dropdown custom-combobox" id="at-subjects-dropdown">
-            <button class="btn btn-outline-secondary w-100 text-start d-flex align-items-center justify-content-between combobox-toggle" type="button" id="at-subjects-btn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="background:#fff; border-color:var(--gray-300); min-height:38px;">
-              <span class="combobox-label text-truncate" id="at-subjects-label" style="color:var(--gray-600); font-size:.875rem;">Select subjects taught...</span>
-              <i class="fas fa-chevron-down ms-2 text-muted" style="font-size:.75rem;"></i>
+
+        <!-- Multiple Advisory Classes Container (1 to 3) -->
+        <div class="mb-3 p-3 bg-light rounded-3 border">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <label class="form-label mb-0 fw-semibold text-dark">
+              <i class="fas fa-chalkboard text-primary me-1"></i>Advisory Classes <span class="text-danger">*</span>
+              <small class="text-muted fw-normal ms-1">(1 to 3 classes)</small>
+            </label>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="at-add-class-btn" onclick="addAdvisoryClassRow('at')">
+              <i class="fas fa-plus me-1"></i>Add Advisory Class
             </button>
-            <div class="dropdown-menu w-100 p-2 shadow-lg combobox-menu" style="max-height: 280px; overflow-y: auto; z-index: 1060;">
-              <div class="p-1 mb-2 sticky-top bg-white border-bottom pb-2">
-                <input type="text" class="form-control form-control-sm combobox-search" placeholder="Search subjects (Math, Science, MAPEH...)" oninput="filterComboboxSubjects(this, 'at')">
-                <div class="d-flex justify-content-between align-items-center mt-1 pt-1">
-                  <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" style="font-size:.75rem;" onclick="selectAllComboboxSubjects('at', true)">Select All</button>
-                  <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-danger" style="font-size:.75rem;" onclick="selectAllComboboxSubjects('at', false)">Clear All</button>
-                </div>
-              </div>
-              <div class="combobox-options-list" id="at-subjects-list"></div>
-            </div>
           </div>
+          <div id="at-classes-container" class="d-flex flex-column gap-2"></div>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Username <span class="text-danger">*</span></label>
-          <input type="text" id="at-username" class="form-control" placeholder="Login username" autocomplete="off">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Email <span class="text-danger">*</span></label>
-          <input type="email" id="at-email" class="form-control" placeholder="email@example.com">
+
+        <div class="row g-2 mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Username <span class="text-danger">*</span></label>
+            <input type="text" id="at-username" class="form-control" placeholder="Login username" autocomplete="off">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Email <span class="text-danger">*</span></label>
+            <input type="email" id="at-email" class="form-control" placeholder="email@example.com">
+          </div>
         </div>
         <div class="row g-2">
           <div class="col-6">
@@ -169,7 +152,7 @@ $gradeJson = json_encode(GRADE_LEVELS);
 
 <!-- ── Edit Teacher Modal ── -->
 <div class="modal fade" id="editTeacherModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title"><i class="fas fa-user-edit me-2"></i>Edit Teacher</h5>
@@ -177,52 +160,35 @@ $gradeJson = json_encode(GRADE_LEVELS);
       </div>
       <div class="modal-body">
         <input type="hidden" id="et-id">
-        <div class="mb-3">
-          <label class="form-label">Username</label>
-          <input type="text" id="et-username" class="form-control" readonly style="background:var(--gray-100);font-family:monospace;">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Full Name <span class="text-danger">*</span></label>
-          <input type="text" id="et-name" class="form-control" placeholder="Full name">
+        <div class="row g-2 mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Username</label>
+            <input type="text" id="et-username" class="form-control" readonly style="background:var(--gray-100);font-family:monospace;">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Full Name <span class="text-danger">*</span></label>
+            <input type="text" id="et-name" class="form-control" placeholder="Full name">
+          </div>
         </div>
         <div class="mb-3">
           <label class="form-label">Email <span class="text-danger">*</span></label>
           <input type="email" id="et-email" class="form-control" placeholder="email@example.com">
         </div>
-        <div class="row g-2 mb-3">
-          <div class="col-6">
-            <label class="form-label">Grade <span class="text-danger">*</span></label>
-            <select id="et-grade" class="form-select" onchange="loadSectionsFor('et-section','et-grade')">
-              <option value="">— Select Grade —</option>
-            </select>
-          </div>
-          <div class="col-6">
-            <label class="form-label">Advisory Section <span class="text-danger">*</span></label>
-            <select id="et-section" class="form-select" disabled>
-              <option value="">— Select Grade first —</option>
-            </select>
-          </div>
-        </div>
-        <!-- Teaching Subjects Combobox checklist (G7-G12) -->
-        <div class="mb-3">
-          <label class="form-label">Teaching Subjects <span class="text-muted fw-normal">(G7 – G12)</span></label>
-          <div class="dropdown custom-combobox" id="et-subjects-dropdown">
-            <button class="btn btn-outline-secondary w-100 text-start d-flex align-items-center justify-content-between combobox-toggle" type="button" id="et-subjects-btn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="background:#fff; border-color:var(--gray-300); min-height:38px;">
-              <span class="combobox-label text-truncate" id="et-subjects-label" style="color:var(--gray-600); font-size:.875rem;">Select subjects taught...</span>
-              <i class="fas fa-chevron-down ms-2 text-muted" style="font-size:.75rem;"></i>
+
+        <!-- Multiple Advisory Classes Container (1 to 3) -->
+        <div class="mb-3 p-3 bg-light rounded-3 border">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <label class="form-label mb-0 fw-semibold text-dark">
+              <i class="fas fa-chalkboard text-primary me-1"></i>Advisory Classes <span class="text-danger">*</span>
+              <small class="text-muted fw-normal ms-1">(1 to 3 classes)</small>
+            </label>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="et-add-class-btn" onclick="addAdvisoryClassRow('et')">
+              <i class="fas fa-plus me-1"></i>Add Advisory Class
             </button>
-            <div class="dropdown-menu w-100 p-2 shadow-lg combobox-menu" style="max-height: 280px; overflow-y: auto; z-index: 1060;">
-              <div class="p-1 mb-2 sticky-top bg-white border-bottom pb-2">
-                <input type="text" class="form-control form-control-sm combobox-search" placeholder="Search subjects (Math, Science, MAPEH...)" oninput="filterComboboxSubjects(this, 'et')">
-                <div class="d-flex justify-content-between align-items-center mt-1 pt-1">
-                  <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" style="font-size:.75rem;" onclick="selectAllComboboxSubjects('et', true)">Select All</button>
-                  <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-danger" style="font-size:.75rem;" onclick="selectAllComboboxSubjects('et', false)">Clear All</button>
-                </div>
-              </div>
-              <div class="combobox-options-list" id="et-subjects-list"></div>
-            </div>
           </div>
+          <div id="et-classes-container" class="d-flex flex-column gap-2"></div>
         </div>
+
         <hr>
         <div class="mb-1">
           <label class="form-label fw-semibold" style="font-size:.82rem;">
@@ -261,12 +227,6 @@ showDesktopOnlyWarning();
 let allTeachers  = [];
 let addTeacherModal, editModal;
 
-/* ── Populate grade dropdowns on page load ── */
-['at-grade','et-grade'].forEach(id => {
-  const sel = document.getElementById(id);
-  GRADE_LEVELS.forEach(g => sel.innerHTML += `<option value="${g}">${g}</option>`);
-});
-
 const DEFAULT_SECTIONS = {
   'Grade 1': ['Rizal', 'Mabini'],
   'Grade 2': ['Bonifacio', 'Mabini'],
@@ -278,166 +238,154 @@ const DEFAULT_SECTIONS = {
   'Grade 8': ['Luna', 'Rizal'],
   'Grade 9': ['Luna', 'Bonifacio'],
   'Grade 10': ['Mabini', 'Rizal'],
-  'Grade 11': ['STEM', 'ABM', 'HUMSS', 'GAS', 'TVL'],
-  'Grade 12': ['STEM', 'ABM', 'HUMSS', 'GAS', 'TVL']
+  'Grade 11': ['STEM', 'ABM', 'HUMSS', 'GAS', 'TVL - ICT', 'TVL - HE'],
+  'Grade 12': ['STEM', 'ABM', 'HUMSS', 'GAS', 'TVL - ICT', 'TVL - HE']
 };
 
-async function loadSectionsFor(sectionSelId, gradeSelId, preselect = '') {
-  const gradeVal = document.getElementById(gradeSelId).value;
-  const secSel   = document.getElementById(sectionSelId);
-  secSel.innerHTML = '<option value="">Loading...</option>';
-  secSel.disabled  = true;
+/* ── Dynamic Multiple Advisory Classes Handler (1 to 3 classes) ── */
+let modalClassState = {
+  at: [{ grade: '', section: '' }],
+  et: [{ grade: '', section: '' }]
+};
 
-  if (!gradeVal) {
-    secSel.innerHTML = '<option value="">— Select Grade first —</option>';
-    return;
-  }
-
-  let list = [];
+async function fetchSectionsForGrade(gradeVal) {
+  if (!gradeVal) return [];
+  let dbList = [];
   try {
     const res  = await fetch(`${BASE}/api/sections/index.php?grade_level=${encodeURIComponent(gradeVal)}`);
     const data = await res.json();
     if (data.ok && data.sections && data.sections.length > 0) {
-      list = data.sections.map(s => s.section_name);
+      dbList = data.sections.map(s => s.section_name);
     }
   } catch (e) {
     console.error(e);
   }
 
-  const defs = DEFAULT_SECTIONS[gradeVal] || ['Rizal', 'Mabini', 'Bonifacio', 'Luna', 'STEM', 'ABM', 'HUMSS'];
-  defs.forEach(d => {
-    if (!list.includes(d)) list.push(d);
-  });
-
-  if (preselect && !list.includes(preselect)) {
-    list.push(preselect);
+  // If database contains sections for this specific grade level, strictly return those
+  if (dbList.length > 0) {
+    return dbList;
   }
 
-  secSel.innerHTML = '<option value="">— Select Advisory Section —</option>';
-  list.forEach(secName => {
-    const opt = document.createElement('option');
-    opt.value = secName;
-    opt.textContent = secName;
-    if (secName === preselect) opt.selected = true;
-    secSel.appendChild(opt);
-  });
-  secSel.disabled = false;
+  // Otherwise, strictly fall back to default sections for THIS specific grade level only
+  return DEFAULT_SECTIONS[gradeVal] ? [...DEFAULT_SECTIONS[gradeVal]] : [];
 }
 
-const G7_G12_SUBJECTS = {
-  'Junior High School (Grade 7 – 10)': [
-    'Filipino', 'English', 'Mathematics', 'Science',
-    'Araling Panlipunan', 'Edukasyon sa Pagpapakatao',
-    'Technology and Livelihood Education', 'MAPEH'
-  ],
-  'Senior High School (Grade 11 – 12)': [
-    'Oral Communication', 'Reading and Writing', 'Komunikasyon at Pananaliksik',
-    '21st Century Literature', 'Contemporary Philippine Arts',
-    'Media and Information Literacy', 'General Mathematics',
-    'Statistics and Probability', 'Earth and Life Science',
-    'Physical Science', 'Introduction to Philosophy', 'Physical Education and Health'
-  ]
-};
-
-function renderComboboxOptions(prefix) {
-  const container = document.getElementById(`${prefix}-subjects-list`);
+async function renderAdvisoryClassRows(prefix) {
+  const container = document.getElementById(`${prefix}-classes-container`);
+  const addBtn    = document.getElementById(`${prefix}-add-class-btn`);
   if (!container) return;
-  let html = '';
-  let idx = 0;
-  for (const [groupName, subjects] of Object.entries(G7_G12_SUBJECTS)) {
-    html += `<div class="combobox-group-label fw-bold text-uppercase text-muted px-2 py-1 mb-1 rounded" style="font-size:.68rem; background:#f1f5f9; letter-spacing:0.5px;">${groupName}</div>`;
-    subjects.forEach(sub => {
-      idx++;
-      const id = `${prefix}-sub-${idx}`;
-      html += `<div class="form-check px-4 py-1 combobox-item rounded" style="transition:background .15s;">
-        <input class="form-check-input subject-checkbox" type="checkbox" value="${escHtml(sub)}" id="${id}" onchange="updateComboboxLabel('${prefix}')">
-        <label class="form-check-label w-100 ms-1 cursor-pointer select-none" for="${id}" style="font-size:.85rem; cursor:pointer;">${escHtml(sub)}</label>
-      </div>`;
+
+  const rows = modalClassState[prefix] || [];
+  if (addBtn) {
+    addBtn.disabled = rows.length >= 3;
+    if (rows.length >= 3) {
+      addBtn.title = 'Maximum 3 advisory classes allowed';
+    } else {
+      addBtn.title = 'Add another advisory class';
+    }
+  }
+
+  container.innerHTML = '';
+  for (let idx = 0; idx < rows.length; idx++) {
+    const item = rows[idx];
+    const rowEl = document.createElement('div');
+    rowEl.className = 'row g-2 align-items-center bg-white p-2 rounded-2 border shadow-sm';
+
+    let gradeOptions = `<option value="">— Select Grade —</option>`;
+    GRADE_LEVELS.forEach(g => {
+      gradeOptions += `<option value="${g}" ${item.grade === g ? 'selected' : ''}>${g}</option>`;
     });
-  }
-  container.innerHTML = html;
-}
 
-function updateComboboxLabel(prefix) {
-  const checkboxes = document.querySelectorAll(`#${prefix}-subjects-list .subject-checkbox:checked`);
-  const labelEl = document.getElementById(`${prefix}-subjects-label`);
-  const selected = Array.from(checkboxes).map(cb => cb.value);
+    let secDisabled = !item.grade ? 'disabled' : '';
+    let secOptions = !item.grade ? `<option value="">— Select Grade first —</option>` : `<option value="">— Select Section —</option>`;
 
-  if (selected.length === 0) {
-    labelEl.innerHTML = '<span class="text-muted">Select subjects taught (G7–G12)...</span>';
-  } else if (selected.length <= 2) {
-    labelEl.innerHTML = selected.map(s => `<span class="badge bg-primary bg-opacity-10 text-primary me-1 fw-medium" style="font-size:.75rem;">${escHtml(s)}</span>`).join('');
-  } else {
-    labelEl.innerHTML = `<span class="badge bg-primary me-1">${selected.length} Selected</span> <span class="text-dark" style="font-size:.8rem;">(${escHtml(selected.slice(0,2).join(', '))} +${selected.length - 2} more)</span>`;
-  }
-}
+    rowEl.innerHTML = `
+      <div class="col-12 col-md-5">
+        <label class="form-label mb-1 small text-muted">Class ${idx + 1} Grade</label>
+        <select class="form-select form-select-sm class-grade-sel" data-idx="${idx}" onchange="onClassGradeChange('${prefix}', ${idx}, this.value)">
+          ${gradeOptions}
+        </select>
+      </div>
+      <div class="col-10 col-md-6">
+        <label class="form-label mb-1 small text-muted">Section</label>
+        <select class="form-select form-select-sm class-section-sel" data-idx="${idx}" ${secDisabled} onchange="onClassSectionChange('${prefix}', ${idx}, this.value)">
+          ${secOptions}
+        </select>
+      </div>
+      <div class="col-2 col-md-1 text-end d-flex align-items-end justify-content-end" style="height: 100%;">
+        ${rows.length > 1 ? `
+          <button type="button" class="btn btn-outline-danger btn-sm p-1 px-2" style="margin-top: 1.4rem;" onclick="removeAdvisoryClassRow('${prefix}', ${idx})" title="Remove class">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        ` : `<div style="width:28px;"></div>`}
+      </div>
+    `;
 
-function setSelectedSubjects(prefix, subjectsList = '') {
-  let selected = [];
-  if (Array.isArray(subjectsList)) {
-    selected = subjectsList;
-  } else if (typeof subjectsList === 'string' && subjectsList.trim() !== '') {
-    selected = subjectsList.split(',').map(s => s.trim());
-  }
-  const checkboxes = document.querySelectorAll(`#${prefix}-subjects-list .subject-checkbox`);
-  checkboxes.forEach(cb => {
-    cb.checked = selected.includes(cb.value);
-  });
-  updateComboboxLabel(prefix);
-}
+    container.appendChild(rowEl);
 
-function getSelectedSubjects(prefix) {
-  const checkboxes = document.querySelectorAll(`#${prefix}-subjects-list .subject-checkbox:checked`);
-  return Array.from(checkboxes).map(cb => cb.value);
-}
-
-function filterComboboxSubjects(inputEl, prefix) {
-  const filter = inputEl.value.toLowerCase().trim();
-  const items = document.querySelectorAll(`#${prefix}-subjects-list .combobox-item`);
-  const groupLabels = document.querySelectorAll(`#${prefix}-subjects-list .combobox-group-label`);
-
-  items.forEach(item => {
-    const text = item.textContent.toLowerCase();
-    item.classList.toggle('d-none', !text.includes(filter));
-  });
-
-  groupLabels.forEach(label => {
-    let nextEl = label.nextElementSibling;
-    let hasVisible = false;
-    while (nextEl && !nextEl.classList.contains('combobox-group-label')) {
-      if (!nextEl.classList.contains('d-none')) {
-        hasVisible = true;
-        break;
-      }
-      nextEl = nextEl.nextElementSibling;
+    // Populate sections asynchronously strictly for the selected grade
+    if (item.grade) {
+      const secSel = rowEl.querySelector('.class-section-sel');
+      fetchSectionsForGrade(item.grade).then(secList => {
+        if (item.section && !secList.includes(item.section)) secList.push(item.section);
+        secSel.innerHTML = `<option value="">— Select Section —</option>` +
+          secList.map(s => `<option value="${escHtml(s)}" ${item.section === s ? 'selected' : ''}>${escHtml(s)}</option>`).join('');
+        secSel.disabled = false;
+      });
     }
-    label.classList.toggle('d-none', !hasVisible);
-  });
+  }
 }
 
-function selectAllComboboxSubjects(prefix, checkAll) {
-  const checkboxes = document.querySelectorAll(`#${prefix}-subjects-list .subject-checkbox`);
-  checkboxes.forEach(cb => {
-    const parentItem = cb.closest('.combobox-item');
-    if (!parentItem || !parentItem.classList.contains('d-none')) {
-      cb.checked = checkAll;
+function onClassGradeChange(prefix, idx, val) {
+  if (modalClassState[prefix][idx]) {
+    modalClassState[prefix][idx].grade = val;
+    modalClassState[prefix][idx].section = '';
+  }
+  renderAdvisoryClassRows(prefix);
+}
+
+function onClassSectionChange(prefix, idx, val) {
+  if (modalClassState[prefix][idx]) {
+    modalClassState[prefix][idx].section = val;
+  }
+}
+
+function addAdvisoryClassRow(prefix) {
+  if (!modalClassState[prefix]) modalClassState[prefix] = [];
+  if (modalClassState[prefix].length >= 3) {
+    showToast('Maximum of 3 advisory classes allowed.', 'warning');
+    return;
+  }
+  modalClassState[prefix].push({ grade: '', section: '' });
+  renderAdvisoryClassRows(prefix);
+}
+
+function removeAdvisoryClassRow(prefix, idx) {
+  if (modalClassState[prefix] && modalClassState[prefix].length > 1) {
+    modalClassState[prefix].splice(idx, 1);
+    renderAdvisoryClassRows(prefix);
+  }
+}
+
+function getAdvisoryClassesFromState(prefix) {
+  const list = modalClassState[prefix] || [];
+  const valid = [];
+  for (const item of list) {
+    const g = (item.grade || '').trim();
+    const s = (item.section || '').trim();
+    if (g || s) {
+      valid.push({ grade_level: g, section: s });
     }
-  });
-  updateComboboxLabel(prefix);
+  }
+  return valid;
 }
-
-// Render options for Add and Edit modal comboboxes
-renderComboboxOptions('at');
-renderComboboxOptions('et');
 
 /* ══ ADD TEACHER ══ */
 function openAddTeacherModal() {
   if (!addTeacherModal) addTeacherModal = new bootstrap.Modal(document.getElementById('addTeacherModal'));
   ['at-name','at-username','at-email','at-password','at-confirm'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('at-grade').value    = '';
-  document.getElementById('at-section').innerHTML = '<option value="">— Select Grade first —</option>';
-  document.getElementById('at-section').disabled  = true;
-  setSelectedSubjects('at', []);
+  modalClassState['at'] = [{ grade: '', section: '' }];
+  renderAdvisoryClassRows('at');
   document.getElementById('at-error').classList.add('d-none');
   document.getElementById('at-submit-btn').disabled = false;
   document.getElementById('at-submit-btn').innerHTML = '<i class="fas fa-user-plus me-1"></i> Add Teacher';
@@ -446,18 +394,27 @@ function openAddTeacherModal() {
 
 async function submitAddTeacher() {
   document.getElementById('at-error').classList.add('d-none');
-  const name            = document.getElementById('at-name').value.trim();
-  const advisory_grade  = document.getElementById('at-grade').value;
-  const advisory_subject= document.getElementById('at-section').value;
-  const teaching_subjects= getSelectedSubjects('at');
-  const username        = document.getElementById('at-username').value.trim();
-  const email           = document.getElementById('at-email').value.trim();
-  const password        = document.getElementById('at-password').value;
-  const confirm         = document.getElementById('at-confirm').value;
+  const name             = document.getElementById('at-name').value.trim();
+  const advisory_classes = getAdvisoryClassesFromState('at');
+  const username         = document.getElementById('at-username').value.trim();
+  const email            = document.getElementById('at-email').value.trim();
+  const password         = document.getElementById('at-password').value;
+  const confirm          = document.getElementById('at-confirm').value;
 
-  if (!name)             return showError('at-error','Full name is required.');
-  if (!advisory_grade)   return showError('at-error','Please select a grade level.');
-  if (!advisory_subject) return showError('at-error','Please select an advisory section.');
+  if (!name) return showError('at-error','Full name is required.');
+  if (!advisory_classes.length) return showError('at-error','Please assign at least one advisory class.');
+  for (let i = 0; i < advisory_classes.length; i++) {
+    if (!advisory_classes[i].grade_level) return showError('at-error', `Please select grade level for Class ${i+1}.`);
+    if (!advisory_classes[i].section) return showError('at-error', `Please select advisory section for Class ${i+1}.`);
+  }
+  // Check duplicate inside list
+  const seen = {};
+  for (const c of advisory_classes) {
+    const k = c.grade_level + '|' + c.section;
+    if (seen[k]) return showError('at-error', `Duplicate advisory class selected: ${c.grade_level} - ${c.section}.`);
+    seen[k] = true;
+  }
+
   if (!username || !email || !password || !confirm) return showError('at-error','Please fill in all required fields.');
   if (password.length < 6) return showError('at-error','Password must be at least 6 characters.');
   if (password !== confirm) return showError('at-error','Passwords do not match.');
@@ -468,7 +425,7 @@ async function submitAddTeacher() {
   try {
     const res  = await fetch(`${BASE}/api/accounts/create.php`, {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ role:'teacher', name, advisory_grade, advisory_subject, teaching_subjects, username, email, password })
+      body: JSON.stringify({ role:'teacher', name, advisory_classes, username, email, password })
     });
     const data = await res.json();
     if (!data.ok) {
@@ -498,7 +455,7 @@ async function loadTeachers() {
     renderTable();
   } catch {
     document.getElementById('teachers-tbody').innerHTML =
-      '<tr><td colspan="8" class="text-center text-danger py-3">Failed to load teachers.</td></tr>';
+      '<tr><td colspan="6" class="text-center text-danger py-3">Failed to load teachers.</td></tr>';
   }
 }
 
@@ -508,31 +465,31 @@ function renderTable() {
   const tbody = document.getElementById('teachers-tbody');
   document.getElementById('count-display').textContent = filtered.length;
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fas fa-chalkboard-teacher"></i><p>No teachers found.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="fas fa-chalkboard-teacher"></i><p>No teachers found.</p></div></td></tr>`;
     return;
   }
   tbody.innerHTML = filtered.map((t, i) => {
     const isActive = t.status === 'active';
-    let teachingSubStr = t.teaching_subjects || '';
-    let teachingBadges = '<span class="text-muted" style="font-size:.8rem;">—</span>';
-    if (teachingSubStr) {
-      let list = teachingSubStr.split(',').map(s=>s.trim()).filter(Boolean);
-      if (list.length > 0) {
-        if (list.length <= 2) {
-          teachingBadges = list.map(s => `<span class="badge bg-secondary bg-opacity-10 text-dark border me-1 fw-normal" style="font-size:.73rem;">${escHtml(s)}</span>`).join('');
-        } else {
-          teachingBadges = `<span class="badge bg-primary bg-opacity-15 text-primary fw-semibold me-1" style="font-size:.75rem;" title="${escHtml(list.join(', '))}">${list.length} Subjects</span>` +
-                           `<span class="text-muted" style="font-size:.78rem;" title="${escHtml(list.join(', '))}">${escHtml(list.slice(0,2).join(', '))}...</span>`;
-        }
-      }
+
+    // Render multiple advisory class badges
+    let advisoryBadges = '<span class="text-muted" style="font-size:.8rem;">—</span>';
+    let classes = t.advisory_classes || [];
+    if (classes.length === 0 && (t.advisory_grade || t.advisory_subject)) {
+      classes = [{ grade_level: t.advisory_grade, section: t.advisory_subject }];
     }
+    if (classes.length > 0) {
+      advisoryBadges = classes.map(c =>
+        `<span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 me-1 mb-1 fw-semibold d-inline-flex align-items-center" style="font-size:.78rem;">
+          <i class="fas fa-chalkboard me-1 opacity-75"></i>${escHtml(c.grade_level)} — ${escHtml(c.section)}
+        </span>`
+      ).join('');
+    }
+
     return `<tr id="teacher-row-${t.id}">
       <td>${i + 1}</td>
       <td><strong>${escHtml(t.name)}</strong></td>
       <td><span style="font-family:monospace;font-size:.82rem;">${escHtml(t.username)}</span></td>
-      <td><span class="badge bg-primary bg-opacity-10 text-primary fw-semibold" style="font-size:.78rem;">${escHtml(t.advisory_grade || '—')}</span></td>
-      <td style="font-size:.85rem;">${escHtml(t.advisory_subject || '—')}</td>
-      <td>${teachingBadges}</td>
+      <td>${advisoryBadges}</td>
       <td>
         <span class="badge ${isActive?'bg-success':'bg-danger'} bg-opacity-15 text-${isActive?'success':'danger'} fw-semibold" id="t-badge-${t.id}">
           ${isActive ? 'Active' : 'Inactive'}
@@ -584,37 +541,47 @@ async function openEditModal(id) {
   document.getElementById('et-email').value     = t.email || '';
   document.getElementById('et-new-pw').value    = '';
   document.getElementById('et-confirm-pw').value= '';
-  setSelectedSubjects('et', t.teaching_subjects || '');
   document.getElementById('et-error').classList.add('d-none');
   document.getElementById('et-save-btn').disabled = false;
   document.getElementById('et-save-btn').innerHTML = '<i class="fas fa-save me-1"></i> Save Changes';
 
-  // Set grade and load sections
-  document.getElementById('et-grade').value = t.advisory_grade || '';
-  if (t.advisory_grade) {
-    await loadSectionsFor('et-section', 'et-grade', t.advisory_subject || '');
-  } else {
-    document.getElementById('et-section').innerHTML = '<option value="">— Select Grade first —</option>';
-    document.getElementById('et-section').disabled = true;
+  // Prepopulate classes for edit modal
+  let classes = t.advisory_classes || [];
+  if (!classes.length && (t.advisory_grade || t.advisory_subject)) {
+    classes = [{ grade_level: t.advisory_grade, section: t.advisory_subject }];
   }
+  if (!classes.length) {
+    classes = [{ grade_level: '', section: '' }];
+  }
+  modalClassState['et'] = classes.map(c => ({ grade: c.grade_level || '', section: c.section || '' }));
+  renderAdvisoryClassRows('et');
 
   editModal.show();
 }
 
 async function saveTeacher() {
   document.getElementById('et-error').classList.add('d-none');
-  const id              = parseInt(document.getElementById('et-id').value);
-  const name            = document.getElementById('et-name').value.trim();
-  const email           = document.getElementById('et-email').value.trim();
-  const advisory_grade  = document.getElementById('et-grade').value;
-  const advisory_subject= document.getElementById('et-section').value;
-  const teaching_subjects= getSelectedSubjects('et');
-  const newPw           = document.getElementById('et-new-pw').value;
-  const confirmPw       = document.getElementById('et-confirm-pw').value;
+  const id               = parseInt(document.getElementById('et-id').value);
+  const name             = document.getElementById('et-name').value.trim();
+  const email            = document.getElementById('et-email').value.trim();
+  const advisory_classes = getAdvisoryClassesFromState('et');
+  const newPw            = document.getElementById('et-new-pw').value;
+  const confirmPw        = document.getElementById('et-confirm-pw').value;
 
-  if (!name || !email)   return showError('et-error','Name and email are required.');
-  if (!advisory_grade)   return showError('et-error','Please select a grade level.');
-  if (!advisory_subject) return showError('et-error','Please select an advisory section.');
+  if (!name || !email) return showError('et-error','Name and email are required.');
+  if (!advisory_classes.length) return showError('et-error','Please assign at least one advisory class.');
+  for (let i = 0; i < advisory_classes.length; i++) {
+    if (!advisory_classes[i].grade_level) return showError('et-error', `Please select grade level for Class ${i+1}.`);
+    if (!advisory_classes[i].section) return showError('et-error', `Please select advisory section for Class ${i+1}.`);
+  }
+  // Check duplicate inside list
+  const seen = {};
+  for (const c of advisory_classes) {
+    const k = c.grade_level + '|' + c.section;
+    if (seen[k]) return showError('et-error', `Duplicate advisory class selected: ${c.grade_level} - ${c.section}.`);
+    seen[k] = true;
+  }
+
   if (newPw && newPw.length < 6) return showError('et-error','New password must be at least 6 characters.');
   if (newPw && newPw !== confirmPw) return showError('et-error','Passwords do not match.');
 
@@ -624,7 +591,7 @@ async function saveTeacher() {
   try {
     const res  = await fetch(`${BASE}/api/teachers/index.php`, {
       method:'PUT', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ id, name, email, advisory_grade, advisory_subject, teaching_subjects, new_password: newPw })
+      body: JSON.stringify({ id, name, email, advisory_classes, new_password: newPw })
     });
     const data = await res.json();
     if (!data.ok) {

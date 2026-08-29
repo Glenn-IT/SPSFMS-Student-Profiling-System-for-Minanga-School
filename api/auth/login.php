@@ -43,6 +43,7 @@ $_SESSION['user'] = [
     'position'         => $user['position'],
     'advisory_grade'   => $user['advisory_grade'] ?? null,
     'advisory_subject' => $user['advisory_subject'] ?? null,
+    'advisory_classes' => $user['role'] === 'teacher' ? getTeacherAdvisoryClasses($pdo, $user['id']) : [],
     'lrn'              => $user['lrn'],
     'grade_level'      => $user['grade_level'],
     'section'          => $user['section'],

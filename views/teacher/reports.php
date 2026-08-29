@@ -10,20 +10,14 @@ $uStmt = $pdo->prepare("SELECT * FROM users WHERE id = ? LIMIT 1");
 $uStmt->execute([$user['id']]);
 $freshUser = $uStmt->fetch() ?: $user;
 
-$myGrade   = $freshUser['advisory_grade']   ?? '';
-$mySection = $freshUser['advisory_subject'] ?? '';
-
-if (!$myGrade && !empty($freshUser['position'])) {
-    if (preg_match('/(Grade\s+\d+)\s*-\s*Section\s*(.+)/i', $freshUser['position'], $m)) {
-        $myGrade   = trim($m[1]);
-        $mySection = trim($m[2]);
-    } elseif (preg_match('/(Grade\s+\d+)\s*(.+)/i', $freshUser['position'], $m)) {
-        $myGrade   = trim($m[1]);
-        $mySection = trim($m[2]);
-    }
+// Get all advisory classes for teacher
+$myClasses = getTeacherAdvisoryClasses($pdo, $freshUser['id']);
+if (empty($myClasses)) {
+    $myClasses = [['grade_level' => 'Grade 1', 'section' => 'Mabini']];
 }
-if (!$myGrade)   $myGrade   = 'Grade 1';
-if (!$mySection) $mySection = 'Mabini';
+
+$myGrade   = $myClasses[0]['grade_level'];
+$mySection = $myClasses[0]['section'];
 
 $grade   = $_GET['grade']   ?? $myGrade;
 $section = $_GET['section'] ?? $mySection;
@@ -76,26 +70,53 @@ $students = $stmt->fetchAll();
       <div class="ms-auto"><div class="user-menu"><div class="user-avatar" style="background:var(--secondary);color:#fff;"><?= strtoupper(substr($user['name'],0,1)) ?></div><div><div class="user-name"><?= htmlspecialchars($user['name']) ?></div><div class="user-role">Teacher</div></div></div></div>
     </nav>
 
-    <div class="page-header no-print"><h3>Grade Summary Report</h3><p>Print class grade summary</p></div>
+    <div class="page-header no-print d-flex flex-column gap-2">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+          <h3 class="mb-1">Grade Summary Report</h3>
+          <p class="mb-0 text-muted">Generate and print class grade summary records</p>
+        </div>
+      </div>
+
+      <!-- Advisory Classes Quick-Select Shortcuts -->
+      <?php if (count($myClasses) > 1): ?>
+        <div class="p-2 bg-white rounded-3 border shadow-sm mt-2">
+          <div class="d-flex align-items-center flex-wrap gap-2">
+            <span class="text-muted fw-bold small me-1 ps-1"><i class="fas fa-chalkboard me-1 text-success"></i>My Advisory Classes:</span>
+            <?php foreach ($myClasses as $idx => $cls):
+              $isCurrent = ($grade === $cls['grade_level'] && $section === $cls['section']);
+            ?>
+              <a href="?grade=<?= urlencode($cls['grade_level']) ?>&section=<?= urlencode($cls['section']) ?>&sy=<?= urlencode($sy) ?>" class="btn btn-sm <?= $isCurrent ? 'btn-success text-white fw-bold shadow-sm' : 'btn-light border text-dark' ?>" style="border-radius: 20px; font-size: .84rem; padding: 4px 14px;">
+                <i class="fas fa-layer-group me-1 <?= $isCurrent ? 'text-white' : 'text-success' ?>"></i>
+                <?= htmlspecialchars($cls['grade_level']) ?> — Section <?= htmlspecialchars($cls['section']) ?>
+              </a>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      <?php endif; ?>
+    </div>
 
     <form method="get" class="card mb-3 no-print">
       <div class="card-body">
         <div class="row g-2 align-items-end">
           <div class="col-md-3"><label class="form-label mb-1">Grade Level</label>
-            <select name="grade" class="form-select">
+            <select name="grade" id="rep-grade" class="form-select" onchange="updateSectionDropdown()">
               <?php foreach (GRADE_LEVELS as $gl): ?>
               <option value="<?= $gl ?>" <?= $grade===$gl?'selected':'' ?>><?= $gl ?></option>
               <?php endforeach; ?>
             </select>
           </div>
-          <div class="col-md-3"><label class="form-label mb-1">School Year</label>
+          <div class="col-md-3"><label class="form-label mb-1">Section</label>
+            <input type="text" name="section" id="rep-section" class="form-control" value="<?= htmlspecialchars($section) ?>" placeholder="Section name">
+          </div>
+          <div class="col-md-2"><label class="form-label mb-1">School Year</label>
             <select name="sy" class="form-select">
               <option value="2025-2026" <?= $sy==='2025-2026'?'selected':'' ?>>2025–2026</option>
               <option value="2024-2025" <?= $sy==='2024-2025'?'selected':'' ?>>2024–2025</option>
             </select>
           </div>
-          <div class="col-md-3"><button class="btn btn-secondary w-100">Generate</button></div>
-          <div class="col-md-3"><button type="button" class="btn btn-primary w-100" onclick="window.print()"><i class="fas fa-print me-2"></i>Print</button></div>
+          <div class="col-md-2"><button class="btn btn-secondary w-100"><i class="fas fa-filter me-1"></i>Generate</button></div>
+          <div class="col-md-2"><button type="button" class="btn btn-primary w-100" onclick="window.print()"><i class="fas fa-print me-1"></i>Print</button></div>
         </div>
       </div>
     </form>
@@ -111,7 +132,7 @@ $students = $stmt->fetchAll();
               <div style="font-size:.95rem;color:#333;font-weight:400;margin-bottom:1.75rem;"><?= SCHOOL_ADDRESS ?></div>
 
               <h3 class="text-center text-uppercase text-dark fw-bold mb-1" style="letter-spacing:0.5px;">CLASS GRADE SUMMARY REPORT</h3>
-              <div style="font-size:.95rem;color:#333;" class="text-center"><?= htmlspecialchars($grade) ?> | S.Y. <?= htmlspecialchars($sy) ?></div>
+              <div style="font-size:.95rem;color:#333;" class="text-center"><?= htmlspecialchars($grade) ?> — Section <?= htmlspecialchars($section) ?> | S.Y. <?= htmlspecialchars($sy) ?></div>
               <div style="font-size:.85rem;color:var(--gray-600);" class="text-center mt-1">Prepared by: <?= htmlspecialchars($user['name']) ?></div>
             </div>
           </div>
