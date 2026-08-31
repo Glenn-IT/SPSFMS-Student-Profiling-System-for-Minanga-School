@@ -5,6 +5,7 @@ $activePage = 'grades';
 
 $myClasses = getTeacherAdvisoryClasses($pdo, $user['id']);
 $studentList = $pdo->query("SELECT id,last_name,first_name,middle_name,lrn,grade_level,section FROM students WHERE status='active' ORDER BY grade_level,section,last_name,first_name")->fetchAll();
+$preselectedStudentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : (isset($_GET['id']) ? (int)$_GET['id'] : 0);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -60,7 +61,7 @@ $studentList = $pdo->query("SELECT id,last_name,first_name,middle_name,lrn,grade
             <select id="student-select" class="form-select" onchange="loadGrades()">
               <option value="">— Choose a student —</option>
               <?php foreach ($studentList as $s): ?>
-              <option value="<?= $s['id'] ?>" data-class="<?= htmlspecialchars($s['grade_level'].'|'.$s['section']) ?>"><?= htmlspecialchars($s['last_name'].', '.$s['first_name'].' '.($s['middle_name']??'')) ?> (<?= $s['grade_level'] ?> - <?= $s['section'] ?>)</option>
+              <option value="<?= $s['id'] ?>" data-class="<?= htmlspecialchars($s['grade_level'].'|'.$s['section']) ?>" <?= $preselectedStudentId === (int)$s['id'] ? 'selected' : '' ?>><?= htmlspecialchars($s['last_name'].', '.$s['first_name'].' '.($s['middle_name']??'')) ?> (<?= $s['grade_level'] ?> - <?= $s['section'] ?>)</option>
               <?php endforeach; ?>
             </select>
           </div>
@@ -279,6 +280,28 @@ async function saveAllGrades() {
     showToast('Failed to save grades.', 'error');
   }
 }
+
+window.addEventListener('DOMContentLoaded', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const studentId = urlParams.get('student_id') || urlParams.get('id') || document.getElementById('student-select').value;
+  if (studentId) {
+    const sel = document.getElementById('student-select');
+    sel.value = studentId;
+    const selectedOpt = sel.querySelector(`option[value="${studentId}"]`);
+    if (selectedOpt && selectedOpt.dataset.class) {
+      const classFilter = document.getElementById('class-filter');
+      if (classFilter) {
+        const classOpt = classFilter.querySelector(`option[value="${selectedOpt.dataset.class}"]`);
+        if (classOpt) {
+          classFilter.value = selectedOpt.dataset.class;
+          filterStudentDropdown();
+          sel.value = studentId;
+        }
+      }
+    }
+    loadGrades();
+  }
+});
 </script>
 </body>
 </html>

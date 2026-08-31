@@ -144,7 +144,7 @@ $pending = $totalStudents - $graded;
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table table-modern mb-0" id="advisoryTable">
-            <thead><tr><th>#</th><th>LRN</th><th>Full Name</th><th>Sex</th><th>Age</th><th>Graded Subjects</th><th>Status</th></tr></thead>
+            <thead><tr><th>#</th><th>LRN</th><th>Full Name</th><th>Sex</th><th>Age</th><th>Graded Subjects</th><th class="text-center">Action</th></tr></thead>
             <tbody>
               <?php if (empty($classStudents)): ?>
               <tr><td colspan="7" class="text-center py-4 text-muted">No students enrolled in <?= htmlspecialchars($advisoryGrade) ?> - Section <?= htmlspecialchars($advisorySection) ?>.</td></tr>
@@ -162,7 +162,11 @@ $pending = $totalStudents - $graded;
                   <span class="badge bg-warning bg-opacity-15 text-warning fw-semibold">No grades yet</span>
                   <?php endif; ?>
                 </td>
-                <td><span class="badge-active">Active</span></td>
+                <td class="text-center">
+                  <a href="grades.php?student_id=<?= $s['id'] ?>" class="btn btn-sm" style="background:var(--secondary);color:#fff;font-size:.78rem;padding:4px 10px;border-radius:6px;white-space:nowrap;">
+                    <i class="fas fa-edit me-1"></i>Manage Grade
+                  </a>
+                </td>
               </tr>
               <?php endforeach; endif; ?>
               <tr id="advisoryNoMatch" class="d-none"><td colspan="7" class="text-center py-4 text-muted">No matching students found.</td></tr>
