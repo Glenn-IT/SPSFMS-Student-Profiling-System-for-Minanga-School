@@ -22,7 +22,7 @@ if ($method === 'GET') {
     if (!$student) { http_response_code(404); echo json_encode(['ok'=>false,'message'=>'Student not found']); exit; }
 
     // Get subjects for this grade
-    $subjects = getSubjectsForGrade($student['grade_level']);
+    $subjects = getSubjectsForGrade($student['grade_level'], $pdo);
 
     // Fetch existing grade rows
     $gStmt = $pdo->prepare('SELECT * FROM grades WHERE student_id=? AND school_year=?');
@@ -32,6 +32,9 @@ if ($method === 'GET') {
     $gradeMap = [];
     foreach ($rows as $r) {
         $gradeMap[$r['subject']] = $r;
+        if (!in_array($r['subject'], $subjects)) {
+            $subjects[] = $r['subject'];
+        }
     }
 
     // Build ordered response with all subjects

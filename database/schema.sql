@@ -128,7 +128,83 @@ CREATE TABLE IF NOT EXISTS `report_signatories` (
   `updated_at`          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT IGNORE INTO `report_signatories` (`id`, `prepared_by_type`, `noted_by_type`, `noted_by_title`) VALUES
-(1, 'teacher', 'custom', 'School Head / Principal');
+-- ─── Sections ────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS `sections` (
+  `id`           INT AUTO_INCREMENT PRIMARY KEY,
+  `grade_level`  VARCHAR(20) NOT NULL,
+  `section_name` VARCHAR(100) NOT NULL,
+  `created_at`   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `uq_grade_section` (`grade_level`, `section_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+INSERT IGNORE INTO `sections` (`grade_level`, `section_name`) VALUES
+('Grade 1', 'Mabini'),
+('Grade 2', 'Mabini'),
+('Grade 3', 'Mabini'),
+('Grade 4', 'Bonifacio'),
+('Grade 5', 'Bonifacio'),
+('Grade 6', 'Bonifacio'),
+('Grade 7', 'Rizal'),
+('Grade 8', 'Luna'),
+('Grade 9', 'Luna'),
+('Grade 10', 'Mabini'),
+('Grade 11', 'STEM'),
+('Grade 11', 'ABM'),
+('Grade 11', 'HUMSS'),
+('Grade 12', 'STEM'),
+('Grade 12', 'ABM'),
+('Grade 12', 'HUMSS');
 
+-- ─── Subjects ────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS `subjects` (
+  `id`         INT AUTO_INCREMENT PRIMARY KEY,
+  `name`       VARCHAR(150) NOT NULL,
+  `grade_type` ENUM('elementary','jhs','shs') NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `uq_subject_level` (`name`, `grade_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO `subjects` (`name`, `grade_type`) VALUES
+('Filipino', 'elementary'),
+('English', 'elementary'),
+('Mathematics', 'elementary'),
+('Science', 'elementary'),
+('Araling Panlipunan', 'elementary'),
+('Edukasyon sa Pagpapakatao', 'elementary'),
+('MAPEH', 'elementary'),
+('Mother Tongue', 'elementary'),
+('Filipino', 'jhs'),
+('English', 'jhs'),
+('Mathematics', 'jhs'),
+('Science', 'jhs'),
+('Araling Panlipunan', 'jhs'),
+('Edukasyon sa Pagpapakatao', 'jhs'),
+('Technology and Livelihood Education', 'jhs'),
+('MAPEH', 'jhs'),
+('Oral Communication', 'shs'),
+('Reading and Writing', 'shs'),
+('Komunikasyon at Pananaliksik', 'shs'),
+('21st Century Literature', 'shs'),
+('Contemporary Philippine Arts', 'shs'),
+('Media and Information Literacy', 'shs'),
+('General Mathematics', 'shs'),
+('Statistics and Probability', 'shs'),
+('Earth and Life Science', 'shs'),
+('Physical Science', 'shs'),
+('Introduction to Philosophy', 'shs'),
+('Physical Education and Health', 'shs');
+
+-- ─── School Years ────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS `school_years` (
+  `id`          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `year_label`  VARCHAR(20) NOT NULL UNIQUE,
+  `is_active`   TINYINT(1) NOT NULL DEFAULT 0,
+  `start_date`  DATE DEFAULT NULL,
+  `end_date`    DATE DEFAULT NULL,
+  `created_at`  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO `school_years` (`year_label`, `is_active`, `start_date`, `end_date`) VALUES
+('2024-2025', 0, '2024-06-03', '2025-03-28'),
+('2025-2026', 1, '2025-06-02', '2026-03-27'),
+('2026-2027', 0, '2026-06-01', '2027-03-26');

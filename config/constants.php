@@ -2,8 +2,37 @@
 define('APP_NAME',    'SPSMIS');
 define('SCHOOL_NAME', 'Minanga Integrated School');
 define('SCHOOL_ADDRESS', 'Minanga, Piat, Cagayan');
-define('SCHOOL_YEAR', '2025-2026');
 define('BASE_URL',    '/SPSFMS-Student-Profiling-System-for-Minanga-School');
+
+function getActiveSchoolYear(?PDO $pdo = null): string {
+    $db = $pdo ?? ($GLOBALS['pdo'] ?? null);
+    if ($db instanceof PDO) {
+        try {
+            $stmt = $db->query("SELECT year_label FROM school_years WHERE is_active = 1 LIMIT 1");
+            $val = $stmt->fetchColumn();
+            if (!empty($val)) return $val;
+        } catch (Exception $e) {}
+    }
+    return '2025-2026';
+}
+
+function getSchoolYearsList(?PDO $pdo = null): array {
+    $db = $pdo ?? ($GLOBALS['pdo'] ?? null);
+    if ($db instanceof PDO) {
+        try {
+            $stmt = $db->query("SELECT year_label, is_active FROM school_years ORDER BY year_label DESC");
+            $rows = $stmt->fetchAll();
+            if (!empty($rows)) return $rows;
+        } catch (Exception $e) {}
+    }
+    return [
+        ['year_label' => '2026-2027', 'is_active' => 0],
+        ['year_label' => '2025-2026', 'is_active' => 1],
+        ['year_label' => '2024-2025', 'is_active' => 0]
+    ];
+}
+
+define('SCHOOL_YEAR', getActiveSchoolYear());
 
 
 define('GRADE_LEVELS', [
@@ -68,9 +97,28 @@ define('SUBJECTS_SHS', [
     'Physical Science','Introduction to Philosophy','Physical Education and Health'
 ]);
 
-function getSubjectsForGrade(string $gradeLevel): array {
+function getSubjectsForGrade(string $gradeLevel, ?PDO $pdo = null): array {
     $g = (int) str_replace('Grade ', '', $gradeLevel);
-    if ($g <= 6)  return SUBJECTS_ELEM;
-    if ($g <= 10) return SUBJECTS_JHS;
+    $group = 'shs';
+    if ($g <= 6) {
+        $group = 'elementary';
+    } elseif ($g <= 10) {
+        $group = 'jhs';
+    }
+
+    $db = $pdo ?? ($GLOBALS['pdo'] ?? null);
+    if ($db instanceof PDO) {
+        try {
+            $stmt = $db->prepare("SELECT name FROM subjects WHERE grade_type = ? ORDER BY id ASC");
+            $stmt->execute([$group]);
+            $dbSubjects = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            if (!empty($dbSubjects)) {
+                return $dbSubjects;
+            }
+        } catch (Exception $e) {}
+    }
+
+    if ($group === 'elementary') return SUBJECTS_ELEM;
+    if ($group === 'jhs')        return SUBJECTS_JHS;
     return SUBJECTS_SHS;
 }

@@ -1,8 +1,7 @@
 <?php
 require_once __DIR__ . '/../../includes/auth_check.php';
 $user = requireAuth('admin');
-header('Location: ' . BASE_URL . '/views/admin/dashboard.php');
-exit;
+$activePage = 'subjects';
 ?>
 <!DOCTYPE html>
 <html lang="en">

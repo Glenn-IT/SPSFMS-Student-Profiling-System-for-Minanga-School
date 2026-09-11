@@ -99,6 +99,30 @@ try {
             $pdo->exec("INSERT INTO `report_signatories` (`id`, `prepared_by_type`, `noted_by_type`, `noted_by_title`) VALUES (1, 'teacher', 'custom', 'School Head / Principal')");
         }
     } catch (Exception $rsErr) {}
+
+    // Ensure school_years table exists and is seeded
+    try {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `school_years` (
+              `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+              `year_label` VARCHAR(20) NOT NULL UNIQUE,
+              `is_active` TINYINT(1) NOT NULL DEFAULT 0,
+              `start_date` DATE DEFAULT NULL,
+              `end_date` DATE DEFAULT NULL,
+              `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ");
+        $syCount = $pdo->query("SELECT COUNT(*) FROM `school_years`")->fetchColumn();
+        if ($syCount == 0) {
+            $insSy = $pdo->prepare("INSERT IGNORE INTO `school_years` (`year_label`, `is_active`, `start_date`, `end_date`) VALUES (?, ?, ?, ?)");
+            $defaultSys = [
+                ['2024-2025', 0, '2024-06-03', '2025-03-28'],
+                ['2025-2026', 1, '2025-06-02', '2026-03-27'],
+                ['2026-2027', 0, '2026-06-01', '2027-03-26']
+            ];
+            foreach ($defaultSys as $syRow) { $insSy->execute($syRow); }
+        }
+    } catch (Exception $syErr) {}
 } catch (PDOException $e) {
 
     http_response_code(500);

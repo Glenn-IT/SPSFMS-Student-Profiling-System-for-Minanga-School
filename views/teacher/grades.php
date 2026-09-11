@@ -68,8 +68,9 @@ $preselectedStudentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 
           <div class="col-md-2">
             <label class="form-label">School Year</label>
             <select id="sy-select" class="form-select" onchange="loadGrades()">
-              <option value="2025-2026">2025–2026</option>
-              <option value="2024-2025">2024–2025</option>
+              <?php foreach (getSchoolYearsList($pdo) as $syItem): ?>
+              <option value="<?= htmlspecialchars($syItem['year_label']) ?>" <?= ($syItem['is_active'] || $syItem['year_label'] === SCHOOL_YEAR) ? 'selected' : '' ?>><?= htmlspecialchars($syItem['year_label']) ?><?= $syItem['is_active'] ? ' (Active)' : '' ?></option>
+              <?php endforeach; ?>
             </select>
           </div>
           <div class="col-md-3">

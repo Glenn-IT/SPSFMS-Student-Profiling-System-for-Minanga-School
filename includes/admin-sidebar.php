@@ -9,12 +9,14 @@ $navItems = [
   ['page'=>'students',      'icon'=>'fa-users',                'label'=>'Student Management',   'href'=>BASE_URL.'/views/admin/students.php'],
   ['page'=>'teachers',      'icon'=>'fa-chalkboard-teacher',   'label'=>'Teacher Management',   'href'=>BASE_URL.'/views/admin/teachers.php'],
   ['page'=>'sections',      'icon'=>'fa-th-large',             'label'=>'Section Management',   'href'=>BASE_URL.'/views/admin/sections.php'],
+  ['page'=>'subjects',      'icon'=>'fa-book',                 'label'=>'Subject Management',   'href'=>BASE_URL.'/views/admin/subjects.php'],
   ['page'=>'reports',       'icon'=>'fa-file-alt',             'label'=>'Reports',              'href'=>BASE_URL.'/views/admin/reports.php'],
   ['page'=>'signatories',   'icon'=>'fa-file-signature',        'label'=>'Report Signatories',   'href'=>BASE_URL.'/views/admin/signatories.php'],
   ['page'=>'accounts',      'icon'=>'fa-user-cog',             'label'=>'Account Management',   'href'=>BASE_URL.'/views/admin/accounts.php'],
   ['page'=>'analytics',     'icon'=>'fa-chart-line',           'label'=>'Analytics',            'href'=>BASE_URL.'/views/admin/analytics.php'],
   ['page'=>'settings',      'icon'=>'fa-cog',                  'label'=>'Settings',             'href'=>BASE_URL.'/views/admin/settings.php'],
   ['page'=>'sec_questions', 'icon'=>'fa-shield-alt',           'label'=>'Manage Security QT',   'href'=>BASE_URL.'/views/admin/security-questions.php'],
+  ['page'=>'school_years',  'icon'=>'fa-calendar-alt',         'label'=>'Manage School Year',   'href'=>BASE_URL.'/views/admin/school-years.php'],
 ];
 
 ?>
