@@ -69,7 +69,7 @@ SPSFMS/
 │   │   └── settings.php                # Teacher credentials update
 │   └── student/
 │       ├── dashboard.php               # Announcements & summary grade cards
-│       ├── profile.php                 # Read-only personal/family profile
+│       ├── profile.php                 # Student personal/family profile with self-edit capability
 │       └── settings.php                # Student credentials update
 │
 ├── api/
