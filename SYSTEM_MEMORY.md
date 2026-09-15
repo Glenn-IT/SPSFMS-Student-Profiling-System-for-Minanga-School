@@ -11,7 +11,7 @@ SPSMIS is a role-based school management portal for Minanga Integrated School (M
 ### Core Roles & Target Devices
 - **Administrator Portal** (`views/admin/`): Desktop-only (1024px+). System config, student/teacher/section/subject/account management, analytics, and DepEd reports.
 - **Teacher Portal** (`views/teacher/`): Desktop-only (1024px+). Advisory class overview, student profiles, DepEd SF10 quarterly grading (Q1–Q4 auto-calc), and grade summaries.
-- **Student Portal** (`views/student/`): Mobile-first (375px+). Grades viewer, announcements, profile overview, bottom navigation.
+- **Student Portal** (`views/student/`): Fully responsive (mobile 320px+, tablet 768px+, desktop 1024px+). Grades viewer (SF10 table & mobile cards), announcements, profile overview, top desktop navbar, bottom mobile navigation.
 - **Auth System** (`views/auth/`, `api/auth/`): Role-aware login with 3-attempt lockout, 3-step security question password reset, and session role guards.
 
 ---
@@ -36,6 +36,7 @@ SPSFMS/
 │   ├── auth_check.php                  # requireAuth(), getLoggedInUser(), redirectByRole()
 │   ├── admin-sidebar.php               # Admin navigation menu ($activePage driven)
 │   ├── teacher-sidebar.php             # Teacher navigation menu ($activePage driven)
+│   ├── student-navbar.php              # Responsive student navigation (desktop topbar & mobile bottom nav)
 │   └── chart-download-menu.php         # Dropdown menu helper for exporting Chart.js
 │
 ├── database/
@@ -175,7 +176,7 @@ Whenever any file or logic in the system is changed or refactored, the developer
 | **API Endpoint** (`api/...`) | 1. Views making `fetch()` calls<br>2. HTTP method handlers (`GET`, `POST`, `PUT`, `DELETE`)<br>3. Role validation `$_SESSION['user']['role']`<br>4. Error status codes & JSON keys (`ok`, `message`) | • Ensure client-side JS sends the expected keys and Content-Type.<br>• Ensure response JSON matches `{ok: true/false, ...}` structure.<br>• Verify role guard matches who is allowed to call the API. |
 | **Admin Navigation / View** | 1. `includes/admin-sidebar.php`<br>2. `$activePage` variable in view<br>3. `includes/auth_check.php`<br>4. Desktop overlay in view | • Add link to `$navItems` in `admin-sidebar.php`.<br>• Set `$activePage = '<key>'` before including sidebar.<br>• Include `requireAuth('admin')` at line 2.<br>• Include desktop required overlay. |
 | **Teacher Navigation / View** | 1. `includes/teacher-sidebar.php`<br>2. `$activePage` variable in view<br>3. `includes/auth_check.php`<br>4. `views/teacher/reports.php` | • Add link to `$navItems` in `teacher-sidebar.php`.<br>• Set `$activePage = '<key>'` before including sidebar.<br>• Include `requireAuth('teacher')` at line 2.<br>• Teacher reports are strictly locked to their assigned advisory class only. |
-| **Student Navigation / View** | 1. Mobile bottom navigation bar<br>2. `assets/css/student-mobile.css`<br>3. `includes/auth_check.php` | • Ensure mobile bottom nav links match view files.<br>• Include `requireAuth('student')` at top.<br>• Verify mobile viewport responsiveness (320px–768px). |
+| **Student Navigation / View** | 1. Mobile bottom navigation bar<br>2. Desktop top navigation bar (`includes/student-navbar.php`)<br>3. `assets/css/student-mobile.css`<br>4. `includes/auth_check.php` | • Ensure nav links match view files (`dashboard.php`, `profile.php`, `settings.php`).<br>• Include `requireAuth('student')` at top.<br>• Verify mobile viewport responsiveness (320px–767px) and desktop layout (768px–1200px+). |
 | **School Year** | 1. `config/constants.php` (`SCHOOL_YEAR`, `getActiveSchoolYear()`, `getSchoolYearsList()`)<br>2. `database/schema.sql` & `database/setup.php`<br>3. `api/school-years/index.php`<br>4. `views/admin/school-years.php`<br>5. Dropdowns in `views/teacher/grades.php`, `views/teacher/reports.php`, `views/admin/students.php` | • Ensure only one school year has `is_active = 1`.<br>• Active school year dynamically populates as the default across teacher and admin modules.<br>• Dropdown options load dynamically from `getSchoolYearsList()`. |
 | **Grade Levels / Sections** | 1. `config/constants.php` (`GRADE_LEVELS`, `SECTION_MAP`)<br>2. `database/schema.sql` (default section inserts)<br>3. `database/setup.php` (default section inserts)<br>4. Grade dropdown filters across views (`students.php`, `grades.php`, `sections.php`, `teachers.php`) | • Ensure grade level string matches format `"Grade X"`.<br>• Dynamic section map loads from `sections` table with fallback to constants.<br>• Filter dropdowns populate accurately. |
 | **Subjects** | 1. `config/constants.php` (`getSubjectsForGrade()`)<br>2. `database/schema.sql` & `database/setup.php`<br>3. `api/subjects/index.php`<br>4. `views/admin/subjects.php`<br>5. `api/grades/student.php`<br>6. `views/teacher/grades.php` | • `getSubjectsForGrade()` queries `subjects` table dynamically by `grade_type` with constant fallback.<br>• Newly added/edited subjects in Admin automatically appear in Teacher SF10 grade cards.<br>• Previously recorded subject grades are preserved even if catalog changes. |

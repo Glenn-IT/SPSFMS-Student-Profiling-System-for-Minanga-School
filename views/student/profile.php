@@ -31,20 +31,32 @@ $majorReligions = [
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/theme.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/student-mobile.css">
   <style>
-    .profile-action-bar {
-      padding: 0 1rem .85rem;
+    .profile-hero {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #fff;
+      border-radius: 16px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 8px 24px rgba(26,115,232,0.18);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
     }
-    .edit-profile-btn {
-      width: 100%;
-      border-radius: 12px;
-      padding: .65rem 1rem;
-      font-weight: 600;
-      font-size: .88rem;
+    .profile-avatar-lg {
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      color: var(--primary);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: .5rem;
-      box-shadow: 0 2px 8px rgba(26,115,232,0.25);
+      font-size: 2.2rem;
+      font-weight: 700;
+      border: 4px solid #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,.1);
+      margin: 0 auto 0.75rem;
     }
     .profile-modal .modal-content {
       border-radius: 16px;
@@ -56,34 +68,34 @@ $majorReligions = [
       color: #fff;
       border-top-left-radius: 16px;
       border-top-right-radius: 16px;
-      padding: 1rem 1.25rem;
+      padding: 1.1rem 1.5rem;
     }
     .profile-modal .modal-header .btn-close {
       filter: invert(1);
     }
     .profile-modal .modal-title {
-      font-size: 1rem;
+      font-size: 1.05rem;
       font-weight: 700;
     }
     .profile-modal .form-label {
-      font-size: .78rem;
+      font-size: .8rem;
       font-weight: 600;
       color: #475569;
-      margin-bottom: 3px;
+      margin-bottom: 4px;
     }
     .profile-modal .form-section-title {
-      font-size: .74rem;
+      font-size: .76rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: .5px;
       color: var(--primary);
-      margin-top: .5rem;
-      margin-bottom: .4rem;
+      margin-top: .75rem;
+      margin-bottom: .5rem;
       border-bottom: 1px solid #e2e8f0;
-      padding-bottom: 3px;
+      padding-bottom: 4px;
     }
     .profile-modal .form-control, .profile-modal .form-select {
-      font-size: .85rem;
+      font-size: .88rem;
       border-radius: 8px;
     }
     .profile-modal .form-control:focus, .profile-modal .form-select:focus {
@@ -101,122 +113,225 @@ $majorReligions = [
   </style>
 </head>
 <body>
+
+<?php
+$activeNav = 'profile';
+$navTitle = 'My Profile';
+$showBack = true;
+include __DIR__ . '/../../includes/student-navbar.php';
+?>
+
 <div class="student-app">
-  <div class="student-header">
-    <div class="header-row">
-      <div><h6><?= SCHOOL_NAME ?></h6><h5><i class="fas fa-arrow-left me-2" onclick="history.back()" style="cursor:pointer;"></i>My Profile</h5></div>
-      <div style="width:40px;height:40px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;"><?= $initial ?></div>
+
+  <!-- Desktop Breadcrumb & Hero -->
+  <div class="profile-hero d-none d-md-flex">
+    <div>
+      <h4 class="fw-bold mb-1"><i class="fas fa-id-card me-2"></i>Learner Profile Record</h4>
+      <p class="mb-0 opacity-75 small">DepEd Standard Student Profile & Family Background Information</p>
     </div>
+    <?php if ($student): ?>
+      <button class="btn btn-light fw-bold text-primary shadow-sm px-3 py-2 rounded-3" onclick="openEditProfileModal()">
+        <i class="fas fa-user-edit me-1"></i> Edit Personal Information
+      </button>
+    <?php endif; ?>
   </div>
 
   <?php if ($student): ?>
-  <div class="profile-summary-card" style="flex-direction:column;text-align:center;">
-    <div class="profile-avatar" style="width:72px;height:72px;font-size:1.8rem;margin:0 auto .75rem;"><?= $initial ?></div>
-    <div class="fw-bold" id="disp-fullname" style="font-size:1.05rem;"><?= htmlspecialchars($student['last_name'].', '.$student['first_name'].' '.($student['middle_name']??'')) ?></div>
-    <div style="font-size:.8rem;color:var(--gray-600);margin-top:2px;"><?= htmlspecialchars($student['grade_level'].' | Section '.$student['section']) ?></div>
-    <div style="font-family:monospace;font-size:.78rem;color:var(--gray-400);margin-top:2px;">LRN: <?= htmlspecialchars($student['lrn']) ?></div>
+  <div class="row g-4">
+    
+    <!-- Left Column: Identity, Actions, Contact, Academic Overview -->
+    <div class="col-12 col-lg-4">
+      
+      <!-- Identity Card -->
+      <div class="desktop-card text-center">
+        <div class="profile-avatar-lg"><?= $initial ?></div>
+        <h5 class="fw-bold mb-1 text-dark" id="disp-fullname"><?= htmlspecialchars($student['last_name'].', '.$student['first_name'].' '.($student['middle_name']??'')) ?></h5>
+        <div class="text-muted small mb-2"><?= htmlspecialchars($student['grade_level'].' | Section '.$student['section']) ?></div>
+        <div class="d-inline-block px-3 py-1 bg-light border rounded-pill font-monospace small text-secondary mb-3">
+          LRN: <?= htmlspecialchars($student['lrn']) ?>
+        </div>
+
+        <!-- Action Button -->
+        <button class="btn btn-primary w-100 fw-bold py-2 rounded-3 shadow-sm" onclick="openEditProfileModal()">
+          <i class="fas fa-user-edit me-2"></i> Edit Personal Information
+        </button>
+      </div>
+
+      <!-- Contact Information Card -->
+      <div class="desktop-card">
+        <div class="desktop-card-header">
+          <h6 class="desktop-card-title"><i class="fas fa-address-book text-primary"></i> Contact Information</h6>
+        </div>
+        <div class="mb-3 pb-2 border-bottom">
+          <div class="info-label text-muted small text-uppercase fw-bold" style="font-size:.72rem;">Mobile Contact No.</div>
+          <div class="info-value fw-semibold text-dark mt-1" id="card-contact"><?= htmlspecialchars($student['contact']??'—') ?></div>
+        </div>
+        <div>
+          <div class="info-label text-muted small text-uppercase fw-bold" style="font-size:.72rem;">Email Address</div>
+          <div class="info-value fw-semibold text-dark mt-1 text-truncate" id="card-email"><?= htmlspecialchars($student['email']??'—') ?></div>
+        </div>
+      </div>
+
+      <!-- Academic Metadata Card -->
+      <div class="desktop-card">
+        <div class="desktop-card-header">
+          <h6 class="desktop-card-title"><i class="fas fa-school text-primary"></i> Academic Status</h6>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-bottom small">
+          <span class="text-muted">School Year:</span>
+          <span class="fw-bold text-dark">S.Y. <?= SCHOOL_YEAR ?></span>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-bottom small">
+          <span class="text-muted">Grade Level:</span>
+          <span class="fw-bold text-dark"><?= htmlspecialchars($student['grade_level']) ?></span>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-bottom small">
+          <span class="text-muted">Class Section:</span>
+          <span class="fw-bold text-dark"><?= htmlspecialchars($student['section']) ?></span>
+        </div>
+        <div class="d-flex justify-content-between py-2 small">
+          <span class="text-muted">School:</span>
+          <span class="fw-semibold text-dark text-truncate ms-2"><?= SCHOOL_NAME ?></span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Personal Details & Family Information -->
+    <div class="col-12 col-lg-8">
+
+      <!-- Personal Information Card -->
+      <div class="desktop-card">
+        <div class="desktop-card-header">
+          <h6 class="desktop-card-title"><i class="fas fa-user text-primary"></i> Personal Details</h6>
+          <span class="badge bg-light text-muted border">DepEd SF1</span>
+        </div>
+
+        <div class="profile-info-grid">
+          <div class="profile-info-item full-width">
+            <div class="info-label">Full Name</div>
+            <div class="info-value" id="card-fullname"><?= htmlspecialchars($student['first_name'].' '.($student['middle_name']??'').' '.$student['last_name']) ?></div>
+          </div>
+          <div class="profile-info-item">
+            <div class="info-label">Sex</div>
+            <div class="info-value" id="card-sex"><?= htmlspecialchars($student['sex']) ?></div>
+          </div>
+          <div class="profile-info-item">
+            <div class="info-label">Birthdate</div>
+            <div class="info-value" id="card-birthdate"><?= fd($student['birthdate']) ?></div>
+          </div>
+          <div class="profile-info-item">
+            <div class="info-label">Age</div>
+            <div class="info-value" id="card-age"><?= $student['age'] ?> years old</div>
+          </div>
+          <div class="profile-info-item">
+            <div class="info-label">Mother Tongue</div>
+            <div class="info-value" id="card-tongue"><?= htmlspecialchars($student['mother_tongue']??'—') ?></div>
+          </div>
+          <div class="profile-info-item full-width">
+            <div class="info-label">Religion</div>
+            <div class="info-value" id="card-religion"><?= htmlspecialchars($student['religion']??'—') ?></div>
+          </div>
+          <div class="profile-info-item full-width">
+            <div class="info-label">Residential Address</div>
+            <div class="info-value" id="card-address"><?= htmlspecialchars($student['address']??'—') ?></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Family Information Card -->
+      <div class="desktop-card">
+        <div class="desktop-card-header">
+          <h6 class="desktop-card-title"><i class="fas fa-users text-primary"></i> Family Information</h6>
+        </div>
+
+        <div class="profile-info-grid">
+          <div class="profile-info-item">
+            <div class="info-label">Mother's Name</div>
+            <div class="info-value" id="card-mother"><?= htmlspecialchars($student['mother_name']??'—') ?></div>
+          </div>
+          <div class="profile-info-item">
+            <div class="info-label">Father's Name</div>
+            <div class="info-value" id="card-father"><?= htmlspecialchars($student['father_name']??'—') ?></div>
+          </div>
+          <div class="profile-info-item full-width">
+            <div class="info-label">Guardian's Name & Relationship</div>
+            <div class="info-value" id="card-guardian"><?= htmlspecialchars(($student['guardian_name']??'—').($student['guardian_relation']?' ('.$student['guardian_relation'].')':'')) ?></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
-  <!-- Edit Personal Info Action Button -->
-  <div class="profile-action-bar">
-    <button class="btn btn-primary edit-profile-btn" onclick="openEditProfileModal()">
-      <i class="fas fa-user-edit"></i> Edit Personal Information
-    </button>
-  </div>
-
-  <div class="mobile-section">
-    <div class="mobile-section-title">Personal Information</div>
-    <div class="mobile-card"><div class="card-row mb-1"><span class="card-label">Full Name</span></div><div class="card-value" id="card-fullname"><?= htmlspecialchars($student['first_name'].' '.($student['middle_name']??'').' '.$student['last_name']) ?></div></div>
-    <div class="mobile-card"><div class="card-row"><span class="card-label">Sex</span><span class="card-value" id="card-sex"><?= htmlspecialchars($student['sex']) ?></span></div></div>
-    <div class="mobile-card"><div class="card-row"><span class="card-label">Birthdate</span><span class="card-value" id="card-birthdate"><?= fd($student['birthdate']) ?></span></div></div>
-    <div class="mobile-card"><div class="card-row"><span class="card-label">Age</span><span class="card-value" id="card-age"><?= $student['age'] ?> years old</span></div></div>
-    <div class="mobile-card"><div class="card-row"><span class="card-label">Mother Tongue</span><span class="card-value" id="card-tongue"><?= htmlspecialchars($student['mother_tongue']??'—') ?></span></div></div>
-    <div class="mobile-card"><div class="card-row"><span class="card-label">Religion</span><span class="card-value" id="card-religion"><?= htmlspecialchars($student['religion']??'—') ?></span></div></div>
-    <div class="mobile-card"><div class="card-row mb-1"><span class="card-label">Address</span></div><div class="card-value" id="card-address" style="font-size:.85rem;"><?= htmlspecialchars($student['address']??'—') ?></div></div>
-  </div>
-
-  <div class="mobile-section">
-    <div class="mobile-section-title">Family Information</div>
-    <div class="mobile-card"><div class="card-row"><span class="card-label">Mother</span><span class="card-value" id="card-mother"><?= htmlspecialchars($student['mother_name']??'—') ?></span></div></div>
-    <div class="mobile-card"><div class="card-row"><span class="card-label">Father</span><span class="card-value" id="card-father"><?= htmlspecialchars($student['father_name']??'—') ?></span></div></div>
-    <div class="mobile-card"><div class="card-row"><span class="card-label">Guardian</span><span class="card-value" id="card-guardian"><?= htmlspecialchars(($student['guardian_name']??'—').($student['guardian_relation']?' ('.$student['guardian_relation'].')':'')) ?></span></div></div>
-  </div>
-
-  <div class="mobile-section">
-    <div class="mobile-section-title">Contact Information</div>
-    <div class="mobile-card"><div class="card-row"><span class="card-label">Contact No.</span><span class="card-value" id="card-contact"><?= htmlspecialchars($student['contact']??'—') ?></span></div></div>
-    <div class="mobile-card"><div class="card-row"><span class="card-label">Email</span><span class="card-value" id="card-email" style="font-size:.82rem;"><?= htmlspecialchars($student['email']??'—') ?></span></div></div>
-  </div>
   <?php else: ?>
-  <div class="mobile-section text-center py-4 text-muted">Student record not found.</div>
+    <div class="desktop-card text-center py-5 text-muted">
+      <i class="fas fa-user-slash mb-2" style="font-size:2.5rem; opacity:.4;"></i>
+      <h6 class="fw-bold mt-2">Student Record Not Found</h6>
+      <p class="small mb-0">No profile details could be located for your LRN (<?= htmlspecialchars($user['lrn'] ?? '') ?>). Please consult the school registrar or administrator.</p>
+    </div>
   <?php endif; ?>
 
-  <div style="height:.5rem;"></div>
-  <nav class="bottom-nav">
-    <a href="dashboard.php" class="bottom-nav-item"><i class="fas fa-home"></i><span>Home</span></a>
-    <a href="dashboard.php#grades-section" class="bottom-nav-item"><i class="fas fa-chart-bar"></i><span>Grades</span></a>
-    <a href="profile.php" class="bottom-nav-item active"><i class="fas fa-user"></i><span>Profile</span></a>
-    <a href="settings.php" class="bottom-nav-item"><i class="fas fa-cog"></i><span>Settings</span></a>
-  </nav>
 </div>
 
 <!-- Edit Personal Information Modal -->
 <?php if ($student): ?>
 <div class="modal fade profile-modal" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="editProfileModalLabel"><i class="fas fa-user-edit me-2"></i>Edit Personal Information</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body p-3">
+      <div class="modal-body p-4">
         <form id="student-edit-form" onsubmit="saveStudentProfile(event)">
-          <!-- Non-editable academic metadata -->
-          <div class="p-2 mb-3 bg-light rounded-3 border d-flex align-items-center justify-content-between">
+          
+          <!-- Non-editable academic metadata banner -->
+          <div class="p-3 mb-3 bg-light rounded-3 border d-flex align-items-center justify-content-between">
             <div>
-              <div class="text-muted small" style="font-size:.72rem;">LRN <span class="uneditable-badge">Locked</span></div>
-              <div class="fw-bold" style="font-family:monospace;font-size:.82rem;"><?= htmlspecialchars($student['lrn']) ?></div>
+              <div class="text-muted small" style="font-size:.72rem;">Learner Reference Number (LRN) <span class="uneditable-badge">Locked</span></div>
+              <div class="fw-bold font-monospace" style="font-size:.9rem;"><?= htmlspecialchars($student['lrn']) ?></div>
             </div>
             <div class="text-end">
               <div class="text-muted small" style="font-size:.72rem;">Grade & Section <span class="uneditable-badge">Locked</span></div>
-              <div class="fw-bold" style="font-size:.82rem;"><?= htmlspecialchars($student['grade_level'].' - '.$student['section']) ?></div>
+              <div class="fw-bold" style="font-size:.9rem;"><?= htmlspecialchars($student['grade_level'].' - '.$student['section']) ?></div>
             </div>
           </div>
 
           <div class="form-section-title">Personal Details</div>
-          <div class="row g-2 mb-2">
-            <div class="col-6">
+          <div class="row g-3 mb-2">
+            <div class="col-12 col-md-4">
               <label class="form-label">First Name *</label>
               <input type="text" id="ef-first" class="form-control name-only" value="<?= htmlspecialchars($student['first_name']) ?>" required>
             </div>
-            <div class="col-6">
+            <div class="col-12 col-md-4">
               <label class="form-label">Middle Name</label>
               <input type="text" id="ef-middle" class="form-control name-only" value="<?= htmlspecialchars($student['middle_name'] ?? '') ?>" placeholder="Optional">
             </div>
-            <div class="col-12">
+            <div class="col-12 col-md-4">
               <label class="form-label">Last Name *</label>
               <input type="text" id="ef-last" class="form-control name-only" value="<?= htmlspecialchars($student['last_name']) ?>" required>
             </div>
-            <div class="col-6">
+            <div class="col-6 col-md-3">
               <label class="form-label">Sex *</label>
               <select id="ef-sex" class="form-select" required>
                 <option value="Male" <?= $student['sex'] === 'Male' ? 'selected' : '' ?>>Male</option>
                 <option value="Female" <?= $student['sex'] === 'Female' ? 'selected' : '' ?>>Female</option>
               </select>
             </div>
-            <div class="col-6">
+            <div class="col-6 col-md-4">
               <label class="form-label">Birthdate *</label>
               <input type="date" id="ef-birthdate" class="form-control" max="<?= date('Y-m-d') ?>" value="<?= htmlspecialchars($student['birthdate']) ?>" onchange="updateCalculatedAge()" required>
             </div>
-            <div class="col-4">
+            <div class="col-4 col-md-2">
               <label class="form-label">Age</label>
               <input type="number" id="ef-age" class="form-control bg-light" value="<?= (int)$student['age'] ?>" readonly>
             </div>
-            <div class="col-8">
+            <div class="col-8 col-md-3">
               <label class="form-label">Mother Tongue</label>
-              <input type="text" id="ef-tongue" class="form-control" value="<?= htmlspecialchars($student['mother_tongue'] ?? '') ?>" placeholder="e.g. Cebuano, Tagalog">
+              <input type="text" id="ef-tongue" class="form-control" value="<?= htmlspecialchars($student['mother_tongue'] ?? '') ?>" placeholder="e.g. Ibanag, Ilocano">
             </div>
-            <div class="col-12">
+            <div class="col-12 col-md-6">
               <label class="form-label">Religion</label>
               <select id="ef-religion" class="form-select">
                 <?php foreach ($majorReligions as $rel): 
@@ -229,46 +344,46 @@ $majorReligions = [
                 <?php endif; ?>
               </select>
             </div>
-            <div class="col-12">
-              <label class="form-label">Home Address</label>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Residential Address</label>
               <input type="text" id="ef-address" class="form-control" value="<?= htmlspecialchars($student['address'] ?? '') ?>" placeholder="Barangay, Municipality, Province">
             </div>
           </div>
 
-          <div class="form-section-title mt-3">Family Information</div>
-          <div class="row g-2 mb-2">
-            <div class="col-6">
-              <label class="form-label">Mother's Name</label>
-              <input type="text" id="ef-mother" class="form-control name-only" value="<?= htmlspecialchars($student['mother_name'] ?? '') ?>" placeholder="Mother's full name">
+          <div class="form-section-title mt-4">Family Information</div>
+          <div class="row g-3 mb-2">
+            <div class="col-12 col-md-6">
+              <label class="form-label">Mother's Full Name</label>
+              <input type="text" id="ef-mother" class="form-control name-only" value="<?= htmlspecialchars($student['mother_name'] ?? '') ?>" placeholder="Mother's complete maiden/married name">
             </div>
-            <div class="col-6">
-              <label class="form-label">Father's Name</label>
-              <input type="text" id="ef-father" class="form-control name-only" value="<?= htmlspecialchars($student['father_name'] ?? '') ?>" placeholder="Father's full name">
+            <div class="col-12 col-md-6">
+              <label class="form-label">Father's Full Name</label>
+              <input type="text" id="ef-father" class="form-control name-only" value="<?= htmlspecialchars($student['father_name'] ?? '') ?>" placeholder="Father's complete name">
             </div>
-            <div class="col-7">
+            <div class="col-12 col-md-7">
               <label class="form-label">Guardian's Name</label>
-              <input type="text" id="ef-guardian" class="form-control name-only" value="<?= htmlspecialchars($student['guardian_name'] ?? '') ?>" placeholder="Guardian's name">
+              <input type="text" id="ef-guardian" class="form-control name-only" value="<?= htmlspecialchars($student['guardian_name'] ?? '') ?>" placeholder="Guardian's name (if not living with parents)">
             </div>
-            <div class="col-5">
-              <label class="form-label">Relationship</label>
-              <input type="text" id="ef-relation" class="form-control" value="<?= htmlspecialchars($student['guardian_relation'] ?? '') ?>" placeholder="e.g. Mother, Aunt">
+            <div class="col-12 col-md-5">
+              <label class="form-label">Relationship to Guardian</label>
+              <input type="text" id="ef-relation" class="form-control" value="<?= htmlspecialchars($student['guardian_relation'] ?? '') ?>" placeholder="e.g. Aunt, Grandparent">
             </div>
           </div>
 
-          <div class="form-section-title mt-3">Contact Information</div>
-          <div class="row g-2 mb-1">
-            <div class="col-6">
+          <div class="form-section-title mt-4">Contact Information</div>
+          <div class="row g-3 mb-1">
+            <div class="col-12 col-md-6">
               <label class="form-label">Mobile Contact No.</label>
               <input type="text" id="ef-contact" class="form-control digits-only" maxlength="11" inputmode="numeric" value="<?= htmlspecialchars($student['contact'] ?? '') ?>" placeholder="09xxxxxxxxx" pattern="09[0-9]{9}" title="11-digit PH mobile number starting with 09">
             </div>
-            <div class="col-6">
+            <div class="col-12 col-md-6">
               <label class="form-label">Email Address</label>
               <input type="email" id="ef-email" class="form-control" value="<?= htmlspecialchars($student['email'] ?? '') ?>" placeholder="student@example.com">
             </div>
           </div>
         </form>
       </div>
-      <div class="modal-footer p-2 bg-light">
+      <div class="modal-footer p-3 bg-light">
         <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
         <button type="button" id="save-profile-btn" class="btn btn-primary btn-sm px-4 fw-bold" onclick="submitStudentProfile()">
           <i class="fas fa-save me-1"></i> Save Changes
@@ -446,4 +561,3 @@ async function saveStudentProfile(e) {
 </script>
 </body>
 </html>
-
