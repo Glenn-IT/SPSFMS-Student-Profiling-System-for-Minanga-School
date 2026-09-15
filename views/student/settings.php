@@ -88,6 +88,42 @@ include __DIR__ . '/../../includes/student-navbar.php';
         </div>
       </div>
 
+      <!-- System Developers Card -->
+      <div class="desktop-card">
+        <div class="desktop-card-header">
+          <h6 class="desktop-card-title"><i class="fas fa-laptop-code text-primary"></i> System Developers</h6>
+          <span class="badge bg-primary bg-opacity-10 text-primary">BSIT 4th Year</span>
+        </div>
+        <div class="d-flex flex-column gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <img src="<?= BASE_URL ?>/img/Bea.jpg" alt="Bea O. Eneres" class="rounded-circle shadow-sm" style="width:48px;height:48px;object-fit:cover;border:2px solid var(--primary-light,#e8f0fe);">
+            <div class="overflow-hidden">
+              <div class="fw-bold text-dark small">Bea O. Eneres</div>
+              <div class="text-muted" style="font-size:.72rem;">BSIT 4th Year · 09974996082</div>
+              <div class="text-truncate" style="font-size:.72rem;"><a href="mailto:beaeneres2704@gmail.com" class="text-secondary text-decoration-none">beaeneres2704@gmail.com</a></div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-3 border-top pt-2">
+            <img src="<?= BASE_URL ?>/img/Ritchilyn.jpg" alt="Ritchilyn A. Orpilla" class="rounded-circle shadow-sm" style="width:48px;height:48px;object-fit:cover;border:2px solid var(--primary-light,#e8f0fe);">
+            <div class="overflow-hidden">
+              <div class="fw-bold text-dark small">Ritchilyn A. Orpilla</div>
+              <div class="text-muted" style="font-size:.72rem;">BSIT 4th Year · 09531124253</div>
+              <div class="text-truncate" style="font-size:.72rem;"><a href="mailto:ritchilynorpilla@gmail.com" class="text-secondary text-decoration-none">ritchilynorpilla@gmail.com</a></div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-3 border-top pt-2">
+            <img src="<?= BASE_URL ?>/img/Roque.jpg" alt="Christian Roque" class="rounded-circle shadow-sm" style="width:48px;height:48px;object-fit:cover;border:2px solid var(--primary-light,#e8f0fe);">
+            <div class="overflow-hidden">
+              <div class="fw-bold text-dark small">Christian Roque</div>
+              <div class="text-muted" style="font-size:.72rem;">BSIT 4th Year · CSU Piat Campus</div>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-outline-primary btn-sm w-100 mt-3" onclick="openDevelopersModal(event)">
+          <i class="fas fa-id-card me-1"></i> View Full Developer Profiles
+        </button>
+      </div>
+
     </div>
 
     <!-- Right Column: Password Management & Session -->
@@ -219,5 +255,6 @@ function doLogout() {
   });
 }
 </script>
+<?php include __DIR__ . '/../../includes/developers-modal.php'; ?>
 </body>
 </html>

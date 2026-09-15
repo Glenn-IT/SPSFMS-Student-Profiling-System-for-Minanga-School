@@ -77,8 +77,8 @@ include __DIR__ . '/../../includes/student-navbar.php';
         <span class="hero-badge"><i class="fas fa-calendar-alt"></i> S.Y. <?= SCHOOL_YEAR ?></span>
       </div>
     </div>
-    <div class="hero-avatar-wrap d-none d-md-flex">
-      <?= $initial ?>
+    <div class="d-none d-md-flex align-items-center gap-2">
+      <img src="<?= BASE_URL ?>/img/MIS-Logo.jpg" alt="<?= SCHOOL_NAME ?>" style="width:78px;height:78px;border-radius:16px;object-fit:cover;border:3px solid rgba(255,255,255,0.4);box-shadow:0 4px 14px rgba(0,0,0,0.18);" onerror="this.style.display='none'">
     </div>
   </div>
 
@@ -101,9 +101,12 @@ include __DIR__ . '/../../includes/student-navbar.php';
             <span class="text-muted">Academic Status:</span>
             <span class="fw-bold <?= $standing === 'With Honors' ? 'text-success' : ($standing === 'Passed' ? 'text-primary' : 'text-dark') ?>"><?= $standing ?></span>
           </div>
-          <div class="d-flex justify-content-between py-1 small">
+          <div class="d-flex justify-content-between align-items-center py-1 small">
             <span class="text-muted">School:</span>
-            <span class="fw-semibold text-truncate ms-2" style="max-width:180px;"><?= SCHOOL_NAME ?></span>
+            <span class="fw-semibold text-truncate ms-2 d-flex align-items-center gap-1" style="max-width:180px;">
+              <img src="<?= BASE_URL ?>/img/MIS-Logo.jpg" alt="Logo" style="width:18px;height:18px;border-radius:4px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">
+              <?= SCHOOL_NAME ?>
+            </span>
           </div>
         </div>
       </div>

@@ -107,6 +107,9 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
           <button class="subsetting-pill" id="tab-security" onclick="switchSubsetting('security')">
             <i class="fas fa-shield-alt me-2"></i>Security Question
           </button>
+          <button class="subsetting-pill" id="tab-developers" onclick="switchSubsetting('developers')">
+            <i class="fas fa-laptop-code me-2"></i>System Developers
+          </button>
         </div>
       </div>
     </div>
@@ -236,6 +239,82 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
           </div>
         </div>
 
+        <!-- Subsetting 4: Developer Info -->
+        <div class="card mb-3 shadow-sm border-0 subsetting-card" id="card-developers" style="display:none;">
+          <div class="card-header bg-white py-3 fw-bold d-flex align-items-center justify-content-between">
+            <div>
+              <i class="fas fa-laptop-code me-2" style="color:var(--secondary);"></i>System Developers & Capstone Researchers
+            </div>
+            <span class="badge bg-success bg-opacity-10 text-success">BSIT · CSU Piat</span>
+          </div>
+          <div class="card-body">
+            <p class="text-muted small mb-4">
+              The <strong>Student Profiling and Management Information System (SPSMIS)</strong> was researched, designed, and developed for <strong>Minanga Integrated School</strong> by 4th Year BSIT students of <strong>Cagayan State University – Piat Campus</strong>.
+            </p>
+            <div class="row g-3">
+              <!-- Developer 1: Bea O. Eneres -->
+              <div class="col-md-4">
+                <div class="card h-100 border text-center p-3 rounded-3 shadow-sm">
+                  <img src="<?= BASE_URL ?>/img/Bea.jpg" alt="Bea O. Eneres" class="rounded-circle shadow-sm mx-auto mb-3" style="width:100px;height:100px;object-fit:cover;border:3px solid var(--secondary-light,#e6f4ea);">
+                  <h6 class="fw-bold mb-1 text-dark">Bea O. Eneres</h6>
+                  <div class="badge bg-success bg-opacity-10 text-success mb-2 align-self-center">BSIT · 4th Year</div>
+                  <div class="text-muted small mb-3">Developer / Researcher</div>
+                  <div class="border-top pt-2 text-start small">
+                    <div class="mb-1 text-truncate" title="beaeneres2704@gmail.com">
+                      <i class="fas fa-envelope text-success me-2" style="width:16px;"></i>
+                      <a href="mailto:beaeneres2704@gmail.com" class="text-secondary text-decoration-none">beaeneres2704@gmail.com</a>
+                    </div>
+                    <div>
+                      <i class="fas fa-phone text-success me-2" style="width:16px;"></i>
+                      <span class="text-secondary">09974996082</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Developer 2: Ritchilyn A. Orpilla -->
+              <div class="col-md-4">
+                <div class="card h-100 border text-center p-3 rounded-3 shadow-sm">
+                  <img src="<?= BASE_URL ?>/img/Ritchilyn.jpg" alt="Ritchilyn A. Orpilla" class="rounded-circle shadow-sm mx-auto mb-3" style="width:100px;height:100px;object-fit:cover;border:3px solid var(--secondary-light,#e6f4ea);">
+                  <h6 class="fw-bold mb-1 text-dark">Ritchilyn A. Orpilla</h6>
+                  <div class="badge bg-success bg-opacity-10 text-success mb-2 align-self-center">BSIT · 4th Year</div>
+                  <div class="text-muted small mb-3">Developer / Researcher</div>
+                  <div class="border-top pt-2 text-start small">
+                    <div class="mb-1 text-truncate" title="ritchilynorpilla@gmail.com">
+                      <i class="fas fa-envelope text-success me-2" style="width:16px;"></i>
+                      <a href="mailto:ritchilynorpilla@gmail.com" class="text-secondary text-decoration-none">ritchilynorpilla@gmail.com</a>
+                    </div>
+                    <div>
+                      <i class="fas fa-phone text-success me-2" style="width:16px;"></i>
+                      <span class="text-secondary">09531124253</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Developer 3: Christian Roque -->
+              <div class="col-md-4">
+                <div class="card h-100 border text-center p-3 rounded-3 shadow-sm">
+                  <img src="<?= BASE_URL ?>/img/Roque.jpg" alt="Christian Roque" class="rounded-circle shadow-sm mx-auto mb-3" style="width:100px;height:100px;object-fit:cover;border:3px solid var(--secondary-light,#e6f4ea);">
+                  <h6 class="fw-bold mb-1 text-dark">Christian Roque</h6>
+                  <div class="badge bg-success bg-opacity-10 text-success mb-2 align-self-center">BSIT · 4th Year</div>
+                  <div class="text-muted small mb-3">Developer / Researcher</div>
+                  <div class="border-top pt-2 text-start small">
+                    <div class="mb-1 text-truncate">
+                      <i class="fas fa-university text-success me-2" style="width:16px;"></i>
+                      <span class="text-secondary">CSU – Piat Campus</span>
+                    </div>
+                    <div>
+                      <i class="fas fa-graduation-cap text-success me-2" style="width:16px;"></i>
+                      <span class="text-secondary">College of Info Tech</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Danger Zone -->
         <div class="card border-danger shadow-sm subsetting-card" id="card-danger">
           <div class="card-header bg-danger bg-opacity-10 text-danger fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>Danger Zone</div>
@@ -254,6 +333,47 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
 <script>
 const BASE = '<?= BASE_URL ?>';
 showDesktopOnlyWarning();
+
+let currentTab = 'profile';
+
+document.addEventListener('DOMContentLoaded', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const tabFromParam = urlParams.get('tab');
+  const tabFromHash = window.location.hash.replace('#', '');
+  const targetTab = tabFromParam || tabFromHash || 'profile';
+  switchSubsetting(targetTab, false);
+});
+
+function switchSubsetting(subsetting, updateHistory = true) {
+  const validTabs = ['profile', 'password', 'security', 'developers'];
+  if (!validTabs.includes(subsetting)) subsetting = 'profile';
+  currentTab = subsetting;
+
+  document.querySelectorAll('#settings-subsetting-nav .subsetting-pill').forEach(btn => {
+    btn.classList.remove('active');
+  });
+
+  const activeBtn = document.getElementById('tab-' + subsetting);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  const cards = {
+    profile: document.getElementById('card-profile'),
+    password: document.getElementById('card-password'),
+    security: document.getElementById('card-security'),
+    developers: document.getElementById('card-developers')
+  };
+
+  Object.keys(cards).forEach(key => {
+    if (cards[key]) {
+      cards[key].style.display = (key === subsetting) ? 'block' : 'none';
+    }
+  });
+
+  if (updateHistory) {
+    const newUrl = window.location.pathname + '?tab=' + subsetting;
+    history.replaceState(null, '', newUrl);
+  }
+}
 
 async function saveProfile() {
   const name = document.getElementById('p-name').value.trim();

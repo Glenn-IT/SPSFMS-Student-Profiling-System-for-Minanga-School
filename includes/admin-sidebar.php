@@ -22,7 +22,7 @@ $navItems = [
 ?>
 <aside class="sidebar">
   <div class="sidebar-brand">
-    <div class="sidebar-logo"><i class="fas fa-graduation-cap"></i></div>
+    <img src="<?= BASE_URL ?>/img/MIS-Logo.jpg" alt="Logo" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.2);" onerror="this.style.display='none'">
     <div>
       <div style="font-weight:700;font-size:.9rem;line-height:1.1;">Minanga IS</div>
       <div style="font-size:.68rem;opacity:.6;">Student Profiling System</div>
@@ -48,6 +48,9 @@ $navItems = [
         <div style="font-size:.68rem;opacity:.6;">Administrator</div>
       </div>
     </div>
+    <a href="<?= BASE_URL ?>/views/admin/settings.php?tab=developers" class="sidebar-link" style="color:rgba(255,255,255,.75);margin-bottom:.25rem;">
+      <i class="fas fa-laptop-code sidebar-icon"></i><span>Developers</span>
+    </a>
     <a href="<?= BASE_URL ?>/api/auth/logout.php" class="sidebar-link" style="color:#ff7b7b;" onclick="return confirmLogout(this)">
       <i class="fas fa-sign-out-alt sidebar-icon"></i><span>Logout</span>
     </a>

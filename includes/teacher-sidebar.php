@@ -13,7 +13,7 @@ $navItems = [
 ?>
 <aside class="sidebar" style="background:#1e3a2f;">
   <div class="sidebar-brand">
-    <div class="sidebar-logo" style="background:rgba(52,168,83,.2);color:#34a853;"><i class="fas fa-chalkboard-teacher"></i></div>
+    <img src="<?= BASE_URL ?>/img/MIS-Logo.jpg" alt="Logo" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.2);" onerror="this.style.display='none'">
     <div>
       <div style="font-weight:700;font-size:.9rem;line-height:1.1;">Minanga IS</div>
       <div style="font-size:.68rem;opacity:.6;">Teacher Portal</div>
@@ -39,6 +39,9 @@ $navItems = [
         <div style="font-size:.68rem;opacity:.6;"><?= htmlspecialchars($user['position'] ?? 'Teacher') ?></div>
       </div>
     </div>
+    <a href="<?= BASE_URL ?>/views/teacher/settings.php?tab=developers" class="sidebar-link" style="color:rgba(255,255,255,.75);margin-bottom:.25rem;">
+      <i class="fas fa-laptop-code sidebar-icon"></i><span>Developers</span>
+    </a>
     <a href="<?= BASE_URL ?>/api/auth/logout.php" class="sidebar-link" style="color:#ff7b7b;" onclick="return confirmLogout(this)">
       <i class="fas fa-sign-out-alt sidebar-icon"></i><span>Logout</span>
     </a>

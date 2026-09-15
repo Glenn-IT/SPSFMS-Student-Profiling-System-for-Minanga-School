@@ -72,12 +72,15 @@ $pending = $totalStudents - $graded;
     </nav>
 
     <div class="page-header d-flex flex-column gap-2">
-      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <div>
-          <h3 class="mb-1">Welcome, <?= htmlspecialchars(explode(' ',$user['name'])[0]) ?>!</h3>
-          <p class="mb-0 text-muted">
-            Currently viewing: <strong class="text-dark"><?= htmlspecialchars($advisoryGrade) ?> — Section <?= htmlspecialchars($advisorySection) ?></strong> · S.Y. <?= SCHOOL_YEAR ?>
-          </p>
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <img src="<?= BASE_URL ?>/img/MIS-Logo.jpg" alt="<?= SCHOOL_NAME ?>" style="width:58px;height:58px;border-radius:12px;object-fit:cover;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,.08);flex-shrink:0;" onerror="this.style.display='none'">
+          <div>
+            <h3 class="mb-1">Welcome, <?= htmlspecialchars(explode(' ',$user['name'])[0]) ?>!</h3>
+            <p class="mb-0 text-muted">
+              Currently viewing: <strong class="text-dark"><?= htmlspecialchars($advisoryGrade) ?> — Section <?= htmlspecialchars($advisorySection) ?></strong> · S.Y. <?= SCHOOL_YEAR ?>
+            </p>
+          </div>
         </div>
         <div>
           <span class="badge bg-secondary bg-opacity-10 text-dark border px-3 py-2 fw-semibold" style="font-size:.82rem;">

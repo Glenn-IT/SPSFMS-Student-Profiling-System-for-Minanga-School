@@ -63,14 +63,17 @@ $showBack = $showBack ?? false;
 <!-- ── Mobile Top Header (< 768px) ── -->
 <div class="student-header student-mobile-header">
   <div class="header-row">
-    <div>
-      <h6><?= SCHOOL_NAME ?></h6>
-      <h5>
-        <?php if ($showBack): ?>
-          <i class="fas fa-arrow-left me-2" onclick="history.back()" style="cursor:pointer;" title="Go Back"></i>
-        <?php endif; ?>
-        <?= htmlspecialchars($navTitle) ?>
-      </h5>
+    <div class="d-flex align-items-center gap-2">
+      <img src="<?= BASE_URL ?>/img/MIS-Logo.jpg" alt="Logo" style="width:36px;height:36px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,0.4);" onerror="this.style.display='none'">
+      <div>
+        <h6><?= SCHOOL_NAME ?></h6>
+        <h5>
+          <?php if ($showBack): ?>
+            <i class="fas fa-arrow-left me-2" onclick="history.back()" style="cursor:pointer;" title="Go Back"></i>
+          <?php endif; ?>
+          <?= htmlspecialchars($navTitle) ?>
+        </h5>
+      </div>
     </div>
     <a href="<?= BASE_URL ?>/views/student/profile.php" style="text-decoration:none;color:#fff;">
       <div class="mobile-header-avatar"><?= $initial ?></div>

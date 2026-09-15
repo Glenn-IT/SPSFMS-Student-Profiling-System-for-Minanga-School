@@ -40,7 +40,9 @@ function redirectByRole(string $role): void {
 <body>
 <div class="login-card">
   <div class="login-header">
-    <div class="login-icon"><i class="fas fa-user-shield"></i></div>
+    <div class="mb-3">
+      <img src="<?= BASE_URL ?>/img/MIS-Logo.jpg" alt="<?= SCHOOL_NAME ?>" style="width:78px;height:78px;border-radius:50%;object-fit:cover;box-shadow:0 4px 16px rgba(0,0,0,.15);border:3px solid #fff;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 64 64\'><circle cx=\'32\' cy=\'32\' r=\'32\' fill=\'%231a73e8\'/><text x=\'32\' y=\'40\' font-size=\'26\' font-weight=\'bold\' fill=\'%23ffffff\' text-anchor=\'middle\'>MIS</text></svg>'">
+    </div>
     <h4>Welcome Back</h4>
     <p><?= SCHOOL_NAME ?> — SPSMIS</p>
   </div>
@@ -85,7 +87,15 @@ function redirectByRole(string $role): void {
     <a href="register.php?role=student" style="color:var(--primary);text-decoration:none;font-weight:500;">Register as Student</a>
   </div>
 
+  <div style="text-align:center;margin-top:1rem;padding-top:.75rem;border-top:1px solid var(--gray-200);font-size:.78rem;">
+    <a href="#" onclick="openDevelopersModal(event)" style="color:var(--gray-600);text-decoration:none;">
+      <i class="fas fa-laptop-code me-1 text-primary"></i> System Developers
+    </a>
+  </div>
+
 </div>
+
+<?php include __DIR__ . '/../../includes/developers-modal.php'; ?>
 
 <script>
   const BASE = '<?= BASE_URL ?>';
@@ -207,6 +217,7 @@ function redirectByRole(string $role): void {
     }
   });
 </script>
+<script src="/SPSFMS-Student-Profiling-System-for-Minanga-School/assets/lib/bootstrap.bundle.min.js"></script>
 <script src="<?= BASE_URL ?>/assets/js/components.js"></script>
 </body>
 </html>

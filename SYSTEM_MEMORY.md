@@ -37,6 +37,7 @@ SPSFMS/
 │   ├── admin-sidebar.php               # Admin navigation menu ($activePage driven)
 │   ├── teacher-sidebar.php             # Teacher navigation menu ($activePage driven)
 │   ├── student-navbar.php              # Responsive student navigation (desktop topbar & mobile bottom nav)
+│   ├── developers-modal.php            # System developers profile modal (CSU Piat BSIT capstone team)
 │   └── chart-download-menu.php         # Dropdown menu helper for exporting Chart.js
 │
 ├── database/
