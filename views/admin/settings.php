@@ -297,14 +297,6 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
           </div>
         </div>
 
-        <!-- Danger Zone -->
-        <div class="card border-danger shadow-sm subsetting-card" id="card-danger">
-          <div class="card-header bg-danger bg-opacity-10 text-danger fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>Danger Zone</div>
-          <div class="card-body">
-            <p class="text-muted small mb-3">Logging out will terminate your current administrative session.</p>
-            <a href="<?= BASE_URL ?>/api/auth/logout.php" class="btn btn-danger btn-sm px-3" onclick="return confirmLogout(this)"><i class="fas fa-sign-out-alt me-2"></i>Logout</a>
-          </div>
-        </div>
       </div>
     </div>
   </div>
