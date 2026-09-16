@@ -115,19 +115,7 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
     </div>
 
     <div class="row g-4">
-      <!-- Profile Overview Sidebar Card -->
-      <div class="col-md-4">
-        <div class="card shadow-sm border-0">
-          <div class="card-body text-center py-4">
-            <div style="width:72px;height:72px;background:var(--secondary-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:700;color:var(--secondary);margin:0 auto 1rem;"><?= strtoupper(substr($user['name'],0,1)) ?></div>
-            <h6 class="fw-bold" id="display-name"><?= htmlspecialchars($user['name']) ?></h6>
-            <div style="font-size:.8rem;color:var(--gray-600);" id="display-email"><?= htmlspecialchars($user['email']) ?></div>
-            <span class="badge bg-success bg-opacity-15 text-success mt-2"><?= htmlspecialchars($user['position'] ?? 'Teacher') ?></span>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-8">
+      <div class="col-12">
         <!-- Subsetting 1: Profile Edit -->
         <div class="card mb-3 shadow-sm border-0 subsetting-card" id="card-profile">
           <div class="card-header bg-white py-3 fw-bold" style="color:var(--secondary);"><i class="fas fa-user me-2"></i>Profile Information</div>
