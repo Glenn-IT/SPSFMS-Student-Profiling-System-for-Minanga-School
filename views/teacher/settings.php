@@ -222,7 +222,7 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
           </div>
           <div class="card-body">
             <p class="text-muted small mb-4">
-              The <strong>Student Profiling and Management Information System (SPSMIS)</strong> was researched, designed, and developed for <strong>Minanga Integrated School</strong> by 4th Year BSIT students of <strong>Cagayan State University – Piat Campus</strong>.
+              The <strong>Student Profiling and Management Information System (SPSMIS)</strong> was designed and developed for <strong>Minanga Integrated School</strong> by 4th Year BSIT students of <strong>Cagayan State University – Piat Campus</strong>.
             </p>
             <div class="row g-3">
               <!-- Developer 1: Bea O. Eneres -->
