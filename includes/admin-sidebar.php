@@ -41,13 +41,6 @@ $navItems = [
   </nav>
 
   <div style="margin-top:auto;padding:1rem 1.25rem;border-top:1px solid rgba(255,255,255,.08);">
-    <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.75rem;">
-      <div style="width:34px;height:34px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;"><?= htmlspecialchars($initial) ?></div>
-      <div style="overflow:hidden;">
-        <div style="font-size:.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?= htmlspecialchars($user['name'] ?? 'Admin') ?></div>
-        <div style="font-size:.68rem;opacity:.6;">Administrator</div>
-      </div>
-    </div>
     <a href="<?= BASE_URL ?>/views/admin/settings.php?tab=developers" class="sidebar-link" style="color:rgba(255,255,255,.75);margin-bottom:.25rem;">
       <i class="fas fa-laptop-code sidebar-icon"></i><span>Developers</span>
     </a>
