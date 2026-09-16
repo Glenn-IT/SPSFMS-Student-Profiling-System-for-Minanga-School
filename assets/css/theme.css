@@ -186,3 +186,18 @@ body {
   body { background: white; }
   .print-area { display: block !important; }
 }
+
+/* ── Password input toggle ── */
+.toggle-pw {
+  cursor: pointer;
+  color: var(--gray-400);
+  font-size: .85rem;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+.toggle-pw:hover {
+  color: var(--gray-600);
+}
+input[type="password"]::-ms-reveal, input[type="password"]::-ms-clear { display: none; }
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-strong-password-auto-fill-button { display: none !important; visibility: hidden; }

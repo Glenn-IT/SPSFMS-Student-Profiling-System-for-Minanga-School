@@ -144,11 +144,17 @@ $inactive = $total - $active;
         <div class="row g-2">
           <div class="col-6">
             <label class="form-label">Password <span class="text-danger">*</span></label>
-            <input type="password" id="ca-password" class="form-control" placeholder="Min. 6 characters" autocomplete="new-password">
+            <div class="input-group">
+              <input type="password" id="ca-password" class="form-control" placeholder="Min. 6 characters" autocomplete="new-password">
+              <span class="input-group-text bg-white toggle-pw" onclick="togglePw('ca-password','ca-pw-eye')" title="Toggle password"><i class="fas fa-eye" id="ca-pw-eye"></i></span>
+            </div>
           </div>
           <div class="col-6">
             <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
-            <input type="password" id="ca-confirm" class="form-control" placeholder="Repeat password">
+            <div class="input-group">
+              <input type="password" id="ca-confirm" class="form-control" placeholder="Repeat password">
+              <span class="input-group-text bg-white toggle-pw" onclick="togglePw('ca-confirm','ca-confirm-eye')" title="Toggle password"><i class="fas fa-eye" id="ca-confirm-eye"></i></span>
+            </div>
           </div>
         </div>
 

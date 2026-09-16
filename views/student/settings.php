@@ -142,6 +142,7 @@ include __DIR__ . '/../../includes/student-navbar.php';
             <div class="input-group">
               <span class="input-group-text bg-light text-muted"><i class="fas fa-key"></i></span>
               <input type="password" id="s-old" class="form-control" placeholder="Enter your current password" required autocomplete="current-password">
+              <span class="input-group-text bg-white toggle-pw" onclick="togglePw('s-old','s-old-eye')" title="Toggle password"><i class="fas fa-eye" id="s-old-eye"></i></span>
             </div>
           </div>
           
@@ -151,6 +152,7 @@ include __DIR__ . '/../../includes/student-navbar.php';
               <div class="input-group">
                 <span class="input-group-text bg-light text-muted"><i class="fas fa-shield-alt"></i></span>
                 <input type="password" id="s-new" class="form-control" placeholder="At least 6 characters" required autocomplete="new-password">
+                <span class="input-group-text bg-white toggle-pw" onclick="togglePw('s-new','s-new-eye')" title="Toggle password"><i class="fas fa-eye" id="s-new-eye"></i></span>
               </div>
             </div>
             <div class="col-12 col-md-6">
@@ -158,6 +160,7 @@ include __DIR__ . '/../../includes/student-navbar.php';
               <div class="input-group">
                 <span class="input-group-text bg-light text-muted"><i class="fas fa-check-double"></i></span>
                 <input type="password" id="s-confirm" class="form-control" placeholder="Re-enter new password" required autocomplete="new-password">
+                <span class="input-group-text bg-white toggle-pw" onclick="togglePw('s-confirm','s-confirm-eye')" title="Toggle password"><i class="fas fa-eye" id="s-confirm-eye"></i></span>
               </div>
             </div>
           </div>
@@ -236,7 +239,11 @@ async function changePassword() {
       showToast('Password changed successfully!', 'success');
       ['s-old','s-new','s-confirm'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.value = '';
+        if (el) { el.value = ''; el.type = 'password'; }
+      });
+      ['s-old-eye','s-new-eye','s-confirm-eye'].forEach(id => {
+        const eye = document.getElementById(id);
+        if (eye) eye.className = 'fas fa-eye';
       });
     } else {
       showToast(data.message || 'Failed to change password.', 'error');

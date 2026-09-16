@@ -140,42 +140,6 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
           </div>
         </div>
 
-        <div class="card mb-3">
-          <div class="card-header" style="color:var(--secondary);"><i class="fas fa-lock me-2"></i>Change Password</div>
-          <div class="card-body">
-            <div class="row g-3">
-              <div class="col-md-4"><label class="form-label">Current Password</label><input type="password" id="pw-old" class="form-control"></div>
-              <div class="col-md-4"><label class="form-label">New Password</label><input type="password" id="pw-new" class="form-control"></div>
-              <div class="col-md-4"><label class="form-label">Confirm New</label><input type="password" id="pw-confirm" class="form-control"></div>
-              <div class="col-12"><button class="btn btn-sm" style="background:var(--secondary);color:#fff;" onclick="changePassword()"><i class="fas fa-key me-2"></i>Change Password</button></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card mb-3">
-          <div class="card-header" style="color:var(--secondary);"><i class="fas fa-shield-alt me-2"></i>Security Question</div>
-          <div class="card-body">
-            <div class="row g-3">
-              <div class="col-md-7">
-                <label class="form-label fw-semibold d-flex justify-content-between align-items-center">
-                  <span>Security Question</span>
-                  <small class="text-muted fw-normal" style="font-size:0.78rem;">Choose from list</small>
-                </label>
-                <div class="input-group">
-                  <select id="sec-q" class="form-select">
-                    <option value="">Select a security question</option>
-                    <?php 
-                    foreach ($secQuestions as $q): 
-                      $selected = ($q === $currentQ) ? 'selected' : '';
-                    ?>
-                    <option value="<?= htmlspecialchars($q) ?>" <?= $selected ?>><?= htmlspecialchars($q) ?></option>
-                    <?php endforeach; ?>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <!-- Subsetting 2: Change Password -->
         <div class="card mb-3 shadow-sm border-0 subsetting-card" id="card-password">
@@ -184,15 +148,24 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
             <div class="row g-3">
               <div class="col-md-4">
                 <label class="form-label fw-semibold">Current Password</label>
-                <input type="password" id="pw-old" class="form-control" placeholder="••••••••">
+                <div class="input-group">
+                  <input type="password" id="pw-old" class="form-control" placeholder="••••••••">
+                  <span class="input-group-text bg-white toggle-pw" onclick="togglePw('pw-old','pw-old-eye')" title="Toggle password"><i class="fas fa-eye" id="pw-old-eye"></i></span>
+                </div>
               </div>
               <div class="col-md-4">
                 <label class="form-label fw-semibold">New Password</label>
-                <input type="password" id="pw-new" class="form-control" placeholder="At least 6 chars">
+                <div class="input-group">
+                  <input type="password" id="pw-new" class="form-control" placeholder="At least 6 chars">
+                  <span class="input-group-text bg-white toggle-pw" onclick="togglePw('pw-new','pw-new-eye')" title="Toggle password"><i class="fas fa-eye" id="pw-new-eye"></i></span>
+                </div>
               </div>
               <div class="col-md-4">
                 <label class="form-label fw-semibold">Confirm New Password</label>
-                <input type="password" id="pw-confirm" class="form-control" placeholder="Re-type new password">
+                <div class="input-group">
+                  <input type="password" id="pw-confirm" class="form-control" placeholder="Re-type new password">
+                  <span class="input-group-text bg-white toggle-pw" onclick="togglePw('pw-confirm','pw-confirm-eye')" title="Toggle password"><i class="fas fa-eye" id="pw-confirm-eye"></i></span>
+                </div>
               </div>
               <div class="col-12 mt-3">
                 <button class="btn btn-sm px-3 text-white" style="background:var(--secondary);" onclick="changePassword()">
@@ -243,7 +216,7 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
         <div class="card mb-3 shadow-sm border-0 subsetting-card" id="card-developers" style="display:none;">
           <div class="card-header bg-white py-3 fw-bold d-flex align-items-center justify-content-between">
             <div>
-              <i class="fas fa-laptop-code me-2" style="color:var(--secondary);"></i>System Developers & Capstone Researchers
+              <i class="fas fa-laptop-code me-2" style="color:var(--secondary);"></i>System Developers
             </div>
             <span class="badge bg-success bg-opacity-10 text-success">BSIT · CSU Piat</span>
           </div>
@@ -315,14 +288,6 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
           </div>
         </div>
 
-        <!-- Danger Zone -->
-        <div class="card border-danger shadow-sm subsetting-card" id="card-danger">
-          <div class="card-header bg-danger bg-opacity-10 text-danger fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>Danger Zone</div>
-          <div class="card-body">
-            <p class="text-muted small mb-3">Logging out will terminate your current teacher session.</p>
-            <a href="<?= BASE_URL ?>/api/auth/logout.php" class="btn btn-danger btn-sm px-3" onclick="return confirmLogout(this)"><i class="fas fa-sign-out-alt me-2"></i>Logout</a>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -426,7 +391,14 @@ async function changePassword() {
     hideLoading();
     if (d.ok) {
       showToast('Password changed successfully!', 'success');
-      ['pw-old','pw-new','pw-confirm'].forEach(id=>document.getElementById(id).value='');
+      ['pw-old','pw-new','pw-confirm'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.value = ''; el.type = 'password'; }
+      });
+      ['pw-old-eye','pw-new-eye','pw-confirm-eye'].forEach(id => {
+        const eye = document.getElementById(id);
+        if (eye) eye.className = 'fas fa-eye';
+      });
     } else {
       showToast(d.message || 'Failed to change password.', 'error');
     }

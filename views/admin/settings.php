@@ -157,15 +157,24 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
             <div class="row g-3">
               <div class="col-md-4">
                 <label class="form-label fw-semibold">Current Password</label>
-                <input type="password" id="pw-old" class="form-control" placeholder="••••••••">
+                <div class="input-group">
+                  <input type="password" id="pw-old" class="form-control" placeholder="••••••••">
+                  <span class="input-group-text bg-white toggle-pw" onclick="togglePw('pw-old','pw-old-eye')" title="Toggle password"><i class="fas fa-eye" id="pw-old-eye"></i></span>
+                </div>
               </div>
               <div class="col-md-4">
                 <label class="form-label fw-semibold">New Password</label>
-                <input type="password" id="pw-new" class="form-control" placeholder="At least 6 chars">
+                <div class="input-group">
+                  <input type="password" id="pw-new" class="form-control" placeholder="At least 6 chars">
+                  <span class="input-group-text bg-white toggle-pw" onclick="togglePw('pw-new','pw-new-eye')" title="Toggle password"><i class="fas fa-eye" id="pw-new-eye"></i></span>
+                </div>
               </div>
               <div class="col-md-4">
                 <label class="form-label fw-semibold">Confirm New Password</label>
-                <input type="password" id="pw-confirm" class="form-control" placeholder="Re-type new password">
+                <div class="input-group">
+                  <input type="password" id="pw-confirm" class="form-control" placeholder="Re-type new password">
+                  <span class="input-group-text bg-white toggle-pw" onclick="togglePw('pw-confirm','pw-confirm-eye')" title="Toggle password"><i class="fas fa-eye" id="pw-confirm-eye"></i></span>
+                </div>
               </div>
               <div class="col-12 mt-3">
                 <button class="btn btn-primary btn-sm px-3" onclick="changePassword()">
@@ -216,7 +225,7 @@ if ($currentQ && !in_array($currentQ, $secQuestions)) {
         <div class="card mb-3 shadow-sm border-0 subsetting-card" id="card-developers" style="display:none;">
           <div class="card-header bg-white py-3 fw-bold d-flex align-items-center justify-content-between">
             <div>
-              <i class="fas fa-laptop-code me-2" style="color:var(--primary);"></i>System Developers & Capstone Researchers
+              <i class="fas fa-laptop-code me-2" style="color:var(--primary);"></i>System Developers
             </div>
             <span class="badge bg-primary bg-opacity-10 text-primary">BSIT · CSU Piat</span>
           </div>

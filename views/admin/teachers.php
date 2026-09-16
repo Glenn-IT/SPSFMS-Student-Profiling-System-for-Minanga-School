@@ -131,11 +131,17 @@ $gradeJson = json_encode(GRADE_LEVELS);
         <div class="row g-2">
           <div class="col-6">
             <label class="form-label">Password <span class="text-danger">*</span></label>
-            <input type="password" id="at-password" class="form-control" placeholder="Min. 6 characters" autocomplete="new-password">
+            <div class="input-group">
+              <input type="password" id="at-password" class="form-control" placeholder="Min. 6 characters" autocomplete="new-password">
+              <span class="input-group-text bg-white toggle-pw" onclick="togglePw('at-password','at-pw-eye')" title="Toggle password"><i class="fas fa-eye" id="at-pw-eye"></i></span>
+            </div>
           </div>
           <div class="col-6">
             <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
-            <input type="password" id="at-confirm" class="form-control" placeholder="Repeat password">
+            <div class="input-group">
+              <input type="password" id="at-confirm" class="form-control" placeholder="Repeat password">
+              <span class="input-group-text bg-white toggle-pw" onclick="togglePw('at-confirm','at-confirm-eye')" title="Toggle password"><i class="fas fa-eye" id="at-confirm-eye"></i></span>
+            </div>
           </div>
         </div>
         <div id="at-error" class="alert alert-danger mt-3 d-none" style="font-size:.85rem;"></div>
@@ -197,8 +203,18 @@ $gradeJson = json_encode(GRADE_LEVELS);
           </label>
         </div>
         <div class="row g-2 mb-3">
-          <div class="col-6"><input type="password" id="et-new-pw" class="form-control" placeholder="New password" autocomplete="new-password"></div>
-          <div class="col-6"><input type="password" id="et-confirm-pw" class="form-control" placeholder="Confirm password"></div>
+          <div class="col-6">
+            <div class="input-group">
+              <input type="password" id="et-new-pw" class="form-control" placeholder="New password" autocomplete="new-password">
+              <span class="input-group-text bg-white toggle-pw" onclick="togglePw('et-new-pw','et-pw-eye')" title="Toggle password"><i class="fas fa-eye" id="et-pw-eye"></i></span>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="input-group">
+              <input type="password" id="et-confirm-pw" class="form-control" placeholder="Confirm password">
+              <span class="input-group-text bg-white toggle-pw" onclick="togglePw('et-confirm-pw','et-conf-eye')" title="Toggle password"><i class="fas fa-eye" id="et-conf-eye"></i></span>
+            </div>
+          </div>
         </div>
         <div id="et-error" class="alert alert-danger d-none" style="font-size:.85rem;"></div>
       </div>

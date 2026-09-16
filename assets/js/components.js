@@ -312,3 +312,22 @@ function populateSectionDropdown(selectEl, gradeLevel, includeAll = false) {
     selectEl.appendChild(o);
   });
 }
+
+function togglePw(inputId = 'password', eyeId = 'pw-eye') {
+  const inp = typeof inputId === 'string' ? document.getElementById(inputId) : inputId;
+  const eye = typeof eyeId === 'string' ? document.getElementById(eyeId) : eyeId;
+  if (!inp) return;
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    if (eye) {
+      eye.classList.remove('fa-eye');
+      eye.classList.add('fa-eye-slash');
+    }
+  } else {
+    inp.type = 'password';
+    if (eye) {
+      eye.classList.remove('fa-eye-slash');
+      eye.classList.add('fa-eye');
+    }
+  }
+}
