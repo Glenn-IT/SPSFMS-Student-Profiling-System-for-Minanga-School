@@ -10,7 +10,7 @@ SPSMIS is a role-based school management portal for Minanga Integrated School (M
 
 ### Core Roles & Target Devices
 - **Administrator Portal** (`views/admin/`): Desktop-only (1024px+). System config, student/teacher/section/subject/account management, analytics, and DepEd reports.
-- **Teacher Portal** (`views/teacher/`): Desktop-only (1024px+). Advisory class overview, student profiles, DepEd SF10 quarterly grading (Q1–Q4 auto-calc), and grade summaries.
+- **Teacher Portal** (`views/teacher/`): Desktop-only (1024px+). Advisory class overview, student profiles, DepEd SF10 term grading (Term 1–Term 3, Final Grade auto-calc: average of T1–T3), and grade summaries.
 - **Student Portal** (`views/student/`): Fully responsive (mobile 320px+, tablet 768px+, desktop 1024px+). Grades viewer (SF10 table & mobile cards), announcements, profile overview, top desktop navbar, bottom mobile navigation.
 - **Auth System** (`views/auth/`, `api/auth/`): Role-aware login with 3-attempt lockout, 3-step security question password reset, and session role guards.
 
@@ -150,8 +150,8 @@ SPSFMS/
    - Fields: `id`, `teacher_id` (FK -> `users.id` CASCADE), `grade_level`, `section`, `created_at`. Unique key on `(teacher_id, grade_level, section)`.
 3. **`students`**: DepEd standard student demographic and profiling data.
    - Fields: `id`, `lrn` (unique), `grade_level`, `section`, `first_name`, `middle_name`, `last_name`, `sex` (`Male`/`Female`), `birthdate`, `age`, `mother_tongue`, `religion`, `address`, `mother_name`, `father_name`, `guardian_name`, `guardian_relation`, `contact`, `email`, `school_year`, `status`, timestamps.
-4. **`grades`**: DepEd Form 137 / SF10 quarterly grades.
-   - Fields: `id`, `student_id` (FK -> `students.id` CASCADE), `school_year`, `grade_level`, `section`, `subject`, `q1`, `q2`, `q3`, `q4`, `final_grade`, `remarks` (`Passed`/`Failed`), timestamps. Unique key on `(student_id, school_year, subject)`.
+4. **`grades`**: DepEd Form 137 / SF10 academic grades (Term 1, Term 2, Term 3, with Final Grade auto-computed as average of T1–T3).
+   - Fields: `id`, `student_id` (FK -> `students.id` CASCADE), `school_year`, `grade_level`, `section`, `subject`, `t1`, `t2`, `t3`, `q1`, `q2`, `q3`, `q4`, `final_grade`, `remarks` (`Passed`/`Failed`), timestamps. Unique key on `(student_id, school_year, subject)`.
 5. **`announcements`**: School notices shown on student & teacher dashboards.
    - Fields: `id`, `title`, `body`, `audience` (`all`, `student`, `teacher`), `posted_at`.
 6. **`sections`**: Masterlist of active class sections per grade level.
@@ -181,6 +181,7 @@ Whenever any file or logic in the system is changed or refactored, the developer
 | **School Year** | 1. `config/constants.php` (`SCHOOL_YEAR`, `getActiveSchoolYear()`, `getSchoolYearsList()`)<br>2. `database/schema.sql` & `database/setup.php`<br>3. `api/school-years/index.php`<br>4. `views/admin/school-years.php`<br>5. Dropdowns in `views/teacher/grades.php`, `views/teacher/reports.php`, `views/admin/students.php` | • Ensure only one school year has `is_active = 1`.<br>• Active school year dynamically populates as the default across teacher and admin modules.<br>• Dropdown options load dynamically from `getSchoolYearsList()`. |
 | **Grade Levels / Sections** | 1. `config/constants.php` (`GRADE_LEVELS`, `SECTION_MAP`)<br>2. `database/schema.sql` (default section inserts)<br>3. `database/setup.php` (default section inserts)<br>4. Grade dropdown filters across views (`students.php`, `grades.php`, `sections.php`, `teachers.php`) | • Ensure grade level string matches format `"Grade X"`.<br>• Dynamic section map loads from `sections` table with fallback to constants.<br>• Filter dropdowns populate accurately. |
 | **Subjects** | 1. `config/constants.php` (`getSubjectsForGrade()`)<br>2. `database/schema.sql` & `database/setup.php`<br>3. `api/subjects/index.php`<br>4. `views/admin/subjects.php`<br>5. `api/grades/student.php`<br>6. `views/teacher/grades.php` | • `getSubjectsForGrade()` queries `subjects` table dynamically by `grade_type` with constant fallback.<br>• Newly added/edited subjects in Admin automatically appear in Teacher SF10 grade cards.<br>• Previously recorded subject grades are preserved even if catalog changes. |
+| **Grades / Terms (New Curriculum)** | 1. `database/schema.sql`<br>2. `database/setup.php`<br>3. `api/grades/student.php`<br>4. `api/grades/index.php`<br>5. `views/teacher/grades.php`<br>6. `views/teacher/reports.php`<br>7. `views/student/dashboard.php` | • Grades structure supports Term 1 (T1), Term 2 (T2), and Term 3 (T3).<br>• Final Grade is auto-computed as average of (T1 + T2 + T3) / 3.<br>• Remarks: Passed (>= 75) / Failed (< 75).<br>• Dual storage/read compatibility for `t1..t3` and `q1..q3`. |
 | **Auth / Roles / Sessions** | 1. `api/auth/login.php`<br>2. `api/auth/logout.php`<br>3. `includes/auth_check.php`<br>4. `index.php` role redirection | • Ensure session keys (`$_SESSION['user']`, `['role']`, `['id']`, `['name']`) remain uniform.<br>• Ensure `redirectByRole()` handles all active roles.<br>• Verify cache control headers prevent back-button after logout. |
 
 ---

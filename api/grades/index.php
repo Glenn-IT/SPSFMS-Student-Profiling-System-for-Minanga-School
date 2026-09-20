@@ -17,7 +17,7 @@ if ($grade)   { $where[] = 'g.grade_level = ?'; $params[] = $grade; }
 if ($section) { $where[] = 'g.section = ?';     $params[] = $section; }
 
 $sql = "SELECT s.id as student_id, s.last_name, s.first_name, s.middle_name, s.lrn,
-               g.grade_level, g.section, g.subject, g.q1, g.q2, g.q3, g.q4, g.final_grade, g.remarks
+               g.grade_level, g.section, g.subject, g.t1, g.t2, g.t3, g.q1, g.q2, g.q3, g.q4, g.final_grade, g.remarks
         FROM students s
         LEFT JOIN grades g ON g.student_id = s.id AND g.school_year = ?
         WHERE s.status = 'active'" .

@@ -126,6 +126,9 @@ CREATE TABLE IF NOT EXISTS `grades` (
   `grade_level` VARCHAR(20) NOT NULL,
   `section`     VARCHAR(50) NOT NULL,
   `subject`     VARCHAR(100) NOT NULL,
+  `t1`          DECIMAL(5,2) DEFAULT NULL,
+  `t2`          DECIMAL(5,2) DEFAULT NULL,
+  `t3`          DECIMAL(5,2) DEFAULT NULL,
   `q1`          DECIMAL(5,2) DEFAULT NULL,
   `q2`          DECIMAL(5,2) DEFAULT NULL,
   `q3`          DECIMAL(5,2) DEFAULT NULL,
@@ -345,75 +348,83 @@ if ($existingSt == 0) {
 // ── Seed Grades ──────────────────────────────────────────────────────────────
 $existingGr = $pdo->query("SELECT COUNT(*) FROM grades")->fetchColumn();
 if ($existingGr == 0) {
-    $ins = $pdo->prepare("INSERT INTO grades (student_id,school_year,grade_level,section,subject,q1,q2,q3,q4,final_grade,remarks) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+    $ins = $pdo->prepare("INSERT INTO grades (student_id,school_year,grade_level,section,subject,t1,t2,t3,q1,q2,q3,q4,final_grade,remarks) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
     $sy = '2025-2026';
-    $gradeData = [
+    $rawGradeData = [
       // student_id 9 = Juan Dela Cruz (Grade 7)
-      [9,$sy,'Grade 7','Rizal','Filipino',88,87,89,90,89,'Passed'],
-      [9,$sy,'Grade 7','Rizal','English',85,86,84,87,86,'Passed'],
-      [9,$sy,'Grade 7','Rizal','Mathematics',90,92,91,93,92,'Passed'],
-      [9,$sy,'Grade 7','Rizal','Science',87,88,86,89,88,'Passed'],
-      [9,$sy,'Grade 7','Rizal','Araling Panlipunan',83,84,85,86,85,'Passed'],
-      [9,$sy,'Grade 7','Rizal','Edukasyon sa Pagpapakatao',90,91,92,91,91,'Passed'],
-      [9,$sy,'Grade 7','Rizal','Technology and Livelihood Education',88,87,89,88,88,'Passed'],
-      [9,$sy,'Grade 7','Rizal','MAPEH',86,87,88,87,87,'Passed'],
+      [9,$sy,'Grade 7','Rizal','Filipino',88,87,89],
+      [9,$sy,'Grade 7','Rizal','English',85,86,84],
+      [9,$sy,'Grade 7','Rizal','Mathematics',90,92,91],
+      [9,$sy,'Grade 7','Rizal','Science',87,88,86],
+      [9,$sy,'Grade 7','Rizal','Araling Panlipunan',83,84,85],
+      [9,$sy,'Grade 7','Rizal','Edukasyon sa Pagpapakatao',90,91,92],
+      [9,$sy,'Grade 7','Rizal','Technology and Livelihood Education',88,87,89],
+      [9,$sy,'Grade 7','Rizal','MAPEH',86,87,88],
       // student_id 10 = Maria Santos (Grade 7)
-      [10,$sy,'Grade 7','Rizal','Filipino',92,93,91,94,93,'Passed'],
-      [10,$sy,'Grade 7','Rizal','English',94,95,93,96,95,'Passed'],
-      [10,$sy,'Grade 7','Rizal','Mathematics',88,89,90,91,90,'Passed'],
-      [10,$sy,'Grade 7','Rizal','Science',91,92,90,93,92,'Passed'],
-      [10,$sy,'Grade 7','Rizal','Araling Panlipunan',89,90,91,92,91,'Passed'],
-      [10,$sy,'Grade 7','Rizal','Edukasyon sa Pagpapakatao',95,94,96,95,95,'Passed'],
-      [10,$sy,'Grade 7','Rizal','Technology and Livelihood Education',90,91,92,91,91,'Passed'],
-      [10,$sy,'Grade 7','Rizal','MAPEH',93,92,94,93,93,'Passed'],
+      [10,$sy,'Grade 7','Rizal','Filipino',92,93,91],
+      [10,$sy,'Grade 7','Rizal','English',94,95,93],
+      [10,$sy,'Grade 7','Rizal','Mathematics',88,89,90],
+      [10,$sy,'Grade 7','Rizal','Science',91,92,90],
+      [10,$sy,'Grade 7','Rizal','Araling Panlipunan',89,90,91],
+      [10,$sy,'Grade 7','Rizal','Edukasyon sa Pagpapakatao',95,94,96],
+      [10,$sy,'Grade 7','Rizal','Technology and Livelihood Education',90,91,92],
+      [10,$sy,'Grade 7','Rizal','MAPEH',93,92,94],
       // student_id 11 = Pedro Reyes (Grade 7)
-      [11,$sy,'Grade 7','Rizal','Filipino',78,79,80,81,80,'Passed'],
-      [11,$sy,'Grade 7','Rizal','English',75,76,74,77,76,'Passed'],
-      [11,$sy,'Grade 7','Rizal','Mathematics',82,83,81,84,83,'Passed'],
-      [11,$sy,'Grade 7','Rizal','Science',79,78,80,79,79,'Passed'],
-      [11,$sy,'Grade 7','Rizal','Araling Panlipunan',76,77,78,79,78,'Passed'],
-      [11,$sy,'Grade 7','Rizal','Edukasyon sa Pagpapakatao',83,84,85,84,84,'Passed'],
-      [11,$sy,'Grade 7','Rizal','Technology and Livelihood Education',80,81,82,81,81,'Passed'],
-      [11,$sy,'Grade 7','Rizal','MAPEH',77,78,79,80,79,'Passed'],
+      [11,$sy,'Grade 7','Rizal','Filipino',78,79,80],
+      [11,$sy,'Grade 7','Rizal','English',75,76,74],
+      [11,$sy,'Grade 7','Rizal','Mathematics',82,83,81],
+      [11,$sy,'Grade 7','Rizal','Science',79,78,80],
+      [11,$sy,'Grade 7','Rizal','Araling Panlipunan',76,77,78],
+      [11,$sy,'Grade 7','Rizal','Edukasyon sa Pagpapakatao',83,84,85],
+      [11,$sy,'Grade 7','Rizal','Technology and Livelihood Education',80,81,82],
+      [11,$sy,'Grade 7','Rizal','MAPEH',77,78,79],
       // student_id 12 = Lourdes Fernandez (Grade 7)
-      [12,$sy,'Grade 7','Rizal','Filipino',85,86,87,88,87,'Passed'],
-      [12,$sy,'Grade 7','Rizal','English',88,89,87,90,89,'Passed'],
-      [12,$sy,'Grade 7','Rizal','Mathematics',72,73,71,74,73,'Passed'],
-      [12,$sy,'Grade 7','Rizal','Science',83,84,82,85,84,'Passed'],
-      [12,$sy,'Grade 7','Rizal','Araling Panlipunan',87,88,89,90,89,'Passed'],
-      [12,$sy,'Grade 7','Rizal','Edukasyon sa Pagpapakatao',90,91,92,91,91,'Passed'],
-      [12,$sy,'Grade 7','Rizal','Technology and Livelihood Education',85,86,87,86,86,'Passed'],
-      [12,$sy,'Grade 7','Rizal','MAPEH',89,90,88,91,90,'Passed'],
+      [12,$sy,'Grade 7','Rizal','Filipino',85,86,87],
+      [12,$sy,'Grade 7','Rizal','English',88,89,87],
+      [12,$sy,'Grade 7','Rizal','Mathematics',72,73,71],
+      [12,$sy,'Grade 7','Rizal','Science',83,84,82],
+      [12,$sy,'Grade 7','Rizal','Araling Panlipunan',87,88,89],
+      [12,$sy,'Grade 7','Rizal','Edukasyon sa Pagpapakatao',90,91,92],
+      [12,$sy,'Grade 7','Rizal','Technology and Livelihood Education',85,86,87],
+      [12,$sy,'Grade 7','Rizal','MAPEH',89,90,88],
       // student_id 13 = Ramon Bautista (Grade 7)
-      [13,$sy,'Grade 7','Rizal','Filipino',70,71,69,72,71,'Passed'],
-      [13,$sy,'Grade 7','Rizal','English',73,72,74,73,73,'Passed'],
-      [13,$sy,'Grade 7','Rizal','Mathematics',68,69,67,70,69,'Passed'],
-      [13,$sy,'Grade 7','Rizal','Science',72,71,73,72,72,'Passed'],
-      [13,$sy,'Grade 7','Rizal','Araling Panlipunan',74,75,76,75,75,'Passed'],
-      [13,$sy,'Grade 7','Rizal','Edukasyon sa Pagpapakatao',78,79,80,79,79,'Passed'],
-      [13,$sy,'Grade 7','Rizal','Technology and Livelihood Education',76,77,78,77,77,'Passed'],
-      [13,$sy,'Grade 7','Rizal','MAPEH',74,75,73,76,75,'Passed'],
+      [13,$sy,'Grade 7','Rizal','Filipino',70,71,69],
+      [13,$sy,'Grade 7','Rizal','English',73,72,74],
+      [13,$sy,'Grade 7','Rizal','Mathematics',68,69,67],
+      [13,$sy,'Grade 7','Rizal','Science',72,71,73],
+      [13,$sy,'Grade 7','Rizal','Araling Panlipunan',74,75,76],
+      [13,$sy,'Grade 7','Rizal','Edukasyon sa Pagpapakatao',78,79,80],
+      [13,$sy,'Grade 7','Rizal','Technology and Livelihood Education',76,77,78],
+      [13,$sy,'Grade 7','Rizal','MAPEH',74,75,73],
       // student_id 19 = Lorenzo Miranda (Grade 11 STEM)
-      [19,$sy,'Grade 11','STEM','Oral Communication',90,91,89,92,91,'Passed'],
-      [19,$sy,'Grade 11','STEM','Reading and Writing',88,89,87,90,89,'Passed'],
-      [19,$sy,'Grade 11','STEM','Komunikasyon at Pananaliksik',85,86,84,87,86,'Passed'],
-      [19,$sy,'Grade 11','STEM','21st Century Literature',87,88,86,89,88,'Passed'],
-      [19,$sy,'Grade 11','STEM','General Mathematics',92,93,94,95,94,'Passed'],
-      [19,$sy,'Grade 11','STEM','Statistics and Probability',90,91,92,93,92,'Passed'],
-      [19,$sy,'Grade 11','STEM','Earth and Life Science',88,89,87,90,89,'Passed'],
-      [19,$sy,'Grade 11','STEM','Physical Science',91,92,90,93,92,'Passed'],
+      [19,$sy,'Grade 11','STEM','Oral Communication',90,91,89],
+      [19,$sy,'Grade 11','STEM','Reading and Writing',88,89,87],
+      [19,$sy,'Grade 11','STEM','Komunikasyon at Pananaliksik',85,86,84],
+      [19,$sy,'Grade 11','STEM','21st Century Literature',87,88,86],
+      [19,$sy,'Grade 11','STEM','General Mathematics',92,93,94],
+      [19,$sy,'Grade 11','STEM','Statistics and Probability',90,91,92],
+      [19,$sy,'Grade 11','STEM','Earth and Life Science',88,89,87],
+      [19,$sy,'Grade 11','STEM','Physical Science',91,92,90],
       // student_id 20 = Michelle Santos (Grade 11 STEM)
-      [20,$sy,'Grade 11','STEM','Oral Communication',95,94,96,95,95,'Passed'],
-      [20,$sy,'Grade 11','STEM','Reading and Writing',93,94,92,95,94,'Passed'],
-      [20,$sy,'Grade 11','STEM','Komunikasyon at Pananaliksik',91,92,90,93,92,'Passed'],
-      [20,$sy,'Grade 11','STEM','21st Century Literature',94,95,93,96,95,'Passed'],
-      [20,$sy,'Grade 11','STEM','General Mathematics',89,90,91,92,91,'Passed'],
-      [20,$sy,'Grade 11','STEM','Statistics and Probability',87,88,89,90,89,'Passed'],
-      [20,$sy,'Grade 11','STEM','Earth and Life Science',92,93,91,94,93,'Passed'],
-      [20,$sy,'Grade 11','STEM','Physical Science',88,89,87,90,89,'Passed'],
+      [20,$sy,'Grade 11','STEM','Oral Communication',95,94,96],
+      [20,$sy,'Grade 11','STEM','Reading and Writing',93,94,92],
+      [20,$sy,'Grade 11','STEM','Komunikasyon at Pananaliksik',91,92,90],
+      [20,$sy,'Grade 11','STEM','21st Century Literature',94,95,93],
+      [20,$sy,'Grade 11','STEM','General Mathematics',89,90,91],
+      [20,$sy,'Grade 11','STEM','Statistics and Probability',87,88,89],
+      [20,$sy,'Grade 11','STEM','Earth and Life Science',92,93,91],
+      [20,$sy,'Grade 11','STEM','Physical Science',88,89,87],
     ];
-    foreach ($gradeData as $g) $ins->execute($g);
-    out('✔ Seeded <strong>' . count($gradeData) . ' grade rows</strong>.', 'ok');
+    foreach ($rawGradeData as $row) {
+        $t1 = $row[5];
+        $t2 = $row[6];
+        $t3 = $row[7];
+        $final = round(($t1 + $t2 + $t3) / 3, 2);
+        $remarks = $final >= 75 ? 'Passed' : 'Failed';
+        // Insert t1, t2, t3, and mirror to q1, q2, q3 (with q4 null) for full backwards compatibility
+        $ins->execute([$row[0], $row[1], $row[2], $row[3], $row[4], $t1, $t2, $t3, $t1, $t2, $t3, null, $final, $remarks]);
+    }
+    out('✔ Seeded <strong>' . count($rawGradeData) . ' grade rows</strong> (Terms 1–3).', 'ok');
 } else {
     out("ℹ Grades already exist ($existingGr rows) — skipping.", 'info');
 }

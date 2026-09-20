@@ -212,7 +212,7 @@ include __DIR__ . '/../../includes/student-navbar.php';
         <?php if (empty($grades)): ?>
           <div class="p-4 text-center text-muted">
             <i class="fas fa-folder-open mb-2" style="font-size:2rem; opacity:.4;"></i>
-            <p class="mb-0 small">No grades recorded for this school year yet. Check back once quarterly grades are finalized by your advisers.</p>
+            <p class="mb-0 small">No grades recorded for this school year yet. Check back once term grades are finalized by your advisers.</p>
           </div>
         <?php else: ?>
 
@@ -221,13 +221,12 @@ include __DIR__ . '/../../includes/student-navbar.php';
             <table class="table sf10-table">
               <thead>
                 <tr>
-                  <th style="width:36%;">Subject</th>
-                  <th class="text-center" style="width:10%;">Q1</th>
-                  <th class="text-center" style="width:10%;">Q2</th>
-                  <th class="text-center" style="width:10%;">Q3</th>
-                  <th class="text-center" style="width:10%;">Q4</th>
-                  <th class="text-center" style="width:12%;">Final</th>
-                  <th class="text-center" style="width:12%;">Remarks</th>
+                  <th style="width:38%;">Subject</th>
+                  <th class="text-center" style="width:12%;">Term 1</th>
+                  <th class="text-center" style="width:12%;">Term 2</th>
+                  <th class="text-center" style="width:12%;">Term 3</th>
+                  <th class="text-center" style="width:13%;">Final</th>
+                  <th class="text-center" style="width:13%;">Remarks</th>
                 </tr>
               </thead>
               <tbody>
@@ -239,10 +238,9 @@ include __DIR__ . '/../../includes/student-navbar.php';
                   ?>
                   <tr>
                     <td class="subject-col"><?= htmlspecialchars($g['subject']) ?></td>
-                    <td class="grade-val"><?= $g['q1'] ?? '—' ?></td>
-                    <td class="grade-val"><?= $g['q2'] ?? '—' ?></td>
-                    <td class="grade-val"><?= $g['q3'] ?? '—' ?></td>
-                    <td class="grade-val"><?= $g['q4'] ?? '—' ?></td>
+                    <td class="grade-val"><?= $g['t1'] ?? $g['q1'] ?? '—' ?></td>
+                    <td class="grade-val"><?= $g['t2'] ?? $g['q2'] ?? '—' ?></td>
+                    <td class="grade-val"><?= $g['t3'] ?? $g['q3'] ?? '—' ?></td>
                     <td class="final-val <?= $color ?>"><?= $final ?? '—' ?></td>
                     <td class="text-center">
                       <?php if ($g['remarks']): ?>
@@ -259,7 +257,7 @@ include __DIR__ . '/../../includes/student-navbar.php';
               <?php if ($avg !== null): ?>
                 <tfoot>
                   <tr style="background:#f8fafc; font-weight:700;">
-                    <td colspan="5" class="text-end text-uppercase" style="font-size:.8rem; letter-spacing:.5px; color:#475569;">General Average</td>
+                    <td colspan="4" class="text-end text-uppercase" style="font-size:.8rem; letter-spacing:.5px; color:#475569;">General Average</td>
                     <td class="text-center text-primary" style="font-size:1.05rem;"><?= number_format($avg, 2) ?></td>
                     <td class="text-center">
                       <span class="remarks-badge <?= $avg >= 75 ? 'passed' : 'failed' ?>">
@@ -286,7 +284,7 @@ include __DIR__ . '/../../includes/student-navbar.php';
                   <span class="card-value fw-bold" style="color:<?= $color ?>;"><?= $final ?? '—' ?></span>
                 </div>
                 <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top" style="font-size:.75rem;">
-                  <span class="text-muted">Q1: <?= $g['q1']??'—' ?> | Q2: <?= $g['q2']??'—' ?> | Q3: <?= $g['q3']??'—' ?> | Q4: <?= $g['q4']??'—' ?></span>
+                  <span class="text-muted">T1: <?= $g['t1']??$g['q1']??'—' ?> | T2: <?= $g['t2']??$g['q2']??'—' ?> | T3: <?= $g['t3']??$g['q3']??'—' ?></span>
                   <?php if ($g['remarks']): ?>
                     <span class="remarks-badge <?= $isPass ? 'passed' : 'failed' ?>"><?= htmlspecialchars($g['remarks']) ?></span>
                   <?php endif; ?>

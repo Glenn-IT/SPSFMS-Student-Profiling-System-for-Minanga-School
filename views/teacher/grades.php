@@ -37,15 +37,15 @@ $preselectedStudentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 
       <div class="ms-auto"><div class="user-menu"><div class="user-avatar" style="background:var(--secondary);color:#fff;"><?= strtoupper(substr($user['name'],0,1)) ?></div><div><div class="user-name"><?= htmlspecialchars($user['name']) ?></div><div class="user-role">Teacher</div></div></div></div>
     </nav>
 
-    <div class="page-header"><h3>Grade Management (SF10)</h3><p>Select a student to view or edit quarterly grades</p></div>
+    <div class="page-header"><h3>Grade Management (SF10)</h3><p>Select a student to view or edit academic term grades (Term 1 – Term 3)</p></div>
 
     <!-- Student & Class Selector -->
     <div class="card mb-3">
       <div class="card-body">
         <div class="row g-2 align-items-end">
-          <?php if (!empty($myClasses)): ?>
+          <?php if (count($myClasses) > 1): ?>
           <div class="col-md-3">
-            <label class="form-label">Advisory Class</label>
+            <label class="form-label">Filter by Class</label>
             <select id="class-filter" class="form-select" onchange="filterStudentDropdown()">
               <option value="">All My Classes</option>
               <?php foreach ($myClasses as $idx => $cls): ?>
@@ -104,18 +104,20 @@ $preselectedStudentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 
               <thead>
                 <tr>
                   <th style="text-align:left;min-width:200px;">Learning Area / Subject</th>
-                  <th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th>
-                  <th style="background:#d1fae5;">Final Grade</th>
-                  <th style="background:#d1fae5;">Remarks</th>
+                  <th class="text-center" style="width:110px;">Term 1</th>
+                  <th class="text-center" style="width:110px;">Term 2</th>
+                  <th class="text-center" style="width:110px;">Term 3</th>
+                  <th class="text-center" style="background:#d1fae5;width:120px;">Final Grade</th>
+                  <th class="text-center" style="background:#d1fae5;width:110px;">Remarks</th>
                 </tr>
               </thead>
               <tbody id="grades-tbody">
-                <tr><td colspan="7" class="text-center text-muted py-4">Select a student above to load grades.</td></tr>
+                <tr><td colspan="6" class="text-center text-muted py-4">Select a student above to load grades.</td></tr>
               </tbody>
               <tfoot>
                 <tr style="background:#f0fdf4;">
                   <td class="fw-bold">General Average</td>
-                  <td colspan="4"></td>
+                  <td colspan="3"></td>
                   <td class="fw-bold text-center" id="general-average">—</td>
                   <td class="fw-bold text-center" id="general-remarks">—</td>
                 </tr>
@@ -196,19 +198,20 @@ async function loadGrades() {
 
     data.subjects.forEach(subject => {
       const g = data.grades[subject] || {};
-      const q1 = g.q1 ?? '', q2 = g.q2 ?? '', q3 = g.q3 ?? '', q4 = g.q4 ?? '';
+      const t1 = g.t1 ?? g.q1 ?? '';
+      const t2 = g.t2 ?? g.q2 ?? '';
+      const t3 = g.t3 ?? g.q3 ?? '';
       const final = g.final_grade ?? '';
       const remarks = g.remarks || '';
       if (final !== '' && final !== null) { gradeSum += parseFloat(final); gradeCount++; }
       const rmClass = remarks === 'Passed' ? 'remarks-passed' : (remarks === 'Failed' ? 'remarks-failed' : '');
       tbody.innerHTML += `<tr data-subject="${subject}">
         <td>${subject}</td>
-        <td><input type="number" class="grade-input q-input" data-q="q1" min="0" max="100" value="${q1}" onchange="recomputeRow(this)"></td>
-        <td><input type="number" class="grade-input q-input" data-q="q2" min="0" max="100" value="${q2}" onchange="recomputeRow(this)"></td>
-        <td><input type="number" class="grade-input q-input" data-q="q3" min="0" max="100" value="${q3}" onchange="recomputeRow(this)"></td>
-        <td><input type="number" class="grade-input q-input" data-q="q4" min="0" max="100" value="${q4}" onchange="recomputeRow(this)"></td>
-        <td class="fw-bold final-cell">${final !== '' ? final : '—'}</td>
-        <td class="${rmClass} remarks-cell">${remarks || '—'}</td>
+        <td><input type="number" class="grade-input term-input text-center" data-term="t1" min="0" max="100" step="any" value="${t1}" oninput="recomputeRow(this)" onchange="recomputeRow(this)"></td>
+        <td><input type="number" class="grade-input term-input text-center" data-term="t2" min="0" max="100" step="any" value="${t2}" oninput="recomputeRow(this)" onchange="recomputeRow(this)"></td>
+        <td><input type="number" class="grade-input term-input text-center" data-term="t3" min="0" max="100" step="any" value="${t3}" oninput="recomputeRow(this)" onchange="recomputeRow(this)"></td>
+        <td class="fw-bold final-cell text-center">${final !== '' ? final : '—'}</td>
+        <td class="${rmClass} remarks-cell text-center">${remarks || '—'}</td>
       </tr>`;
     });
 
@@ -225,18 +228,18 @@ async function loadGrades() {
 
 function recomputeRow(input) {
   const row = input.closest('tr');
-  const inputs = row.querySelectorAll('.q-input');
+  const inputs = row.querySelectorAll('.term-input');
   const vals = Array.from(inputs).map(i => i.value !== '' ? parseFloat(i.value) : null);
   if (vals.every(v => v !== null)) {
-    const final = Math.round(vals.reduce((a,b) => a+b, 0) / 4 * 100) / 100;
+    const final = Math.round(vals.reduce((a,b) => a+b, 0) / 3 * 100) / 100;
     const remarks = final >= 75 ? 'Passed' : 'Failed';
-    row.querySelector('.final-cell').textContent = final;
+    row.querySelector('.final-cell').textContent = final.toFixed(2);
     row.querySelector('.remarks-cell').textContent = remarks;
-    row.querySelector('.remarks-cell').className = 'remarks-cell ' + (remarks === 'Passed' ? 'remarks-passed' : 'remarks-failed');
+    row.querySelector('.remarks-cell').className = 'remarks-cell text-center ' + (remarks === 'Passed' ? 'remarks-passed' : 'remarks-failed');
   } else {
     row.querySelector('.final-cell').textContent = '—';
     row.querySelector('.remarks-cell').textContent = '—';
-    row.querySelector('.remarks-cell').className = 'remarks-cell';
+    row.querySelector('.remarks-cell').className = 'remarks-cell text-center';
   }
   updateGeneralAverage();
 }
@@ -255,18 +258,19 @@ async function saveAllGrades() {
   const sy        = document.getElementById('sy-select').value;
   if (!studentId || !currentStudent) { showToast('No student selected.', 'error'); return; }
 
-  showLoading('Saving Grades...', 'Updating student SF10 quarterly grades...');
+  showLoading('Saving Grades...', 'Updating student SF10 term grades (Term 1 - Term 3)...');
   try {
     const rows = document.querySelectorAll('#grades-tbody tr');
     let saved = 0;
     for (const row of rows) {
       const subject = row.dataset.subject;
-      const inputs  = row.querySelectorAll('.q-input');
-      const q1 = inputs[0].value, q2 = inputs[1].value, q3 = inputs[2].value, q4 = inputs[3].value;
+      if (!subject) continue;
+      const inputs  = row.querySelectorAll('.term-input');
+      const t1 = inputs[0].value, t2 = inputs[1].value, t3 = inputs[2].value;
       const payload = {
         student_id: parseInt(studentId), school_year: sy,
         grade_level: currentStudent.grade_level, section: currentStudent.section,
-        subject, q1, q2, q3, q4
+        subject, t1, t2, t3, q1: t1, q2: t2, q3: t3
       };
       const res = await fetch(BASE + '/api/grades/student.php', {
         method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)

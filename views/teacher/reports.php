@@ -135,16 +135,15 @@ if ($reportType === 'sf10' && $selectedStudentId > 0 && $hasAdvisory) {
 
         foreach ($sf10Subjects as $subj) {
             $row = $gradeMap[$subj] ?? null;
-            $q1 = $row && $row['q1'] !== null ? (float)$row['q1'] : null;
-            $q2 = $row && $row['q2'] !== null ? (float)$row['q2'] : null;
-            $q3 = $row && $row['q3'] !== null ? (float)$row['q3'] : null;
-            $q4 = $row && $row['q4'] !== null ? (float)$row['q4'] : null;
+            $t1 = $row && ($row['t1'] !== null || $row['q1'] !== null) ? (float)($row['t1'] ?? $row['q1']) : null;
+            $t2 = $row && ($row['t2'] !== null || $row['q2'] !== null) ? (float)($row['t2'] ?? $row['q2']) : null;
+            $t3 = $row && ($row['t3'] !== null || $row['q3'] !== null) ? (float)($row['t3'] ?? $row['q3']) : null;
             $final = $row && $row['final_grade'] !== null ? (float)$row['final_grade'] : null;
 
             if ($final === null) {
-                $quarters = array_filter([$q1, $q2, $q3, $q4], fn($v) => $v !== null);
-                if (count($quarters) === 4) {
-                    $final = round(array_sum($quarters) / 4, 2);
+                $terms = array_filter([$t1, $t2, $t3], fn($v) => $v !== null);
+                if (count($terms) === 3) {
+                    $final = round(array_sum($terms) / 3, 2);
                 }
             }
 
@@ -156,10 +155,12 @@ if ($reportType === 'sf10' && $selectedStudentId > 0 && $hasAdvisory) {
             }
 
             $sf10Grades[$subj] = [
-                'q1' => $q1,
-                'q2' => $q2,
-                'q3' => $q3,
-                'q4' => $q4,
+                't1' => $t1,
+                't2' => $t2,
+                't3' => $t3,
+                'q1' => $t1,
+                'q2' => $t2,
+                'q3' => $t3,
                 'final_grade' => $final,
                 'remarks' => $remarks
             ];
@@ -707,29 +708,30 @@ if ($reportType === 'sf10' && $selectedStudentId > 0 && $hasAdvisory) {
                   <thead>
                     <tr>
                       <th style="min-width: 260px;">Learning Areas / Subjects</th>
-                      <th class="text-center" style="width: 75px;">Q1</th>
-                      <th class="text-center" style="width: 75px;">Q2</th>
-                      <th class="text-center" style="width: 75px;">Q3</th>
-                      <th class="text-center" style="width: 75px;">Q4</th>
+                      <th class="text-center" style="width: 85px;">Term 1</th>
+                      <th class="text-center" style="width: 85px;">Term 2</th>
+                      <th class="text-center" style="width: 85px;">Term 3</th>
                       <th class="text-center" style="width: 105px; background: #e2e8f0 !important;">Final Grade</th>
                       <th class="text-center" style="width: 110px; background: #e2e8f0 !important;">Remarks</th>
                     </tr>
                   </thead>
                   <tbody>
                     <?php if (empty($sf10Subjects)): ?>
-                    <tr><td colspan="7" class="text-center text-muted py-4">No subjects registered for <?= htmlspecialchars($sf10Student['grade_level']) ?>.</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted py-4">No subjects registered for <?= htmlspecialchars($sf10Student['grade_level']) ?>.</td></tr>
                     <?php else: foreach ($sf10Subjects as $subj):
-                      $rec = $sf10Grades[$subj] ?? ['q1'=>null,'q2'=>null,'q3'=>null,'q4'=>null,'final_grade'=>null,'remarks'=>''];
+                      $rec = $sf10Grades[$subj] ?? ['t1'=>null,'t2'=>null,'t3'=>null,'q1'=>null,'q2'=>null,'q3'=>null,'final_grade'=>null,'remarks'=>''];
+                      $t1Val = $rec['t1'] ?? $rec['q1'] ?? null;
+                      $t2Val = $rec['t2'] ?? $rec['q2'] ?? null;
+                      $t3Val = $rec['t3'] ?? $rec['q3'] ?? null;
                       $fg = $rec['final_grade'] !== null ? number_format($rec['final_grade'], 0) : '—';
                       $rem = $rec['remarks'] ?: '—';
                       $remColor = ($rem === 'Passed') ? '#16a34a' : (($rem === 'Failed') ? '#dc2626' : 'inherit');
                     ?>
                     <tr>
                       <td class="fw-semibold text-dark"><?= htmlspecialchars($subj) ?></td>
-                      <td class="text-center"><?= $rec['q1'] !== null ? number_format($rec['q1'],0) : '—' ?></td>
-                      <td class="text-center"><?= $rec['q2'] !== null ? number_format($rec['q2'],0) : '—' ?></td>
-                      <td class="text-center"><?= $rec['q3'] !== null ? number_format($rec['q3'],0) : '—' ?></td>
-                      <td class="text-center"><?= $rec['q4'] !== null ? number_format($rec['q4'],0) : '—' ?></td>
+                      <td class="text-center"><?= $t1Val !== null ? number_format($t1Val,0) : '—' ?></td>
+                      <td class="text-center"><?= $t2Val !== null ? number_format($t2Val,0) : '—' ?></td>
+                      <td class="text-center"><?= $t3Val !== null ? number_format($t3Val,0) : '—' ?></td>
                       <td class="text-center fw-bold fs-6" style="background:#f8fafc;"><?= $fg ?></td>
                       <td class="text-center fw-bold" style="color:<?= $remColor ?>;"><?= $rem ?></td>
                     </tr>
@@ -738,7 +740,7 @@ if ($reportType === 'sf10' && $selectedStudentId > 0 && $hasAdvisory) {
                   <tfoot>
                     <tr style="background:#f1f5f9; font-size:.92rem;">
                       <th class="fw-bold text-dark text-uppercase">General Average</th>
-                      <th colspan="4"></th>
+                      <th colspan="3"></th>
                       <th class="text-center fw-bold fs-6 text-dark"><?= $sf10GeneralAverage !== null ? number_format($sf10GeneralAverage, 2) : '—' ?></th>
                       <th class="text-center fw-bold" style="color:<?= $sf10GeneralRemarks==='Passed'?'#16a34a':($sf10GeneralRemarks==='Failed'?'#dc2626':'inherit') ?>;"><?= $sf10GeneralRemarks ?></th>
                     </tr>
