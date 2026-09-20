@@ -26,7 +26,7 @@ if ($method === 'POST') {
     $d    = json_decode(file_get_contents('php://input'), true);
     $name = trim($d['name'] ?? '');
     $type = $d['grade_type'] ?? '';
-    if (!$name || !in_array($type, ['elementary','jhs','shs'])) {
+    if (!$name || !in_array($type, ['kindergarten','elementary','jhs','shs'])) {
         http_response_code(400); echo json_encode(['ok'=>false,'message'=>'Name and valid grade_type required.']); exit;
     }
     try {

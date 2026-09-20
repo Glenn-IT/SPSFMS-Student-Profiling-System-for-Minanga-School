@@ -184,6 +184,7 @@ $cfg = [
   const ROLE = '<?= $role ?>';
 
   const DEFAULT_SECTIONS = {
+    'Kindergarten': ['Sampaguita'],
     'Grade 1': ['Rizal', 'Mabini'],
     'Grade 2': ['Bonifacio', 'Mabini'],
     'Grade 3': ['Mabini', 'Rizal'],

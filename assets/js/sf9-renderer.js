@@ -25,23 +25,26 @@ function renderSf9ReportCard(data, options = {}) {
   }
 
   const rawGradeLevel = student.grade_level || 'Grade 12';
-  const gradeNum = parseInt(rawGradeLevel.replace(/\D/g, '')) || 12;
-  const isElementary = gradeNum <= 6;
-  const isJhs = gradeNum >= 7 && gradeNum <= 10;
-  const isShs = gradeNum >= 11;
+  const isKinder = /kinder/i.test(rawGradeLevel);
+  const gradeNum = isKinder ? 0 : (parseInt(rawGradeLevel.replace(/\D/g, '')) || 12);
+  const isElementary = !isKinder && gradeNum <= 6;
+  const isJhs = !isKinder && gradeNum >= 7 && gradeNum <= 10;
+  const isShs = !isKinder && gradeNum >= 11;
 
   const fullName = student.full_name 
     || `${student.last_name || ''}, ${student.first_name || ''} ${student.middle_name || ''}`.trim() 
     || '—';
   const lrn = student.lrn || '—';
-  const age = student.age || (gradeNum + 6);
+  const age = student.age || (isKinder ? 5 : (gradeNum + 6));
   const sex = student.sex || student.gender || 'Male';
   const section = student.section || '—';
   const sy = data.school_year || student.school_year || '2026-2027';
 
   let trackStrand = student.track_strand || '';
   if (!trackStrand) {
-    if (isShs) {
+    if (isKinder) {
+      trackStrand = 'Kindergarten Curriculum Framework (DepEd K to 12)';
+    } else if (isShs) {
       trackStrand = 'Technical-Vocational-Livelihood (TVL) - ICT';
     } else if (isJhs) {
       trackStrand = 'Junior High School (K to 12 Curriculum)';
@@ -50,9 +53,11 @@ function renderSf9ReportCard(data, options = {}) {
     }
   }
 
-  const nextGrade = isShs && gradeNum === 12 
-    ? 'Graduated / Higher Education (Tertiary)' 
-    : `Grade ${gradeNum + 1}`;
+  const nextGrade = isKinder
+    ? 'Grade 1'
+    : (isShs && gradeNum === 12 
+      ? 'Graduated / Higher Education (Tertiary)' 
+      : `Grade ${gradeNum + 1}`);
 
   const adviser = escapeHtml(options.adviser !== undefined && options.adviser !== null && options.adviser !== ''
     ? options.adviser 

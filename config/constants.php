@@ -36,6 +36,7 @@ define('SCHOOL_YEAR', getActiveSchoolYear());
 
 
 define('GRADE_LEVELS', [
+    'Kindergarten',
     'Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6',
     'Grade 7','Grade 8','Grade 9','Grade 10',
     'Grade 11','Grade 12'
@@ -61,6 +62,7 @@ function getDynamicSectionMap(): array {
     }
 
     return [
+        'Kindergarten' => ['Sampaguita'],
         'Grade 1'  => ['Mabini'],
         'Grade 2'  => ['Mabini'],
         'Grade 3'  => ['Mabini'],
@@ -77,6 +79,15 @@ function getDynamicSectionMap(): array {
 }
 
 define('SECTION_MAP', getDynamicSectionMap());
+
+define('SUBJECTS_KINDER', [
+    'Literacy and Language',
+    'Mathematics',
+    'Socio-Emotional Development',
+    'Values Education',
+    'Physical Health and Motor Development',
+    'Understanding the Physical and Natural Environment'
+]);
 
 define('SUBJECTS_ELEM', [
     'Filipino','English','Mathematics','Science',
@@ -98,12 +109,16 @@ define('SUBJECTS_SHS', [
 ]);
 
 function getSubjectsForGrade(string $gradeLevel, ?PDO $pdo = null): array {
-    $g = (int) str_replace('Grade ', '', $gradeLevel);
-    $group = 'shs';
-    if ($g <= 6) {
-        $group = 'elementary';
-    } elseif ($g <= 10) {
-        $group = 'jhs';
+    if (stripos($gradeLevel, 'kinder') !== false) {
+        $group = 'kindergarten';
+    } else {
+        $g = (int) str_replace('Grade ', '', $gradeLevel);
+        $group = 'shs';
+        if ($g <= 6) {
+            $group = 'elementary';
+        } elseif ($g <= 10) {
+            $group = 'jhs';
+        }
     }
 
     $db = $pdo ?? ($GLOBALS['pdo'] ?? null);
@@ -118,7 +133,8 @@ function getSubjectsForGrade(string $gradeLevel, ?PDO $pdo = null): array {
         } catch (Exception $e) {}
     }
 
-    if ($group === 'elementary') return SUBJECTS_ELEM;
-    if ($group === 'jhs')        return SUBJECTS_JHS;
+    if ($group === 'kindergarten') return SUBJECTS_KINDER;
+    if ($group === 'elementary')   return SUBJECTS_ELEM;
+    if ($group === 'jhs')          return SUBJECTS_JHS;
     return SUBJECTS_SHS;
 }

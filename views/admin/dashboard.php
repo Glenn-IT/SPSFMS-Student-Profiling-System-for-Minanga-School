@@ -5,7 +5,7 @@ $activePage = 'dashboard';
 
 // Server-side stats
 $total  = (int)$pdo->query("SELECT COUNT(*) FROM students WHERE status='active'")->fetchColumn();
-$elem   = (int)$pdo->query("SELECT COUNT(*) FROM students WHERE status='active' AND grade_level IN ('Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6')")->fetchColumn();
+$elem   = (int)$pdo->query("SELECT COUNT(*) FROM students WHERE status='active' AND (grade_level LIKE '%kinder%' OR grade_level IN ('Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6'))")->fetchColumn();
 $jhs    = (int)$pdo->query("SELECT COUNT(*) FROM students WHERE status='active' AND grade_level IN ('Grade 7','Grade 8','Grade 9','Grade 10')")->fetchColumn();
 $shs    = (int)$pdo->query("SELECT COUNT(*) FROM students WHERE status='active' AND grade_level IN ('Grade 11','Grade 12')")->fetchColumn();
 $male   = (int)$pdo->query("SELECT COUNT(*) FROM students WHERE status='active' AND sex='Male'")->fetchColumn();
@@ -65,7 +65,7 @@ $recent = $recentStmt->fetchAll();
       </div>
       <div class="col-xl-3 col-md-6">
         <div class="stat-card green"><div class="stat-icon"><i class="fas fa-child"></i></div>
-          <div><div class="stat-value"><?= $elem ?></div><div class="stat-label">Elementary (Gr. 1–6)</div></div></div>
+          <div><div class="stat-value"><?= $elem ?></div><div class="stat-label">Elementary (Kinder–Gr. 6)</div></div></div>
       </div>
       <div class="col-xl-3 col-md-6">
         <div class="stat-card yellow"><div class="stat-icon"><i class="fas fa-user-friends"></i></div>
@@ -149,7 +149,7 @@ $recent = $recentStmt->fetchAll();
 showDesktopOnlyWarning();
 
 const ELEM=<?= $elem ?>, JHS=<?= $jhs ?>, SHS=<?= $shs ?>, MALE=<?= $male ?>, FEMALE=<?= $female ?>;
-const GRADE_LABELS = <?= json_encode(array_map(fn($g)=>str_replace('Grade ','Gr.',$g), GRADE_LEVELS)) ?>;
+const GRADE_LABELS = <?= json_encode(array_map(fn($g)=>str_replace(['Kindergarten','Grade '], ['Kinder','Gr.'], $g), GRADE_LEVELS)) ?>;
 const GRADE_COUNTS = <?= json_encode($gradeCounts) ?>;
 
 new Chart(document.getElementById('enrollmentChart'), {

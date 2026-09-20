@@ -32,6 +32,7 @@ $activePage = 'subjects';
 
     <!-- Tabs -->
     <ul class="nav nav-tabs mb-3" id="subject-tabs">
+      <li class="nav-item"><a class="nav-link" href="#" onclick="switchTab('kindergarten',this)"><i class="fas fa-shapes me-1"></i>Kindergarten</a></li>
       <li class="nav-item"><a class="nav-link active" href="#" onclick="switchTab('elementary',this)"><i class="fas fa-school me-1"></i>Elementary (G1–G6)</a></li>
       <li class="nav-item"><a class="nav-link" href="#" onclick="switchTab('jhs',this)"><i class="fas fa-book me-1"></i>Junior High School (G7–G10)</a></li>
       <li class="nav-item"><a class="nav-link" href="#" onclick="switchTab('shs',this)"><i class="fas fa-graduation-cap me-1"></i>Senior High School (G11–G12)</a></li>
@@ -68,6 +69,7 @@ $activePage = 'subjects';
         <div class="mb-3">
           <label class="form-label">Grade Level Group <span class="text-danger">*</span></label>
           <select id="s-type" class="form-select">
+            <option value="kindergarten">Kindergarten</option>
             <option value="elementary">Elementary (Grade 1–6)</option>
             <option value="jhs">Junior High School (Grade 7–10)</option>
             <option value="shs">Senior High School (Grade 11–12)</option>
@@ -97,7 +99,7 @@ showDesktopOnlyWarning();
 
 let currentTab = 'elementary';
 let subjectModal;
-const tabLabels = { elementary: 'Elementary', jhs: 'Junior High School', shs: 'Senior High School' };
+const tabLabels = { kindergarten: 'Kindergarten', elementary: 'Elementary', jhs: 'Junior High School', shs: 'Senior High School' };
 
 function switchTab(type, el) {
   event.preventDefault();
@@ -128,8 +130,8 @@ function renderSubjects(subjects) {
     tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><i class="fas fa-book-open"></i><p>No subjects found for this level. Click <strong>Add Subject</strong> to get started.</p></div></td></tr>`;
     return;
   }
-  const typeColors = { elementary: 'success', jhs: 'primary', shs: 'warning' };
-  const typeLabels = { elementary: 'Elementary', jhs: 'JHS', shs: 'SHS' };
+  const typeColors = { kindergarten: 'info', elementary: 'success', jhs: 'primary', shs: 'warning' };
+  const typeLabels = { kindergarten: 'Kindergarten', elementary: 'Elementary', jhs: 'JHS', shs: 'SHS' };
   tbody.innerHTML = subjects.map((s, i) => `
     <tr id="subj-row-${s.id}">
       <td>${i + 1}</td>

@@ -15,11 +15,15 @@ $byGrade = $stmt->fetchAll();
 $elem = $jhs = $shs = 0;
 $gradeCounts = [];
 foreach ($byGrade as $row) {
-    $g = (int) str_replace('Grade ', '', $row['grade_level']);
+    if (stripos($row['grade_level'], 'kinder') !== false) {
+        $elem += $row['cnt'];
+    } else {
+        $g = (int) str_replace('Grade ', '', $row['grade_level']);
+        if ($g <= 6)       $elem += $row['cnt'];
+        elseif ($g <= 10)  $jhs  += $row['cnt'];
+        else               $shs  += $row['cnt'];
+    }
     $gradeCounts[$row['grade_level']] = (int)$row['cnt'];
-    if ($g <= 6)       $elem += $row['cnt'];
-    elseif ($g <= 10)  $jhs  += $row['cnt'];
-    else               $shs  += $row['cnt'];
 }
 $total = $elem + $jhs + $shs;
 

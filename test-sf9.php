@@ -46,9 +46,13 @@ if ($selectedId !== 'sample_tvl_12' && is_numeric($selectedId)) {
                 $activeStudent['age'] = $bday->diff($today)->y;
             }
             if (empty($activeStudent['track_strand'])) {
-                $activeStudent['track_strand'] = (strpos($activeStudent['grade_level'], '11') !== false || strpos($activeStudent['grade_level'], '12') !== false)
-                    ? 'Technical-Vocational-Livelihood (TVL) - ICT'
-                    : 'Basic Education Curriculum (K to 12)';
+                if (stripos($activeStudent['grade_level'], 'kinder') !== false) {
+                    $activeStudent['track_strand'] = 'Kindergarten Curriculum Framework (DepEd K to 12)';
+                } else {
+                    $activeStudent['track_strand'] = (strpos($activeStudent['grade_level'], '11') !== false || strpos($activeStudent['grade_level'], '12') !== false)
+                        ? 'Technical-Vocational-Livelihood (TVL) - ICT'
+                        : 'Basic Education Curriculum (K to 12)';
+                }
             }
         }
     } catch (Exception $e) {}
@@ -898,11 +902,11 @@ $principalName = $activeStudent['principal'] ?? 'School Head';
           <div class="sf9-cert-lines">
             <div class="sf9-cert-row">
               <span style="min-width: 110px;">Admitted to Grade:</span>
-              <span class="sf9-underline editable-field" contenteditable="false"><?= $grade === 'Grade 12' ? 'Graduated / Higher Education' : 'Grade ' . ((int)filter_var($grade, FILTER_SANITIZE_NUMBER_INT) + 1) ?></span>
+              <span class="sf9-underline editable-field" contenteditable="false"><?= stripos($grade, 'kinder') !== false ? 'Grade 1' : ($grade === 'Grade 12' ? 'Graduated / Higher Education' : 'Grade ' . ((int)filter_var($grade, FILTER_SANITIZE_NUMBER_INT) + 1)) ?></span>
             </div>
             <div class="sf9-cert-row">
               <span style="min-width: 165px;">Eligible for Admission to Grade:</span>
-              <span class="sf9-underline editable-field" contenteditable="false"><?= $grade === 'Grade 12' ? 'Tertiary Level / Employment' : 'Grade ' . ((int)filter_var($grade, FILTER_SANITIZE_NUMBER_INT) + 1) ?></span>
+              <span class="sf9-underline editable-field" contenteditable="false"><?= stripos($grade, 'kinder') !== false ? 'Grade 1' : ($grade === 'Grade 12' ? 'Tertiary Level / Employment' : 'Grade ' . ((int)filter_var($grade, FILTER_SANITIZE_NUMBER_INT) + 1)) ?></span>
             </div>
           </div>
 

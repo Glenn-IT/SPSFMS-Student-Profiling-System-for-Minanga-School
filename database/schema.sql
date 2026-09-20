@@ -141,6 +141,7 @@ CREATE TABLE IF NOT EXISTS `sections` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT IGNORE INTO `sections` (`grade_level`, `section_name`) VALUES
+('Kindergarten', 'Sampaguita'),
 ('Grade 1', 'Mabini'),
 ('Grade 2', 'Mabini'),
 ('Grade 3', 'Mabini'),
@@ -162,12 +163,18 @@ INSERT IGNORE INTO `sections` (`grade_level`, `section_name`) VALUES
 CREATE TABLE IF NOT EXISTS `subjects` (
   `id`         INT AUTO_INCREMENT PRIMARY KEY,
   `name`       VARCHAR(150) NOT NULL,
-  `grade_type` ENUM('elementary','jhs','shs') NOT NULL,
+  `grade_type` ENUM('kindergarten','elementary','jhs','shs') NOT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY `uq_subject_level` (`name`, `grade_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT IGNORE INTO `subjects` (`name`, `grade_type`) VALUES
+('Literacy and Language', 'kindergarten'),
+('Mathematics', 'kindergarten'),
+('Socio-Emotional Development', 'kindergarten'),
+('Values Education', 'kindergarten'),
+('Physical Health and Motor Development', 'kindergarten'),
+('Understanding the Physical and Natural Environment', 'kindergarten'),
 ('Filipino', 'elementary'),
 ('English', 'elementary'),
 ('Mathematics', 'elementary'),

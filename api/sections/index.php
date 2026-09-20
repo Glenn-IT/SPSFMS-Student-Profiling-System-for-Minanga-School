@@ -17,7 +17,7 @@ if ($method === 'GET') {
         $stmt = $pdo->prepare('SELECT * FROM sections WHERE grade_level = ? ORDER BY id ASC');
         $stmt->execute([$grade]);
     } else {
-        $stmt = $pdo->query('SELECT * FROM sections ORDER BY FIELD(grade_level, "Grade 1","Grade 2","Grade 3","Grade 4","Grade 5","Grade 6","Grade 7","Grade 8","Grade 9","Grade 10","Grade 11","Grade 12"), id ASC');
+        $stmt = $pdo->query('SELECT * FROM sections ORDER BY FIELD(grade_level, "Kindergarten","Grade 1","Grade 2","Grade 3","Grade 4","Grade 5","Grade 6","Grade 7","Grade 8","Grade 9","Grade 10","Grade 11","Grade 12"), id ASC');
     }
     echo json_encode(['ok' => true, 'sections' => $stmt->fetchAll()]);
     exit;

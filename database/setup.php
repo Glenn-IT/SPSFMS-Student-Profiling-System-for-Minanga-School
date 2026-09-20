@@ -213,6 +213,7 @@ $secCount = $pdo->query("SELECT COUNT(*) FROM `sections`")->fetchColumn();
 if ($secCount == 0) {
     $insSec = $pdo->prepare("INSERT IGNORE INTO `sections` (`grade_level`, `section_name`) VALUES (?, ?)");
     $defaultSections = [
+        ['Kindergarten', 'Sampaguita'],
         ['Grade 1', 'Mabini'], ['Grade 2', 'Mabini'], ['Grade 3', 'Mabini'],
         ['Grade 4', 'Bonifacio'], ['Grade 5', 'Bonifacio'], ['Grade 6', 'Bonifacio'],
         ['Grade 7', 'Rizal'], ['Grade 8', 'Luna'], ['Grade 9', 'Luna'], ['Grade 10', 'Mabini'],
@@ -228,7 +229,7 @@ $pdo->exec("
 CREATE TABLE IF NOT EXISTS `subjects` (
   `id`         INT AUTO_INCREMENT PRIMARY KEY,
   `name`       VARCHAR(150) NOT NULL,
-  `grade_type` ENUM('elementary','jhs','shs') NOT NULL,
+  `grade_type` ENUM('kindergarten','elementary','jhs','shs') NOT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY `uq_subject_level` (`name`, `grade_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -239,6 +240,12 @@ $subjCount = $pdo->query("SELECT COUNT(*) FROM `subjects`")->fetchColumn();
 if ($subjCount == 0) {
     $insSubj = $pdo->prepare("INSERT IGNORE INTO `subjects` (`name`, `grade_type`) VALUES (?, ?)");
     $defaultSubjs = [
+        ['Literacy and Language', 'kindergarten'],
+        ['Mathematics', 'kindergarten'],
+        ['Socio-Emotional Development', 'kindergarten'],
+        ['Values Education', 'kindergarten'],
+        ['Physical Health and Motor Development', 'kindergarten'],
+        ['Understanding the Physical and Natural Environment', 'kindergarten'],
         ['Filipino', 'elementary'], ['English', 'elementary'], ['Mathematics', 'elementary'],
         ['Science', 'elementary'], ['Araling Panlipunan', 'elementary'],
         ['Edukasyon sa Pagpapakatao', 'elementary'], ['MAPEH', 'elementary'], ['Mother Tongue', 'elementary'],
