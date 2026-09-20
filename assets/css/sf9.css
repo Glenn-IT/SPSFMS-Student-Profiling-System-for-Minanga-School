@@ -1,6 +1,7 @@
 /* =========================================================
    SF9 OFFICIAL DEPED REPORT CARD STYLES
-   Lubo National High School - Form 9 (JHS & SHS)
+   Minanga Integrated School — DepEd Form 9 (Elem, JHS, SHS)
+   Matches official DepEd SF9-TVL-ICT12 layout
    ========================================================= */
 
 @import url("https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap");
@@ -31,28 +32,28 @@
   background: #ffffff;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
   border: 1px solid #e2e8f0;
-  padding: 0.22in 0.28in 0.18in 0.28in;
+  padding: 0.28in 0.35in 0.25in 0.35in;
   box-sizing: border-box;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  column-gap: 0.38in;
+  column-gap: 0.42in;
   position: relative;
   font-family: "Tinos", "Times New Roman", Times, serif;
   color: #000000;
-  line-height: 1.12;
-  font-size: 7.8pt;
+  line-height: 1.15;
+  font-size: 8pt;
   page-break-after: avoid;
   page-break-inside: avoid;
   overflow: hidden;
   text-align: left;
 }
 
-/* Folding center line */
+/* Center folding guideline (screen only) */
 .sf9-sheet::before {
   content: "";
   position: absolute;
-  top: 0.2in;
-  bottom: 0.2in;
+  top: 0.25in;
+  bottom: 0.25in;
   left: 50%;
   width: 1px;
   border-left: 1px dashed #cbd5e1;
@@ -65,397 +66,399 @@
   flex-direction: column;
   height: 100%;
   justify-content: flex-start;
-  gap: 2px;
 }
 
-/* Header with Seals */
-.sf9-header-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 2px;
+/* =========================================================
+   LEFT PANEL: HEADER & REPORT OF GRADES
+   ========================================================= */
+.sf9-header-layout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
 }
-.sf9-header-table td {
-  vertical-align: middle;
-  padding: 0;
-}
-.sf9-logo {
-  width: 52px;
-  height: 52px;
+
+.sf9-header-logo {
+  width: 58px;
+  height: 58px;
   object-fit: contain;
 }
-.sf9-header-center {
+
+.sf9-header-text {
   text-align: center;
-  font-size: 7.6pt;
-  line-height: 1.15;
-}
-.sf9-dept {
-  font-size: 7.5pt;
-}
-.sf9-division {
-  font-weight: bold;
+  line-height: 1.12;
   font-size: 7.8pt;
-  text-transform: uppercase;
 }
-.sf9-school {
+
+.sf9-header-text .gov {
+  font-size: 8.5pt;
+}
+
+.sf9-header-text .division {
   font-weight: bold;
-  font-size: 9.2pt;
-  text-transform: uppercase;
+  font-size: 8.5pt;
   letter-spacing: 0.3px;
+}
+
+.sf9-header-text .school-name {
+  font-weight: bold;
+  font-size: 9.5pt;
   margin-top: 1px;
-}
-.sf9-sy {
-  text-align: center;
-  font-size: 8.2pt;
-  font-weight: bold;
-  margin: 2px 0 1px;
+  letter-spacing: 0.5px;
 }
 
-.sf9-title {
+.sf9-title-block {
   text-align: center;
-  font-weight: bold;
-  font-size: 8.6pt;
-  letter-spacing: 0.4px;
-  margin-bottom: 4px;
-  text-transform: uppercase;
+  margin: 2px 0 6px;
 }
 
-/* Learner Info Grid */
+.sf9-title-block .main-title {
+  font-size: 9.8pt;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+
+.sf9-title-block .sy-title {
+  font-size: 8.5pt;
+}
+
+/* Student info lines */
 .sf9-info-grid {
-  display: grid;
-  grid-template-columns: 2fr 0.8fr 0.8fr;
-  row-gap: 2px;
-  column-gap: 6px;
-  font-size: 7.8pt;
-  margin-bottom: 3px;
-}
-.sf9-info-item {
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 8.5pt;
+  margin-bottom: 6px;
 }
-.sf9-info-label {
-  font-weight: bold;
-  margin-right: 4px;
-  white-space: nowrap;
+
+.sf9-info-row {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
 }
-.sf9-info-line {
+
+.sf9-underline {
   border-bottom: 1px solid #000;
   flex-grow: 1;
-  padding-left: 3px;
-  font-size: 7.8pt;
-  min-height: 11pt;
-  line-height: 11pt;
-}
-
-/* Dear Parents Message */
-.sf9-parents-msg {
-  font-size: 7.0pt;
-  line-height: 1.2;
-  text-align: justify;
-  margin-bottom: 3px;
-  padding: 0 1px;
-}
-.sf9-parents-msg strong {
-  display: inline;
-  margin-right: 2px;
-}
-
-/* Section Titles */
-.sf9-section-title {
+  padding: 0 4px;
+  min-height: 15px;
+  display: inline-block;
   font-weight: bold;
-  font-size: 7.8pt;
-  text-align: center;
-  text-transform: uppercase;
-  margin: 2px 0 2px;
-  letter-spacing: 0.2px;
-  background: #f8fafc;
-  border-top: 1px solid #000;
-  border-bottom: 1px solid #000;
-  padding: 1.5px 2px;
 }
 
-/* Learning Progress Table */
-.sf9-table {
+.sf9-dear-parents {
+  font-size: 7.8pt;
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+.sf9-section-heading {
+  text-align: center;
+  font-weight: bold;
+  font-size: 8.8pt;
+  letter-spacing: 0.3px;
+  margin: 2px 0 4px;
+}
+
+/* Academic Grades Table */
+.sf9-grades-table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid var(--sf9-border);
-  font-size: 7.3pt;
+  border: 1.5px solid #000;
+  font-size: 7.8pt;
   margin-bottom: 4px;
-  table-layout: fixed;
 }
-.sf9-table th, 
-.sf9-table td {
-  border: 1px solid var(--sf9-border);
-  padding: 1.8px 3px;
+
+.sf9-grades-table th,
+.sf9-grades-table td {
+  border: 1px solid #000;
+  padding: 2.5px 3px;
   vertical-align: middle;
-  height: 14.5px;
-  box-sizing: border-box;
 }
-.sf9-table th {
-  font-weight: bold;
+
+.sf9-grades-table thead th {
   text-align: center;
-  background: #f8fafc;
-  font-size: 7.3pt;
-  padding: 2.5px 2px;
-}
-.sf9-table th.selected-term-header {
-  background: #dbeafe !important;
-  color: #1e40af !important;
-}
-.sf9-table .group-row {
   font-weight: bold;
-  background-color: #f1f5f9;
-  font-size: 7.3pt;
-  height: 15px;
 }
-.sf9-table .sub-row td.subj-name {
-  padding-left: 14px;
-  font-style: italic;
-}
-.sf9-table td.text-center {
+
+.sf9-grades-table td.text-center {
   text-align: center;
 }
-.sf9-table td.text-right {
-  text-align: right;
-}
-.sf9-table td.subj-name {
-  padding-left: 5px;
-  font-size: 7.1pt;
-  line-height: 1.12;
-  text-align: left;
-}
 
-/* Explicit cell overrides to strictly prevent pollution from global .grade-cell in style.css */
-.sf9-table td.sf9-grade-cell,
-.sf9-table td.grade-cell,
-.sf9-table td.final-cell,
-.sf9-table td.remark-cell {
-  display: table-cell !important;
-  text-align: center !important;
-  vertical-align: middle !important;
-  width: auto !important;
-  height: 14.5px !important;
-  border: 1px solid var(--sf9-border) !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  color: #000000 !important;
-  font-weight: normal;
-  font-size: 7.3pt !important;
-  line-height: 1.15 !important;
-  padding: 1.8px 3px !important;
-  box-shadow: none !important;
-}
-
-.sf9-table td.final-cell {
-  font-weight: bold !important;
-}
-
-.sf9-table td.remark-cell {
-  font-weight: normal !important;
-}
-
-.sf9-table .gen-avg-row {
+.sf9-group-hdr {
   font-weight: bold;
-  background-color: #f8fafc;
-  font-size: 7.6pt;
-  height: 16px;
+  background: #fafafa;
+  padding-left: 6px !important;
 }
-.sf9-table .gen-avg-row td {
-  border: 1px solid var(--sf9-border);
-  vertical-align: middle;
+
+.sf9-subj-name {
+  padding-left: 12px !important;
+}
+
+.sf9-gen-avg {
+  font-weight: bold;
+  text-align: center;
 }
 
 /* Performance Descriptors Table */
-.sf9-desc-table {
-  width: 100%;
-  border-collapse: collapse;
-  border: 1px solid var(--sf9-border);
-  font-size: 7.0pt;
-  margin-top: 1px;
-}
-.sf9-desc-table th, 
-.sf9-desc-table td {
-  border: 1px solid var(--sf9-border);
-  padding: 1.5px 3px;
-  vertical-align: middle;
-  height: 13.5px;
-}
-.sf9-desc-table th {
-  font-weight: bold;
-  text-align: center;
-  background: #f8fafc;
-  font-size: 7.0pt;
-  padding: 2px 2px;
-}
-
-/* Attendance Table */
-.sf9-attendance-table {
-  width: 100%;
-  border-collapse: collapse;
-  border: 1px solid var(--sf9-border);
-  font-size: 7.1pt;
-  margin-bottom: 6px;
-}
-.sf9-attendance-table th, 
-.sf9-attendance-table td {
-  border: 1px solid var(--sf9-border);
-  padding: 2.2px 1.5px;
-  text-align: center;
-  vertical-align: middle;
-  height: 15.5px;
-}
-.sf9-attendance-table th {
-  font-weight: bold;
-  background: #f8fafc;
-  font-size: 7.1pt;
-}
-.sf9-attendance-table td.row-label {
-  text-align: left;
-  padding-left: 4px;
-  font-weight: bold;
-  font-size: 7.1pt;
-  white-space: nowrap;
-}
-
-/* Signatures Block */
-.sf9-signatures-block {
-  border: 1px solid var(--sf9-border);
-  padding: 6px 10px;
-  margin-bottom: 6px;
-  font-size: 7.5pt;
-}
-.sf9-sig-row {
-  display: flex;
-  align-items: flex-end;
-  margin-bottom: 4.5px;
-}
-.sf9-sig-row:last-child {
-  margin-bottom: 0;
-}
-.sf9-sig-label {
-  width: 65px;
-  font-weight: bold;
-  font-size: 7.5pt;
-}
-.sf9-sig-line {
-  flex-grow: 1;
-  border-bottom: 1px solid #000;
-  height: 13px;
-}
-
-/* Certificate of Transfer */
-.sf9-transfer-cert {
-  border: 1px solid var(--sf9-border);
-  padding: 6px 10px;
-  margin-bottom: 6px;
-  font-size: 7.4pt;
-  line-height: 1.3;
-}
-.sf9-transfer-cert p {
-  margin: 0 0 4px 0;
-  text-indent: 14px;
-  text-align: justify;
-}
-.sf9-transfer-field {
-  display: flex;
-  margin-bottom: 4px;
-}
-.sf9-transfer-field .t-line {
-  border-bottom: 1px solid #000;
-  flex-grow: 1;
-  padding-left: 4px;
-  font-weight: bold;
-  font-size: 7.4pt;
-}
-.sf9-transfer-signers {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 15px;
-  margin-top: 14px;
-  text-align: center;
-}
-.sf9-signer-box {
+.sf9-descriptors-block {
+  margin-top: 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
-.sf9-signer-name {
+
+.sf9-descriptors-title {
+  font-size: 8.2pt;
   font-weight: bold;
-  text-transform: uppercase;
-  font-size: 8.0pt;
-  border-bottom: 1px solid #000;
-  width: 90%;
-  padding-bottom: 1px;
-}
-.sf9-signer-role {
-  font-size: 7.2pt;
-  margin-top: 1px;
+  text-align: center;
+  margin-bottom: 2px;
 }
 
-/* Cancellation Block */
-.sf9-cancellation-cert {
-  border: 1px solid var(--sf9-border);
-  padding: 6px 10px;
-  font-size: 7.4pt;
+.sf9-descriptors-table {
+  width: 86%;
+  border-collapse: collapse;
+  font-size: 7.6pt;
+  text-align: center;
+}
+
+.sf9-descriptors-table th {
+  font-weight: bold;
+  padding: 1px 4px;
+}
+
+.sf9-descriptors-table td {
+  padding: 1px 4px;
+}
+
+/* =========================================================
+   RIGHT PANEL: ATTENDANCE, COMMENTS, TRANSFER
+   ========================================================= */
+.sf9-attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1.5px solid #000;
+  font-size: 7.5pt;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.sf9-attendance-table th,
+.sf9-attendance-table td {
+  border: 1px solid #000;
+  padding: 2px 2px;
+  vertical-align: middle;
+}
+
+.sf9-attendance-table thead th {
+  font-weight: bold;
+}
+
+.sf9-attendance-title {
+  font-weight: bold;
+  font-size: 8.2pt;
+  letter-spacing: 0.5px;
+}
+
+/* Comments / Remarks Box */
+.sf9-comments-box {
+  border: 1.5px solid #000;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 8px;
+  font-size: 8pt;
+}
+
+.sf9-comments-header {
+  font-weight: bold;
+  text-align: center;
+  padding: 2px 0;
+  border-bottom: 1px solid #000;
+  letter-spacing: 0.3px;
+}
+
+.sf9-comment-term {
+  padding: 3px 6px;
+  min-height: 48px;
+  border-bottom: 1px solid #000;
+}
+
+.sf9-comment-term:last-child {
+  border-bottom: none;
+}
+
+.sf9-comment-term-label {
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+/* Parents Signature */
+.sf9-signatures-block {
+  margin-bottom: 10px;
+  font-size: 8pt;
+}
+
+.sf9-signatures-title {
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 4px;
+  letter-spacing: 0.3px;
+}
+
+.sf9-sig-row {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 4px;
+  padding: 0 15px;
+}
+
+.sf9-sig-row label {
+  width: 55px;
+  font-weight: normal;
+  margin: 0;
+}
+
+.sf9-sig-line {
+  flex-grow: 1;
+  border-bottom: 1px solid #000;
+  height: 14px;
+}
+
+/* Certificate of Transfer */
+.sf9-cert-transfer {
+  margin-bottom: 8px;
+  font-size: 7.8pt;
+  line-height: 1.25;
+}
+
+.sf9-cert-title {
+  font-weight: bold;
+  text-align: center;
+  font-size: 8.5pt;
+  margin-bottom: 3px;
+  letter-spacing: 0.3px;
+}
+
+.sf9-cert-lines {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sf9-cert-row {
+  display: flex;
+  align-items: flex-end;
+}
+
+.sf9-cert-signatures {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 8px;
+}
+
+.sf9-cert-sig-line {
+  border-bottom: 1px solid #000;
+  min-height: 18px;
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+/* Cancellation of Eligibility */
+.sf9-cancel-block {
+  font-size: 7.8pt;
   margin-top: 2px;
 }
-.sf9-cancel-grid {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  column-gap: 12px;
-  margin-bottom: 10px;
+
+.sf9-cancel-title {
+  font-weight: bold;
+  text-align: center;
+  font-size: 8.2pt;
+  margin-bottom: 3px;
+  letter-spacing: 0.3px;
 }
 
-/* Inline Edit Styling (from test-page reference) */
-.editable-active [contenteditable="true"] {
-  outline: 1px dashed #3b82f6 !important;
-  background-color: rgba(59, 130, 246, 0.06) !important;
+.sf9-cancel-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 15px;
+  margin-bottom: 8px;
+}
+
+/* Editable highlight when edit mode is toggled */
+.is-editing [contenteditable="true"] {
+  background: #fef08a !important;
+  outline: 1px solid #eab308;
   cursor: text;
 }
-.editable-active [contenteditable="true"]:hover {
-  background-color: rgba(59, 130, 246, 0.15) !important;
-}
-.editable-active [contenteditable="true"]:focus {
-  outline: 2px solid #2563eb !important;
-  background-color: #ffffff !important;
+
+/* =========================================================
+   NATIVE PRINT OPTIMIZATION FOR 11" x 8.5" LANDSCAPE
+   ========================================================= */
+@page {
+  size: letter landscape !important;
+  margin: 0 !important;
 }
 
-/* Print Rules */
 @media print {
-  body.printing-sf9 {
-    background: #ffffff !important;
+  html, body {
+    width: 11in !important;
+    height: 8.5in !important;
     margin: 0 !important;
     padding: 0 !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
-  body.printing-sf9 #desktop-only-overlay,
-  body.printing-sf9 .sidebar,
-  body.printing-sf9 .top-navbar,
-  body.printing-sf9 .no-print,
-  body.printing-sf9 .page-header {
+
+  /* Hide app chrome, sidebars, navbars, modals */
+  #desktop-only-overlay,
+  .sidebar,
+  .top-navbar,
+  .page-header,
+  .navbar,
+  .testpage-toolbar,
+  .no-print,
+  .app-sidebar,
+  .modal-backdrop,
+  header,
+  footer,
+  nav {
     display: none !important;
   }
-  body.printing-sf9 .app-wrapper,
-  body.printing-sf9 .main-content,
-  body.printing-sf9 .page-content,
-  body.printing-sf9 .sf9-wrapper {
+
+  .app-wrapper,
+  .main-content,
+  .page-content,
+  .container,
+  .container-fluid {
     margin: 0 !important;
     padding: 0 !important;
-    width: 100% !important;
-    max-width: none !important;
+    width: 11in !important;
+    height: 8.5in !important;
+    max-width: 11in !important;
   }
-  body.printing-sf9 .sf9-sheet {
+
+  .sf9-wrapper {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 11in !important;
+    height: 8.5in !important;
+  }
+
+  .sf9-sheet {
     box-shadow: none !important;
     border: none !important;
-    margin: 0 auto !important;
-    width: 100% !important;
-    height: 100% !important;
-    max-width: none !important;
-    max-height: none !important;
-    padding: 0.22in 0.28in 0.18in 0.28in !important;
-    transform: none !important;
-    page-break-after: avoid !important;
-    page-break-inside: avoid !important;
+    width: 11in !important;
+    height: 8.5in !important;
+    max-width: 11in !important;
+    max-height: 8.5in !important;
+    padding: 0.28in 0.35in 0.25in 0.35in !important;
+    margin: 0 !important;
   }
-  body.printing-sf9 .sf9-sheet::before {
+
+  .sf9-sheet::before {
     display: none !important;
   }
 }

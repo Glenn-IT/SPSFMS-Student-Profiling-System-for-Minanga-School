@@ -91,6 +91,13 @@ $preselectedStudentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 
             <div style="font-size:.8rem;color:var(--gray-600);"><?= SCHOOL_NAME ?></div>
           </div>
 
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="text-muted small"><i class="fas fa-id-card me-1"></i>Learner Academic Record</span>
+            <a id="btn-print-sf9" href="#" target="_blank" class="btn btn-sm btn-outline-success fw-bold">
+              <i class="fas fa-print me-1"></i>Print SF9 Report Card
+            </a>
+          </div>
+
           <div class="sf10-header row g-2 mb-3">
             <div class="col-md-4"><span style="font-size:.75rem;color:var(--gray-600);">LEARNER'S NAME</span><div class="fw-bold" id="sf10-name">—</div></div>
             <div class="col-md-3"><span style="font-size:.75rem;color:var(--gray-600);">LRN</span><div class="fw-bold" style="font-family:monospace;" id="sf10-lrn">—</div></div>
@@ -191,6 +198,11 @@ async function loadGrades() {
     document.getElementById('sf10-grade').textContent   = data.student.grade_level;
     document.getElementById('sf10-section').textContent = data.student.section;
     document.getElementById('sf10-sy').textContent = sy;
+
+    const sf9Btn = document.getElementById('btn-print-sf9');
+    if (sf9Btn) {
+      sf9Btn.href = `${BASE}/views/teacher/reports.php?type=sf9&student_id=${studentId}&sy=${encodeURIComponent(sy)}`;
+    }
 
     const tbody = document.getElementById('grades-tbody');
     tbody.innerHTML = '';

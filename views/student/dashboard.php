@@ -202,11 +202,18 @@ include __DIR__ . '/../../includes/student-navbar.php';
             <h6 class="sf10-table-title"><i class="fas fa-file-invoice me-2 text-primary"></i>My Grades — S.Y. <?= SCHOOL_YEAR ?></h6>
             <div class="text-muted small" style="font-size:.75rem;">DepEd SF10 / Form 137 Learner Performance</div>
           </div>
-          <?php if ($avg !== null): ?>
-            <div class="badge bg-primary px-3 py-2" style="font-size:.85rem;">
-              General Average: <?= number_format($avg, 2) ?>
-            </div>
-          <?php endif; ?>
+          <div class="d-flex align-items-center gap-2">
+            <?php if ($avg !== null): ?>
+              <div class="badge bg-primary px-3 py-2" style="font-size:.85rem;">
+                General Average: <?= number_format($avg, 2) ?>
+              </div>
+            <?php endif; ?>
+            <?php if ($student): ?>
+              <a href="<?= BASE_URL ?>/test-sf9.php?student_id=<?= $student['id'] ?>&sy=<?= urlencode(SCHOOL_YEAR) ?>" target="_blank" class="btn btn-sm btn-outline-success fw-bold">
+                <i class="fas fa-print me-1"></i>Print SF9
+              </a>
+            <?php endif; ?>
+          </div>
         </div>
 
         <?php if (empty($grades)): ?>
