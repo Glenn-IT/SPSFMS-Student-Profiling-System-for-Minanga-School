@@ -607,6 +607,7 @@ if ($reportType === 'sf10' && $selectedStudentId > 0 && $hasAdvisory) {
               <div class="col-md-3 d-flex gap-2">
                 <button type="button" class="btn btn-primary flex-grow-1" onclick="window.print()" <?= !$sf10Student ? 'disabled' : '' ?>><i class="fas fa-print me-1"></i>Print SF10</button>
                 <?php if ($selectedStudentId): ?>
+                  <a href="?type=sf9&student_id=<?= $selectedStudentId ?>&sy=<?= urlencode($sy) ?>" class="btn btn-success" title="Switch to SF9 Progress Report Card"><i class="fas fa-file-invoice me-1"></i>View SF9</a>
                   <a href="?type=sf10&sy=<?= urlencode($sy) ?>" class="btn btn-light border" title="Reset Search"><i class="fas fa-redo-alt"></i></a>
                 <?php endif; ?>
               </div>
@@ -649,21 +650,23 @@ if ($reportType === 'sf10' && $selectedStudentId > 0 && $hasAdvisory) {
             <div class="card-body p-4">
               <!-- Official DepEd Header -->
               <div class="report-header text-center mb-4" style="border-bottom:2px solid var(--secondary);padding-bottom:1.25rem;">
-                <div class="d-inline-flex align-items-start justify-content-center gap-4">
-                  <img src="<?= BASE_URL ?>/img/MIS-Logo.jpg" alt="School Logo" class="report-header-logo" style="margin-top: 4px;">
-                  <div class="text-center">
-                    <div style="font-size:.95rem;color:#222;font-weight:400;margin-bottom:.2rem;">Republic of the Philippines · Department of Education</div>
-                    <div style="font-size:1.2rem;color:#000;font-weight:800;margin-bottom:.2rem;"><?= SCHOOL_NAME ?></div>
-                    <div style="font-size:.92rem;color:#333;font-weight:400;margin-bottom:1.25rem;"><?= SCHOOL_ADDRESS ?></div>
+                <div class="d-flex align-items-center justify-content-between px-3">
+                  <img src="<?= BASE_URL ?>/assets/img/deped_logo.png" alt="DepEd Logo" style="width: 68px; height: 68px; object-fit: contain;">
+                  <div class="text-center flex-grow-1">
+                    <div style="font-size:.92rem;color:#222;font-weight:400;margin-bottom:.15rem;">Republic of the Philippines · Department of Education</div>
+                    <div style="font-size:.88rem;color:#333;font-weight:600;margin-bottom:.15rem;">Region 02 · Schools Division of Cagayan · Piat District</div>
+                    <div style="font-size:1.22rem;color:#000;font-weight:800;margin-bottom:.15rem;"><?= SCHOOL_NAME ?></div>
+                    <div style="font-size:.88rem;color:#444;font-weight:400;margin-bottom:.75rem;"><?= SCHOOL_ADDRESS ?></div>
 
-                    <h3 class="text-center text-uppercase text-dark fw-bold mb-1" style="letter-spacing:0.5px;">SCHOOL FORM 10 (SF10)</h3>
-                    <div style="font-size:1rem;color:#111;font-weight:700;" class="text-center text-uppercase">
+                    <h3 class="text-center text-uppercase text-dark fw-bold mb-1" style="letter-spacing:0.5px;font-size:1.15rem;">SCHOOL FORM 10 (SF10)</h3>
+                    <div style="font-size:.95rem;color:#111;font-weight:700;" class="text-center text-uppercase">
                       LEARNER'S PERMANENT ACADEMIC RECORD
                     </div>
                     <div style="font-size:.85rem;color:var(--gray-600);" class="text-center mt-1">
                       School Year: <strong><?= htmlspecialchars($sy) ?></strong>
                     </div>
                   </div>
+                  <img src="<?= BASE_URL ?>/assets/img/MIS-Logo.jpg" alt="School Logo" style="width: 68px; height: 68px; object-fit: contain;">
                 </div>
               </div>
 
@@ -752,12 +755,16 @@ if ($reportType === 'sf10' && $selectedStudentId > 0 && $hasAdvisory) {
                 </table>
               </div>
 
-              <!-- Grading Scale DepEd Guide (Standard SF10 Footer) -->
-              <div class="row g-2 mb-4 p-2 bg-light rounded border text-muted small" style="font-size: .75rem;">
-                <div class="col-md-3"><strong>Descriptors:</strong> Outstanding (90-100)</div>
-                <div class="col-md-3">Very Satisfactory (85-89)</div>
-                <div class="col-md-3">Satisfactory (80-84)</div>
-                <div class="col-md-3">Fairly Satisfactory (75-79) / Did Not Meet (Below 75)</div>
+              <!-- Grading Scale DepEd Guide (Updated Minanga IS Standard) -->
+              <div class="p-2 bg-light rounded border text-muted small mb-4">
+                <div class="fw-bold text-dark mb-1" style="font-size:.78rem;">PERFORMANCE DESCRIPTORS &amp; GRADING SCALE</div>
+                <div class="row g-2" style="font-size:.75rem;">
+                  <div class="col-md-2"><strong>90–100:</strong> Advancing (Passed)</div>
+                  <div class="col-md-2"><strong>80–89:</strong> Benchmarking (Passed)</div>
+                  <div class="col-md-2"><strong>75–79:</strong> Connecting (Passed)</div>
+                  <div class="col-md-3"><strong>65–74:</strong> Developing (Failed)</div>
+                  <div class="col-md-3"><strong>0–64:</strong> Emerging (Failed)</div>
+                </div>
               </div>
 
               <!-- Signatories -->
