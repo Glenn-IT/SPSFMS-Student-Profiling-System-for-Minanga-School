@@ -56,7 +56,7 @@ SPSFMS/
 │   │   ├── teachers.php                # Teacher management (adviser & subject assignments)
 │   │   ├── sections.php                # Class sections management
 │   │   ├── subjects.php                # Subject catalogue management (Elem, JHS, SHS)
-│   │   ├── reports.php                 # Printable DepEd masterlists & enrollment reports
+│   │   ├── reports.php                 # Masterlist, gender breakdown, and DepEd Form 9 (SF9) reports
 │   │   ├── signatories.php             # Report signatory customization
 │   │   ├── accounts.php                # System users & account status toggling
 │   │   ├── analytics.php               # Demographic charts & enrollment analytics
@@ -67,7 +67,7 @@ SPSFMS/
 │   │   ├── dashboard.php               # Advisory overview & grading completion status
 │   │   ├── student-profiles.php        # Read-only student browser for teachers
 │   │   ├── grades.php                  # SF10 grade entry grid (Q1-Q4, remarks, auto-save)
-│   │   ├── reports.php                 # Printable class grade summary & individual learner SF10
+│   │   ├── reports.php                 # Printable class summary, individual learner SF10 & SF9 report cards
 │   │   └── settings.php                # Teacher credentials update
 │   └── student/
 │       ├── dashboard.php               # Announcements & summary grade cards
@@ -113,9 +113,11 @@ SPSFMS/
     ├── css/
     │   ├── theme.css                   # Global CSS variables, colors, typography, tables
     │   ├── admin.css                   # Sidebar, topbar, cards, desktop warning overlay
-    │   └── student-mobile.css          # Mobile layout, bottom navigation, card views
+    │   ├── student-mobile.css          # Mobile layout, bottom navigation, card views
+    │   └── sf9.css                     # DepEd SF9 11" x 8.5" Letter Landscape & print styles
     ├── js/
-    │   └── components.js               # Toast alerts, confirm modal, loading spinner
+    │   ├── components.js               # Toast alerts, confirm modal, loading spinner
+    │   └── sf9-renderer.js             # Official DepEd SF9 report card generator & live calculation engine
     └── lib/                            # Vendored offline libraries (Bootstrap, FontAwesome, Chart.js)
 ```
 

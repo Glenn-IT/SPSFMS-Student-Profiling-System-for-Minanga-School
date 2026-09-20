@@ -179,6 +179,7 @@ if ($reportType === 'sf10' && $selectedStudentId > 0 && $hasAdvisory) {
   <?php $pageTitle = 'Reports — Teacher'; include __DIR__ . '/../../includes/head.php'; ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/theme.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin.css">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/sf9.css">
   <style>
     @media print {
       .no-print { display:none !important; }
@@ -388,17 +389,20 @@ if ($reportType === 'sf10' && $selectedStudentId > 0 && $hasAdvisory) {
     <div class="page-header no-print d-flex flex-column gap-2 mb-3">
       <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div>
-          <h3 class="mb-1"><?= $reportType === 'sf10' ? 'Individual Learner SF10 Report' : 'Class Grade Summary Report' ?></h3>
-          <p class="mb-0 text-muted">Generate and print academic records and SF10 for your advisory class</p>
+          <h3 class="mb-1"><?= $reportType === 'sf9' ? 'Learner’s Progress Report Card (SF9)' : ($reportType === 'sf10' ? 'Individual Learner SF10 Report' : 'Class Grade Summary Report') ?></h3>
+          <p class="mb-0 text-muted">Generate and print academic records, SF9 report cards, and SF10 for your advisory class</p>
         </div>
 
-        <!-- Mode Toggle: Class Summary vs Individual SF10 -->
+        <!-- Mode Toggle: Class Summary vs Individual SF10 vs Individual SF9 -->
         <div class="d-flex align-items-center gap-2 bg-white p-1 rounded-pill border shadow-sm">
           <a href="?type=summary&class_idx=<?= $selectedClassIdx ?>&sy=<?= urlencode($sy) ?>" class="btn report-mode-btn <?= $reportType === 'summary' ? 'btn-success text-white shadow-sm' : 'btn-light text-dark' ?>">
             <i class="fas fa-list-alt me-1"></i>Class Summary
           </a>
           <a href="?type=sf10<?= $selectedStudentId ? '&student_id='.$selectedStudentId : '' ?>&sy=<?= urlencode($sy) ?>" class="btn report-mode-btn <?= $reportType === 'sf10' ? 'btn-success text-white shadow-sm' : 'btn-light text-dark' ?>">
             <i class="fas fa-id-card me-1"></i>Individual SF10
+          </a>
+          <a href="?type=sf9<?= $selectedStudentId ? '&student_id='.$selectedStudentId : '' ?>&sy=<?= urlencode($sy) ?>" class="btn report-mode-btn <?= $reportType === 'sf9' ? 'btn-success text-white shadow-sm' : 'btn-light text-dark' ?>">
+            <i class="fas fa-file-invoice me-1"></i>Individual SF9
           </a>
         </div>
       </div>
@@ -566,7 +570,7 @@ if ($reportType === 'sf10' && $selectedStudentId > 0 && $hasAdvisory) {
           </div>
         </div>
 
-      <?php else: ?>
+      <?php elseif ($reportType === 'sf10'): ?>
         <!-- Individual Learner SF10 Search & Report Mode -->
         <form method="get" class="card mb-3 no-print border-0 shadow-sm" id="sf10-search-form" autocomplete="off">
           <input type="hidden" name="type" value="sf10">
@@ -782,6 +786,70 @@ if ($reportType === 'sf10' && $selectedStudentId > 0 && $hasAdvisory) {
           </div>
         <?php endif; ?>
 
+      <?php elseif ($reportType === 'sf9'): ?>
+        <!-- Teacher SF9 Learner Progress Report Card Mode -->
+        <div class="card mb-3 no-print border-0 shadow-sm">
+          <div class="card-body">
+            <div class="row g-2 align-items-end">
+              <div class="col-md-5">
+                <label class="form-label mb-1 fw-semibold"><i class="fas fa-user-graduate text-success me-1"></i>Select Advisory Learner <span class="text-danger">*</span></label>
+                <select id="teacher-sf9-student" class="form-select form-select-sm" onchange="loadTeacherSf9Report()">
+                  <option value="">— Choose an advisory learner —</option>
+                  <?php foreach ($allAdvisoryStudents as $stu): ?>
+                  <option value="<?= $stu['id'] ?>" <?= $selectedStudentId === (int)$stu['id'] ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($stu['last_name'].', '.$stu['first_name'].' '.($stu['middle_name']??'')) ?> (<?= $stu['grade_level'] ?> - <?= $stu['section'] ?>)
+                  </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label mb-1 fw-semibold">Grading Term</label>
+                <select id="teacher-sf9-period" class="form-select form-select-sm" onchange="loadTeacherSf9Report()">
+                  <option value="0">All Terms</option>
+                  <option value="1">1st Term</option>
+                  <option value="2">2nd Term</option>
+                  <option value="3">3rd Term</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label mb-1 fw-semibold">School Year</label>
+                <select id="teacher-sf9-sy" class="form-select form-select-sm" onchange="loadTeacherSf9Report()">
+                  <?php foreach (getSchoolYearsList($pdo) as $syItem): ?>
+                  <option value="<?= htmlspecialchars($syItem['year_label']) ?>" <?= ($syItem['is_active'] || $syItem['year_label'] === $sy) ? 'selected' : '' ?>><?= htmlspecialchars($syItem['year_label']) ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <button class="btn btn-primary btn-sm w-100" onclick="loadTeacherSf9Report()"><i class="fas fa-sync me-1"></i>Load SF9</button>
+              </div>
+            </div>
+
+            <!-- Signatories Live-Sync Bar -->
+            <div class="row g-2 align-items-end mt-2 pt-2 border-top">
+              <div class="col-md-6">
+                <label class="form-label mb-1" style="font-size:0.8rem;font-weight:600" for="teacherSf9AdviserInput">
+                  <i class="fas fa-chalkboard-teacher me-1 text-success"></i>Class Adviser (Prepared by)
+                </label>
+                <input type="text" id="teacherSf9AdviserInput" class="form-control form-control-sm" value="<?= htmlspecialchars($user['name']) ?>" oninput="updateTeacherSf9SignatoriesLive()">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label mb-1" style="font-size:0.8rem;font-weight:600" for="teacherSf9PrincipalInput">
+                  <i class="fas fa-user-tie me-1 text-primary"></i>School Head / Principal (Approved by)
+                </label>
+                <input type="text" id="teacherSf9PrincipalInput" class="form-control form-control-sm" placeholder="School Head / Principal Name" oninput="updateTeacherSf9SignatoriesLive()">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="teacher-sf9-report-content">
+          <div class="card p-5 text-center text-muted no-print">
+            <i class="fas fa-file-invoice fa-3x mb-3 text-secondary opacity-50"></i>
+            <h5>Select an Advisory Learner to Preview SF9</h5>
+            <p class="small mb-0">Choose a student above to view and print their official DepEd Form 9 Progress Report Card.</p>
+          </div>
+        </div>
+
       <?php endif; ?>
     <?php endif; ?>
   </div>
@@ -789,6 +857,7 @@ if ($reportType === 'sf10' && $selectedStudentId > 0 && $hasAdvisory) {
 
 <script src="/SPSFMS-Student-Profiling-System-for-Minanga-School/assets/lib/bootstrap.bundle.min.js"></script>
 <script src="<?= BASE_URL ?>/assets/js/components.js"></script>
+<script src="<?= BASE_URL ?>/assets/js/sf9-renderer.js"></script>
 <script>
 showDesktopOnlyWarning();
 
@@ -1000,6 +1069,93 @@ document.addEventListener('click', function(e) {
     panel.style.display = 'none';
   }
 });
+
+// Teacher SF9 Report Card Controller
+function updateTeacherSf9SignatoriesLive() {
+  const advVal = document.getElementById('teacherSf9AdviserInput')?.value || '';
+  const prinVal = document.getElementById('teacherSf9PrincipalInput')?.value || '';
+  const advEl = document.getElementById('sf9AdviserName');
+  const prinEl = document.getElementById('sf9SchoolHeadName');
+  if (advEl) advEl.textContent = advVal || '—';
+  if (prinEl) prinEl.textContent = prinVal || '—';
+
+  const stuId = document.getElementById('teacher-sf9-student')?.value;
+  if (stuId) {
+    if (advVal) localStorage.setItem('spsmis_sf9_adv_' + stuId, advVal);
+    if (prinVal) localStorage.setItem('spsmis_sf9_prin_' + stuId, prinVal);
+  }
+}
+
+async function loadTeacherSf9Report() {
+  const stuId = document.getElementById('teacher-sf9-student')?.value;
+  const sy = document.getElementById('teacher-sf9-sy')?.value || '<?= $sy ?>';
+  const period = parseInt(document.getElementById('teacher-sf9-period')?.value || '0');
+  const container = document.getElementById('teacher-sf9-report-content');
+
+  if (!stuId) {
+    container.innerHTML = `
+      <div class="card p-5 text-center text-muted no-print">
+        <i class="fas fa-file-invoice fa-3x mb-3 text-secondary opacity-50"></i>
+        <h5>Please Select an Advisory Learner</h5>
+        <p class="small mb-0">Choose a student above to generate their SF9 Learner's Progress Report Card.</p>
+      </div>`;
+    return;
+  }
+
+  showLoading('Generating SF9 Report Card...', 'Loading advisory learner grades & Form 9 layout...');
+  try {
+    const res = await fetch(`${BASE}/api/grades/student.php?student_id=${stuId}&school_year=${sy}`);
+    const data = await res.json();
+    hideLoading();
+
+    if (!data.ok) {
+      showToast(data.message || 'Failed to load student record', 'error');
+      return;
+    }
+
+    const savedAdv = localStorage.getItem('spsmis_sf9_adv_' + stuId) || <?= json_encode($user['name']) ?>;
+    const savedPrin = localStorage.getItem('spsmis_sf9_prin_' + stuId) || 'School Principal / Head';
+
+    const advInput = document.getElementById('teacherSf9AdviserInput');
+    const prinInput = document.getElementById('teacherSf9PrincipalInput');
+    if (advInput) advInput.value = savedAdv;
+    if (prinInput) prinInput.value = savedPrin;
+
+    container.innerHTML = renderSf9ReportCard(data, {
+      period: period,
+      adviser: savedAdv,
+      schoolHead: savedPrin,
+      baseUrl: BASE
+    });
+
+    const advEl = document.getElementById('sf9AdviserName');
+    if (advEl) {
+      advEl.addEventListener('input', () => {
+        const val = advEl.textContent.trim();
+        if (advInput) advInput.value = val;
+        localStorage.setItem('spsmis_sf9_adv_' + stuId, val);
+      });
+    }
+    const prinEl = document.getElementById('sf9SchoolHeadName');
+    if (prinEl) {
+      prinEl.addEventListener('input', () => {
+        const val = prinEl.textContent.trim();
+        if (prinInput) prinInput.value = val;
+        localStorage.setItem('spsmis_sf9_prin_' + stuId, val);
+      });
+    }
+
+  } catch (err) {
+    hideLoading();
+    showToast('Error generating SF9: ' + err.message, 'error');
+  }
+}
+
+<?php if ($reportType === 'sf9' && $selectedStudentId > 0): ?>
+window.addEventListener('DOMContentLoaded', () => {
+  loadTeacherSf9Report();
+});
+<?php endif; ?>
 </script>
 </body>
 </html>

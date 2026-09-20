@@ -5,14 +5,16 @@ $activePage = 'reports';
 
 $sigData = getSignatories($pdo, $user);
 
-$type    = $_GET['type']    ?? '';
-$grade   = $_GET['grade']   ?? '';
-$section = $_GET['section'] ?? '';
-$sy      = $_GET['sy']      ?? '2025-2026';
-$search  = $_GET['search']  ?? '';
+$type      = $_GET['type']       ?? '';
+$grade     = $_GET['grade']      ?? '';
+$section   = $_GET['section']    ?? '';
+$sy        = $_GET['sy']         ?? SCHOOL_YEAR;
+$search    = $_GET['search']     ?? '';
+$studentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 0;
+$period    = isset($_GET['period']) ? (int)$_GET['period'] : 0;
 
 $students = [];
-if ($type) {
+if ($type && $type !== 'sf9') {
     $where = ['status="active"'];
     $params = [];
     if ($grade)   { $where[] = 'grade_level=?'; $params[] = $grade; }
@@ -24,6 +26,19 @@ if ($type) {
     $students = $stmt->fetchAll();
 }
 
+$allActiveStudents = $pdo->query("SELECT id, lrn, first_name, middle_name, last_name, grade_level, section FROM students WHERE status='active' ORDER BY grade_level, last_name, first_name")->fetchAll(PDO::FETCH_ASSOC);
+
+// Adviser lookup map per grade and section
+$adviserMap = [];
+try {
+    $advRows = $pdo->query("SELECT tc.grade_level, tc.section, u.name as adviser_name 
+                            FROM teacher_classes tc 
+                            JOIN users u ON u.id = tc.teacher_id")->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($advRows as $ar) {
+        $adviserMap[$ar['grade_level'].'|'.$ar['section']] = $ar['adviser_name'];
+    }
+} catch (Exception $e) {}
+
 // Encode SECTION_MAP for JS
 $sectionMapJson = json_encode(SECTION_MAP);
 ?>
@@ -33,6 +48,7 @@ $sectionMapJson = json_encode(SECTION_MAP);
   <?php $pageTitle = 'Reports — Admin'; include __DIR__ . '/../../includes/head.php'; ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/theme.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin.css">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/sf9.css">
   <style>
     @media print {
       .no-print { display:none !important; }
@@ -101,9 +117,10 @@ $sectionMapJson = json_encode(SECTION_MAP);
       <?php foreach ([
         ['masterlist','fa-id-card','Student Masterlist','Complete student records with all fields','primary'],
         ['gender','fa-venus-mars','Gender Summary','Gender breakdown by grade level','warning'],
+        ['sf9','fa-award','SF9 Report Card','DepEd Form 9 Learner’s Progress Report Card (US Letter Landscape)','success'],
       ] as [$t,$icon,$label,$desc,$color]): ?>
-      <div class="col-md-6">
-        <a href="?type=<?= $t ?>&sy=2025-2026" style="text-decoration:none;">
+      <div class="col-md-4">
+        <a href="?type=<?= $t ?>&sy=<?= htmlspecialchars($sy) ?>" style="text-decoration:none;">
           <div class="card h-100" style="cursor:pointer;transition:.2s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.12)'" onmouseout="this.style.boxShadow=''">
             <div class="card-body text-center py-4">
               <div style="width:56px;height:56px;background:var(--<?= $color ?>-light,#e8f0fe);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--<?= $color ?>);margin:0 auto .75rem;"><i class="fas <?= $icon ?>"></i></div>
@@ -114,6 +131,96 @@ $sectionMapJson = json_encode(SECTION_MAP);
         </a>
       </div>
       <?php endforeach; ?>
+    </div>
+
+    <?php elseif ($type === 'sf9'): ?>
+
+    <!-- SF9 Filters Card -->
+    <div class="card mb-3 no-print">
+      <div class="card-body">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-2">
+            <label class="form-label mb-1" style="font-size:0.8rem;font-weight:600">Filter Grade</label>
+            <select id="sf9-grade-filter" class="form-select form-select-sm">
+              <option value="">All Grades</option>
+              <?php foreach (GRADE_LEVELS as $gl): ?>
+              <option value="<?= $gl ?>" <?= $grade===$gl?'selected':'' ?>><?= $gl ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label mb-1" style="font-size:0.8rem;font-weight:600">Filter Section</label>
+            <select id="sf9-section-filter" class="form-select form-select-sm">
+              <option value="">All Sections</option>
+              <?php
+                $currSecs = $grade && isset(SECTION_MAP[$grade]) ? SECTION_MAP[$grade] : [];
+                foreach ($currSecs as $sec):
+              ?>
+              <option value="<?= $sec ?>" <?= $section===$sec?'selected':'' ?>><?= $sec ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label mb-1" style="font-size:0.8rem;font-weight:600">Select Learner <span class="text-danger">*</span></label>
+            <select id="sf9-student-select" class="form-select form-select-sm" onchange="onSf9StudentChange()">
+              <option value="">— Choose a student —</option>
+              <?php foreach ($allActiveStudents as $s): ?>
+              <option value="<?= $s['id'] ?>" data-grade="<?= htmlspecialchars($s['grade_level']) ?>" data-section="<?= htmlspecialchars($s['section']) ?>" <?= $studentId === (int)$s['id'] ? 'selected' : '' ?>>
+                <?= htmlspecialchars($s['last_name'].', '.$s['first_name'].' '.($s['middle_name']??'')) ?> (<?= $s['grade_level'] ?> - <?= $s['section'] ?>)
+              </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label mb-1" style="font-size:0.8rem;font-weight:600">Grading Term</label>
+            <select id="sf9-period-select" class="form-select form-select-sm" onchange="loadSf9Report()">
+              <option value="0" <?= $period===0?'selected':'' ?>>All Terms</option>
+              <option value="1" <?= $period===1?'selected':'' ?>>1st Term</option>
+              <option value="2" <?= $period===2?'selected':'' ?>>2nd Term</option>
+              <option value="3" <?= $period===3?'selected':'' ?>>3rd Term</option>
+            </select>
+          </div>
+          <div class="col-md-1">
+            <label class="form-label mb-1" style="font-size:0.8rem;font-weight:600">S.Y.</label>
+            <select id="sf9-sy-select" class="form-select form-select-sm" onchange="loadSf9Report()">
+              <?php foreach (getSchoolYearsList($pdo) as $syItem): ?>
+              <option value="<?= htmlspecialchars($syItem['year_label']) ?>" <?= ($syItem['is_active'] || $syItem['year_label'] === $sy) ? 'selected' : '' ?>><?= htmlspecialchars($syItem['year_label']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="col-md-1">
+            <button class="btn btn-primary btn-sm w-100" onclick="loadSf9Report()" title="Generate / Reload"><i class="fas fa-sync me-1"></i>Load</button>
+          </div>
+          <div class="col-md-1">
+            <a href="reports.php" class="btn btn-outline-secondary btn-sm w-100" title="Back to Reports menu"><i class="fas fa-times"></i></a>
+          </div>
+        </div>
+
+        <!-- Signatories Live-Sync Bar -->
+        <div class="row g-2 align-items-end mt-2 pt-2 border-top">
+          <div class="col-md-6">
+            <label class="form-label mb-1" style="font-size:0.8rem;font-weight:600" for="sf9AdviserInput">
+              <i class="fas fa-chalkboard-teacher me-1 text-success"></i>Class Adviser (Prepared by)
+            </label>
+            <input type="text" id="sf9AdviserInput" class="form-control form-control-sm" placeholder="Class Adviser Name" oninput="updateSf9SignatoriesLive()">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label mb-1" style="font-size:0.8rem;font-weight:600" for="sf9PrincipalInput">
+              <i class="fas fa-user-tie me-1 text-primary"></i>School Head / Principal (Approved by)
+            </label>
+            <input type="text" id="sf9PrincipalInput" class="form-control form-control-sm" placeholder="School Head / Principal Name" oninput="updateSf9SignatoriesLive()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SF9 Output Container -->
+    <div id="sf9-report-content">
+      <div class="card p-5 text-center text-muted no-print" id="sf9-empty-notice">
+        <i class="fas fa-file-invoice fa-3x mb-3 text-secondary opacity-50"></i>
+        <h5>Select a Learner to Preview SF9</h5>
+        <p class="small mb-0">Choose a student and grading term above to generate the official DepEd Form 9 Progress Report Card.</p>
+      </div>
     </div>
 
     <?php else: ?>
@@ -287,6 +394,7 @@ $sectionMapJson = json_encode(SECTION_MAP);
 
 <script src="/SPSFMS-Student-Profiling-System-for-Minanga-School/assets/lib/bootstrap.bundle.min.js"></script>
 <script src="<?= BASE_URL ?>/assets/js/components.js"></script>
+<script src="<?= BASE_URL ?>/assets/js/sf9-renderer.js"></script>
 <script>
 showDesktopOnlyWarning();
 
@@ -393,6 +501,163 @@ showDesktopOnlyWarning();
 
   /* ── Init ── */
   refreshSections();
+})();
+<?php endif; ?>
+
+<?php if ($type === 'sf9'): ?>
+(function() {
+  const BASE_URL = '<?= BASE_URL ?>';
+  const SECTION_MAP = <?= $sectionMapJson ?>;
+  const adviserMap = <?= json_encode($adviserMap) ?>;
+  const defaultPrincipal = <?= json_encode($sigData['noted_by_name'] ?: 'School Principal') ?>;
+  const defaultAdviser = <?= json_encode($sigData['prepared_by_name'] ?: 'Class Adviser') ?>;
+
+  const gradeFilter = document.getElementById('sf9-grade-filter');
+  const sectionFilter = document.getElementById('sf9-section-filter');
+  const studentSelect = document.getElementById('sf9-student-select');
+
+  function refreshSf9Sections() {
+    if (!gradeFilter || !sectionFilter) return;
+    const g = gradeFilter.value;
+    const secs = (g && SECTION_MAP[g]) ? SECTION_MAP[g] : [];
+    sectionFilter.innerHTML = '<option value="">All Sections</option>';
+    secs.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s; opt.textContent = s;
+      sectionFilter.appendChild(opt);
+    });
+    filterSf9StudentDropdown();
+  }
+
+  function filterSf9StudentDropdown() {
+    const gVal = gradeFilter ? gradeFilter.value : '';
+    const sVal = sectionFilter ? sectionFilter.value : '';
+    if (!studentSelect) return;
+
+    const opts = studentSelect.querySelectorAll('option');
+    let currentSelectedHidden = false;
+
+    opts.forEach(opt => {
+      if (!opt.value) return;
+      const optG = opt.dataset.grade || '';
+      const optS = opt.dataset.section || '';
+      const matchG = !gVal || optG === gVal;
+      const matchS = !sVal || optS === sVal;
+      if (matchG && matchS) {
+        opt.style.display = '';
+        opt.disabled = false;
+      } else {
+        opt.style.display = 'none';
+        opt.disabled = true;
+        if (opt.selected) currentSelectedHidden = true;
+      }
+    });
+
+    if (currentSelectedHidden) {
+      studentSelect.value = '';
+      loadSf9Report();
+    }
+  }
+
+  window.filterSf9StudentDropdown = filterSf9StudentDropdown;
+
+  window.updateSf9SignatoriesLive = function() {
+    const advVal = document.getElementById('sf9AdviserInput')?.value || '';
+    const prinVal = document.getElementById('sf9PrincipalInput')?.value || '';
+    const advEl = document.getElementById('sf9AdviserName');
+    const prinEl = document.getElementById('sf9SchoolHeadName');
+    if (advEl) advEl.textContent = advVal || '—';
+    if (prinEl) prinEl.textContent = prinVal || '—';
+
+    const stuId = studentSelect ? studentSelect.value : '';
+    if (stuId) {
+      if (advVal) localStorage.setItem('spsmis_sf9_adv_' + stuId, advVal);
+      if (prinVal) localStorage.setItem('spsmis_sf9_prin_' + stuId, prinVal);
+    }
+  };
+
+  window.onSf9StudentChange = function() {
+    loadSf9Report();
+  };
+
+  window.loadSf9Report = async function() {
+    const stuId = studentSelect ? studentSelect.value : '';
+    const sy = document.getElementById('sf9-sy-select')?.value || '<?= $sy ?>';
+    const period = parseInt(document.getElementById('sf9-period-select')?.value || '0');
+    const container = document.getElementById('sf9-report-content');
+
+    if (!stuId) {
+      container.innerHTML = `
+        <div class="card p-5 text-center text-muted no-print">
+          <i class="fas fa-file-invoice fa-3x mb-3 text-secondary opacity-50"></i>
+          <h5>Please Select a Learner</h5>
+          <p class="small mb-0">Choose a student above to generate their SF9 Learner's Progress Report Card.</p>
+        </div>`;
+      return;
+    }
+
+    showLoading('Generating SF9 Report Card...', 'Loading student grades & DepEd Form 9 template...');
+    try {
+      const res = await fetch(`${BASE_URL}/api/grades/student.php?student_id=${stuId}&school_year=${sy}`);
+      const data = await res.json();
+      hideLoading();
+
+      if (!data.ok) {
+        showToast(data.message || 'Failed to load student record', 'error');
+        return;
+      }
+
+      const student = data.student;
+      const classKey = (student.grade_level || '') + '|' + (student.section || '');
+      const savedAdv = localStorage.getItem('spsmis_sf9_adv_' + stuId) || adviserMap[classKey] || defaultAdviser;
+      const savedPrin = localStorage.getItem('spsmis_sf9_prin_' + stuId) || defaultPrincipal;
+
+      const advInput = document.getElementById('sf9AdviserInput');
+      const prinInput = document.getElementById('sf9PrincipalInput');
+      if (advInput) advInput.value = savedAdv;
+      if (prinInput) prinInput.value = savedPrin;
+
+      container.innerHTML = renderSf9ReportCard(data, {
+        period: period,
+        adviser: savedAdv,
+        schoolHead: savedPrin,
+        baseUrl: BASE_URL
+      });
+
+      // Two-way sync with inline edit
+      const advEl = document.getElementById('sf9AdviserName');
+      if (advEl) {
+        advEl.addEventListener('input', () => {
+          const val = advEl.textContent.trim();
+          if (advInput) advInput.value = val;
+          localStorage.setItem('spsmis_sf9_adv_' + stuId, val);
+        });
+      }
+      const prinEl = document.getElementById('sf9SchoolHeadName');
+      if (prinEl) {
+        prinEl.addEventListener('input', () => {
+          const val = prinEl.textContent.trim();
+          if (prinInput) prinInput.value = val;
+          localStorage.setItem('spsmis_sf9_prin_' + stuId, val);
+        });
+      }
+
+    } catch (err) {
+      hideLoading();
+      showToast('Error generating SF9: ' + err.message, 'error');
+    }
+  };
+
+  if (gradeFilter) gradeFilter.addEventListener('change', refreshSf9Sections);
+  if (sectionFilter) sectionFilter.addEventListener('change', filterSf9StudentDropdown);
+
+  // Auto load if student_id is selected
+  const initialStuId = studentSelect ? studentSelect.value : '';
+  if (initialStuId) {
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSf9Report();
+    });
+  }
 })();
 <?php endif; ?>
 </script>
