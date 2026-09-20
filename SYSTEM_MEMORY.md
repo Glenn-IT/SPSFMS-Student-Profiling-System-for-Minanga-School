@@ -67,7 +67,7 @@ SPSFMS/
 │   │   ├── dashboard.php               # Advisory overview & grading completion status
 │   │   ├── student-profiles.php        # Read-only student browser for teachers
 │   │   ├── grades.php                  # SF10 grade entry grid (Q1-Q4, remarks, auto-save)
-│   │   ├── reports.php                 # Printable class summary, individual learner SF10 & SF9 report cards
+│   │   ├── reports.php                 # Printable class grade summary & official DepEd Form 9 (SF9) report cards
 │   │   └── settings.php                # Teacher credentials update
 │   └── student/
 │       ├── dashboard.php               # Announcements & summary grade cards

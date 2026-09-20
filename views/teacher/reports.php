@@ -14,8 +14,11 @@ $freshUser = $uStmt->fetch() ?: $user;
 $myClasses = getTeacherAdvisoryClasses($pdo, $freshUser['id']);
 $hasAdvisory = !empty($myClasses);
 
-$reportType = $_GET['type'] ?? 'summary'; // 'summary' or 'sf10'
-if (!in_array($reportType, ['summary', 'sf10'])) {
+$reportType = $_GET['type'] ?? 'summary';
+if ($reportType === 'sf10') {
+    $reportType = 'sf9';
+}
+if (!in_array($reportType, ['summary', 'sf9'])) {
     $reportType = 'summary';
 }
 
@@ -86,92 +89,8 @@ if ($hasAdvisory && $grade && $section && $reportType === 'summary') {
     $summaryStudents = $stmt->fetchAll();
 }
 
-// Data for Individual Learner SF10 Mode
+// Data for Individual Learner SF9 Mode
 $selectedStudentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 0;
-$sf10Student = null;
-$sf10Grades  = [];
-$sf10Subjects = [];
-$sf10GeneralAverage = null;
-$sf10GeneralRemarks = '—';
-$sf10AdviserName = $user['name'];
-
-if ($reportType === 'sf10' && $selectedStudentId > 0 && $hasAdvisory) {
-    // Security check: verify this student belongs to the teacher's advisory classes
-    foreach ($allAdvisoryStudents as $stu) {
-        if ((int)$stu['id'] === $selectedStudentId) {
-            // Found and authorized
-            $sf10Student = $stu;
-            break;
-        }
-    }
-
-    if ($sf10Student) {
-        // Fetch full profile info for student
-        $fullStuStmt = $pdo->prepare("SELECT * FROM students WHERE id = ? LIMIT 1");
-        $fullStuStmt->execute([$selectedStudentId]);
-        $fullStu = $fullStuStmt->fetch();
-        if ($fullStu) {
-            $sf10Student = $fullStu;
-        }
-
-        // Get subjects for this student's grade level
-        $sf10Subjects = getSubjectsForGrade($sf10Student['grade_level'], $pdo);
-
-        // Fetch grades for this student and school year
-        $gStmt = $pdo->prepare("SELECT * FROM grades WHERE student_id = ? AND school_year = ?");
-        $gStmt->execute([$selectedStudentId, $sy]);
-        $gradeRows = $gStmt->fetchAll();
-
-        $gradeMap = [];
-        foreach ($gradeRows as $gr) {
-            $gradeMap[$gr['subject']] = $gr;
-            if (!in_array($gr['subject'], $sf10Subjects)) {
-                $sf10Subjects[] = $gr['subject'];
-            }
-        }
-
-        $totalFinal = 0;
-        $gradedSubjectsCount = 0;
-
-        foreach ($sf10Subjects as $subj) {
-            $row = $gradeMap[$subj] ?? null;
-            $t1 = $row && ($row['t1'] !== null || $row['q1'] !== null) ? (float)($row['t1'] ?? $row['q1']) : null;
-            $t2 = $row && ($row['t2'] !== null || $row['q2'] !== null) ? (float)($row['t2'] ?? $row['q2']) : null;
-            $t3 = $row && ($row['t3'] !== null || $row['q3'] !== null) ? (float)($row['t3'] ?? $row['q3']) : null;
-            $final = $row && $row['final_grade'] !== null ? (float)$row['final_grade'] : null;
-
-            if ($final === null) {
-                $terms = array_filter([$t1, $t2, $t3], fn($v) => $v !== null);
-                if (count($terms) === 3) {
-                    $final = round(array_sum($terms) / 3, 2);
-                }
-            }
-
-            $remarks = '';
-            if ($final !== null) {
-                $remarks = ($final >= 75) ? 'Passed' : 'Failed';
-                $totalFinal += $final;
-                $gradedSubjectsCount++;
-            }
-
-            $sf10Grades[$subj] = [
-                't1' => $t1,
-                't2' => $t2,
-                't3' => $t3,
-                'q1' => $t1,
-                'q2' => $t2,
-                'q3' => $t3,
-                'final_grade' => $final,
-                'remarks' => $remarks
-            ];
-        }
-
-        if ($gradedSubjectsCount > 0) {
-            $sf10GeneralAverage = round($totalFinal / $gradedSubjectsCount, 2);
-            $sf10GeneralRemarks = ($sf10GeneralAverage >= 75) ? 'Passed' : 'Failed';
-        }
-    }
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -389,17 +308,14 @@ if ($reportType === 'sf10' && $selectedStudentId > 0 && $hasAdvisory) {
     <div class="page-header no-print d-flex flex-column gap-2 mb-3">
       <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div>
-          <h3 class="mb-1"><?= $reportType === 'sf9' ? 'Learner’s Progress Report Card (SF9)' : ($reportType === 'sf10' ? 'Individual Learner SF10 Report' : 'Class Grade Summary Report') ?></h3>
-          <p class="mb-0 text-muted">Generate and print academic records, SF9 report cards, and SF10 for your advisory class</p>
+          <h3 class="mb-1"><?= $reportType === 'sf9' ? 'Learner’s Progress Report Card (SF9)' : 'Class Grade Summary Report' ?></h3>
+          <p class="mb-0 text-muted">Generate and print academic records and official SF9 report cards for your advisory class</p>
         </div>
 
-        <!-- Mode Toggle: Class Summary vs Individual SF10 vs Individual SF9 -->
+        <!-- Mode Toggle: Class Summary vs Individual SF9 -->
         <div class="d-flex align-items-center gap-2 bg-white p-1 rounded-pill border shadow-sm">
           <a href="?type=summary&class_idx=<?= $selectedClassIdx ?>&sy=<?= urlencode($sy) ?>" class="btn report-mode-btn <?= $reportType === 'summary' ? 'btn-success text-white shadow-sm' : 'btn-light text-dark' ?>">
             <i class="fas fa-list-alt me-1"></i>Class Summary
-          </a>
-          <a href="?type=sf10<?= $selectedStudentId ? '&student_id='.$selectedStudentId : '' ?>&sy=<?= urlencode($sy) ?>" class="btn report-mode-btn <?= $reportType === 'sf10' ? 'btn-success text-white shadow-sm' : 'btn-light text-dark' ?>">
-            <i class="fas fa-id-card me-1"></i>Individual SF10
           </a>
           <a href="?type=sf9<?= $selectedStudentId ? '&student_id='.$selectedStudentId : '' ?>&sy=<?= urlencode($sy) ?>" class="btn report-mode-btn <?= $reportType === 'sf9' ? 'btn-success text-white shadow-sm' : 'btn-light text-dark' ?>">
             <i class="fas fa-file-invoice me-1"></i>Individual SF9
@@ -570,20 +486,17 @@ if ($reportType === 'sf10' && $selectedStudentId > 0 && $hasAdvisory) {
           </div>
         </div>
 
-      <?php elseif ($reportType === 'sf10'): ?>
-        <!-- Individual Learner SF10 Search & Report Mode -->
-        <form method="get" class="card mb-3 no-print border-0 shadow-sm" id="sf10-search-form" autocomplete="off">
-          <input type="hidden" name="type" value="sf10">
-          <input type="hidden" name="student_id" id="sf10-student-id-input" value="<?= $selectedStudentId ?: '' ?>">
+      <?php else: ?>
+        <!-- Teacher SF9 Learner Progress Report Card Mode -->
+        <div class="card mb-3 no-print border-0 shadow-sm">
           <div class="card-body">
             <div class="row g-2 align-items-end">
-              <div class="col-md-6 realtime-search-wrap">
-                <label class="form-label mb-1 fw-semibold"><i class="fas fa-user-graduate text-success me-1"></i>Search Student Name or LRN (Realtime)</label>
+              <div class="col-md-5 realtime-search-wrap">
+                <label class="form-label mb-1 fw-semibold"><i class="fas fa-user-graduate text-success me-1"></i>Search Learner (Name or LRN)</label>
                 <div class="search-input-group">
                   <i class="fas fa-search search-icon-left"></i>
                   <input type="text" id="realtime-search-input" class="form-control realtime-search-input" 
                          placeholder="Type student name or LRN to search..." 
-                         value="<?= $sf10Student ? htmlspecialchars($sf10Student['last_name'].', '.$sf10Student['first_name'].' '.($sf10Student['middle_name'] ? $sf10Student['middle_name'].' ' : '').'('.$sf10Student['grade_level'].' - '.$sf10Student['section'].')') : '' ?>"
                          oninput="onRealtimeSearchInput(this.value)" 
                          onfocus="onRealtimeSearchFocus()"
                          onkeydown="onRealtimeSearchKeydown(event)">
@@ -591,216 +504,12 @@ if ($reportType === 'sf10' && $selectedStudentId > 0 && $hasAdvisory) {
                     <i class="fas fa-times-circle"></i>
                   </button>
                 </div>
-                <!-- Real-time suggestion / matching results panel -->
                 <div id="realtime-results-panel" class="realtime-results-panel"></div>
               </div>
 
               <div class="col-md-3">
-                <label class="form-label mb-1 fw-semibold">School Year</label>
-                <select name="sy" id="sf10-sy-select" class="form-select" onchange="onSchoolYearChange()">
-                  <?php foreach (getSchoolYearsList($pdo) as $syItem): ?>
-                  <option value="<?= htmlspecialchars($syItem['year_label']) ?>" <?= $sy === $syItem['year_label'] ? 'selected' : '' ?>><?= htmlspecialchars($syItem['year_label']) ?><?= $syItem['is_active'] ? ' (Active)' : '' ?></option>
-                  <?php endforeach; ?>
-                </select>
-              </div>
-
-              <div class="col-md-3 d-flex gap-2">
-                <button type="button" class="btn btn-primary flex-grow-1" onclick="window.print()" <?= !$sf10Student ? 'disabled' : '' ?>><i class="fas fa-print me-1"></i>Print SF10</button>
-                <?php if ($selectedStudentId): ?>
-                  <a href="?type=sf9&student_id=<?= $selectedStudentId ?>&sy=<?= urlencode($sy) ?>" class="btn btn-success" title="Switch to SF9 Progress Report Card"><i class="fas fa-file-invoice me-1"></i>View SF9</a>
-                  <a href="?type=sf10&sy=<?= urlencode($sy) ?>" class="btn btn-light border" title="Reset Search"><i class="fas fa-redo-alt"></i></a>
-                <?php endif; ?>
-              </div>
-            </div>
-
-            <div class="mt-2 pt-2 border-top d-flex align-items-center justify-content-between text-muted small">
-              <div>
-                <i class="fas fa-info-circle text-primary me-1"></i>
-                Type any part of the student's <strong>First Name</strong>, <strong>Last Name</strong>, or <strong>LRN</strong> to instantly display their SF10.
-              </div>
-              <div class="fw-semibold">
-                <?= count($allAdvisoryStudents) ?> students in your advisory class
-              </div>
-            </div>
-          </div>
-        </form>
-
-        <?php if (!$selectedStudentId): ?>
-          <div class="card border-0 shadow-sm text-center py-5 no-print">
-            <div class="card-body">
-              <div style="width: 70px; height: 70px; background: rgba(52,168,83,0.1); color: #34a853; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 1rem;">
-                <i class="fas fa-search"></i>
-              </div>
-              <h5 class="fw-bold mb-1">Select an Advisory Student to View & Print SF10</h5>
-              <p class="text-muted mb-0" style="max-width: 500px; margin: 0 auto;">Choose any student from your advisory class above or use the search filter to display their official School Form 10 (Learner's Permanent Academic Record).</p>
-            </div>
-          </div>
-        <?php elseif (!$sf10Student): ?>
-          <div class="alert alert-danger shadow-sm border-0 no-print" style="border-radius: 10px;">
-            <i class="fas fa-shield-alt fa-2x float-start me-3 text-danger"></i>
-            <div>
-              <h5 class="alert-heading fw-bold mb-1">Access Restricted</h5>
-              <p class="mb-0">The requested student does not belong to any of your assigned advisory classes. Teachers may only view and print School Form 10 for their own advisory students.</p>
-            </div>
-          </div>
-        <?php else: ?>
-
-          <!-- OFFICIAL SF10 PRINTABLE RECORD -->
-          <div class="card shadow-sm border-0">
-            <div class="card-body p-4">
-              <!-- Official DepEd Header -->
-              <div class="report-header text-center mb-4" style="border-bottom:2px solid var(--secondary);padding-bottom:1.25rem;">
-                <div class="d-flex align-items-center justify-content-between px-3">
-                  <img src="<?= BASE_URL ?>/assets/img/deped_logo.png" alt="DepEd Logo" style="width: 68px; height: 68px; object-fit: contain;">
-                  <div class="text-center flex-grow-1">
-                    <div style="font-size:.92rem;color:#222;font-weight:400;margin-bottom:.15rem;">Republic of the Philippines · Department of Education</div>
-                    <div style="font-size:.88rem;color:#333;font-weight:600;margin-bottom:.15rem;">Region 02 · Schools Division of Cagayan · Piat District</div>
-                    <div style="font-size:1.22rem;color:#000;font-weight:800;margin-bottom:.15rem;"><?= SCHOOL_NAME ?></div>
-                    <div style="font-size:.88rem;color:#444;font-weight:400;margin-bottom:.75rem;"><?= SCHOOL_ADDRESS ?></div>
-
-                    <h3 class="text-center text-uppercase text-dark fw-bold mb-1" style="letter-spacing:0.5px;font-size:1.15rem;">SCHOOL FORM 10 (SF10)</h3>
-                    <div style="font-size:.95rem;color:#111;font-weight:700;" class="text-center text-uppercase">
-                      LEARNER'S PERMANENT ACADEMIC RECORD
-                    </div>
-                    <div style="font-size:.85rem;color:var(--gray-600);" class="text-center mt-1">
-                      School Year: <strong><?= htmlspecialchars($sy) ?></strong>
-                    </div>
-                  </div>
-                  <img src="<?= BASE_URL ?>/assets/img/MIS-Logo.jpg" alt="School Logo" style="width: 68px; height: 68px; object-fit: contain;">
-                </div>
-              </div>
-
-              <!-- Learner Information Box -->
-              <div class="sf10-infobox">
-                <div class="row g-2">
-                  <div class="col-md-5">
-                    <span class="sf10-label">Learner's Full Name</span>
-                    <span class="sf10-val text-uppercase"><?= htmlspecialchars($sf10Student['last_name'].', '.$sf10Student['first_name'].' '.($sf10Student['middle_name'] ?? '')) ?></span>
-                  </div>
-                  <div class="col-md-3">
-                    <span class="sf10-label">Learner Reference No. (LRN)</span>
-                    <span class="sf10-val" style="font-family:monospace;letter-spacing:1px;"><?= htmlspecialchars($sf10Student['lrn']) ?></span>
-                  </div>
-                  <div class="col-md-2">
-                    <span class="sf10-label">Grade & Section</span>
-                    <span class="sf10-val"><?= htmlspecialchars($sf10Student['grade_level'].' - '.$sf10Student['section']) ?></span>
-                  </div>
-                  <div class="col-md-2">
-                    <span class="sf10-label">Sex</span>
-                    <span class="sf10-val"><?= htmlspecialchars($sf10Student['sex']) ?></span>
-                  </div>
-
-                  <div class="col-md-3 mt-2">
-                    <span class="sf10-label">Birthdate</span>
-                    <span class="sf10-val"><?= !empty($sf10Student['birthdate']) ? date('F j, Y', strtotime($sf10Student['birthdate'])) : '—' ?></span>
-                  </div>
-                  <div class="col-md-2 mt-2">
-                    <span class="sf10-label">Age</span>
-                    <span class="sf10-val"><?= htmlspecialchars($sf10Student['age'] ?? '—') ?></span>
-                  </div>
-                  <div class="col-md-4 mt-2">
-                    <span class="sf10-label">Class Adviser</span>
-                    <span class="sf10-val"><?= htmlspecialchars($sf10AdviserName) ?></span>
-                  </div>
-                  <div class="col-md-3 mt-2">
-                    <span class="sf10-label">Status</span>
-                    <span class="badge bg-success bg-opacity-10 text-success fw-bold px-2 py-1"><?= ucfirst(htmlspecialchars($sf10Student['status'] ?? 'active')) ?></span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Academic Record Table -->
-              <div class="table-responsive mb-4">
-                <table class="table table-bordered align-middle sf10-table mb-0">
-                  <thead>
-                    <tr>
-                      <th style="min-width: 260px;">Learning Areas / Subjects</th>
-                      <th class="text-center" style="width: 85px;">Term 1</th>
-                      <th class="text-center" style="width: 85px;">Term 2</th>
-                      <th class="text-center" style="width: 85px;">Term 3</th>
-                      <th class="text-center" style="width: 105px; background: #e2e8f0 !important;">Final Grade</th>
-                      <th class="text-center" style="width: 110px; background: #e2e8f0 !important;">Remarks</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <?php if (empty($sf10Subjects)): ?>
-                    <tr><td colspan="6" class="text-center text-muted py-4">No subjects registered for <?= htmlspecialchars($sf10Student['grade_level']) ?>.</td></tr>
-                    <?php else: foreach ($sf10Subjects as $subj):
-                      $rec = $sf10Grades[$subj] ?? ['t1'=>null,'t2'=>null,'t3'=>null,'q1'=>null,'q2'=>null,'q3'=>null,'final_grade'=>null,'remarks'=>''];
-                      $t1Val = $rec['t1'] ?? $rec['q1'] ?? null;
-                      $t2Val = $rec['t2'] ?? $rec['q2'] ?? null;
-                      $t3Val = $rec['t3'] ?? $rec['q3'] ?? null;
-                      $fg = $rec['final_grade'] !== null ? number_format($rec['final_grade'], 0) : '—';
-                      $rem = $rec['remarks'] ?: '—';
-                      $remColor = ($rem === 'Passed') ? '#16a34a' : (($rem === 'Failed') ? '#dc2626' : 'inherit');
-                    ?>
-                    <tr>
-                      <td class="fw-semibold text-dark"><?= htmlspecialchars($subj) ?></td>
-                      <td class="text-center"><?= $t1Val !== null ? number_format($t1Val,0) : '—' ?></td>
-                      <td class="text-center"><?= $t2Val !== null ? number_format($t2Val,0) : '—' ?></td>
-                      <td class="text-center"><?= $t3Val !== null ? number_format($t3Val,0) : '—' ?></td>
-                      <td class="text-center fw-bold fs-6" style="background:#f8fafc;"><?= $fg ?></td>
-                      <td class="text-center fw-bold" style="color:<?= $remColor ?>;"><?= $rem ?></td>
-                    </tr>
-                    <?php endforeach; endif; ?>
-                  </tbody>
-                  <tfoot>
-                    <tr style="background:#f1f5f9; font-size:.92rem;">
-                      <th class="fw-bold text-dark text-uppercase">General Average</th>
-                      <th colspan="3"></th>
-                      <th class="text-center fw-bold fs-6 text-dark"><?= $sf10GeneralAverage !== null ? number_format($sf10GeneralAverage, 2) : '—' ?></th>
-                      <th class="text-center fw-bold" style="color:<?= $sf10GeneralRemarks==='Passed'?'#16a34a':($sf10GeneralRemarks==='Failed'?'#dc2626':'inherit') ?>;"><?= $sf10GeneralRemarks ?></th>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-
-              <!-- Grading Scale DepEd Guide (Updated Minanga IS Standard) -->
-              <div class="p-2 bg-light rounded border text-muted small mb-4">
-                <div class="fw-bold text-dark mb-1" style="font-size:.78rem;">PERFORMANCE DESCRIPTORS &amp; GRADING SCALE</div>
-                <div class="row g-2" style="font-size:.75rem;">
-                  <div class="col-md-2"><strong>90–100:</strong> Advancing (Passed)</div>
-                  <div class="col-md-2"><strong>80–89:</strong> Benchmarking (Passed)</div>
-                  <div class="col-md-2"><strong>75–79:</strong> Connecting (Passed)</div>
-                  <div class="col-md-3"><strong>65–74:</strong> Developing (Failed)</div>
-                  <div class="col-md-3"><strong>0–64:</strong> Emerging (Failed)</div>
-                </div>
-              </div>
-
-              <!-- Signatories -->
-              <div class="signatories" id="signatories-block">
-                <div class="signatory-block">
-                  <div class="sig-label">Prepared by (Class Adviser)</div>
-                  <div class="sig-name"><?= htmlspecialchars($user['name']) ?></div>
-                  <div class="sig-position">Class Adviser (<?= htmlspecialchars($sf10Student['grade_level'] . ' - ' . $sf10Student['section']) ?>)</div>
-                </div>
-                <div class="signatory-block">
-                  <div class="sig-label">Certified True & Correct (School Head)</div>
-                  <div class="sig-name"><?= htmlspecialchars($sigData['noted_by_name'] ?: ' ') ?></div>
-                  <div class="sig-position"><?= htmlspecialchars($sigData['noted_by_title']) ?></div>
-                </div>
-                <div class="signatory-block">
-                  <div class="sig-label">Date Issued</div>
-                  <div class="sig-name"><?= date('F j, Y') ?></div>
-                  <div class="sig-position"><?= date('g:i A') ?></div>
-                </div>
-              </div>
-
-              <div style="font-size:.72rem;color:var(--gray-400);text-align:right;margin-top:1.5rem;" class="no-print">
-                SF10 Generated: <?= date('F j, Y \a\t g:i A') ?> · <?= htmlspecialchars($user['name']) ?> (Class Adviser)
-              </div>
-            </div>
-          </div>
-        <?php endif; ?>
-
-      <?php elseif ($reportType === 'sf9'): ?>
-        <!-- Teacher SF9 Learner Progress Report Card Mode -->
-        <div class="card mb-3 no-print border-0 shadow-sm">
-          <div class="card-body">
-            <div class="row g-2 align-items-end">
-              <div class="col-md-5">
-                <label class="form-label mb-1 fw-semibold"><i class="fas fa-user-graduate text-success me-1"></i>Select Advisory Learner <span class="text-danger">*</span></label>
-                <select id="teacher-sf9-student" class="form-select form-select-sm" onchange="loadTeacherSf9Report()">
+                <label class="form-label mb-1 fw-semibold">Advisory Learner Dropdown</label>
+                <select id="teacher-sf9-student" class="form-select form-select-sm" onchange="onTeacherSf9DropdownChange()">
                   <option value="">— Choose an advisory learner —</option>
                   <?php foreach ($allAdvisoryStudents as $stu): ?>
                   <option value="<?= $stu['id'] ?>" <?= $selectedStudentId === (int)$stu['id'] ? 'selected' : '' ?>>
@@ -809,7 +518,8 @@ if ($reportType === 'sf10' && $selectedStudentId > 0 && $hasAdvisory) {
                   <?php endforeach; ?>
                 </select>
               </div>
-              <div class="col-md-3">
+
+              <div class="col-md-2">
                 <label class="form-label mb-1 fw-semibold">Grading Term</label>
                 <select id="teacher-sf9-period" class="form-select form-select-sm" onchange="loadTeacherSf9Report()">
                   <option value="0">All Terms</option>
@@ -866,6 +576,7 @@ if ($reportType === 'sf10' && $selectedStudentId > 0 && $hasAdvisory) {
 <script src="<?= BASE_URL ?>/assets/js/components.js"></script>
 <script src="<?= BASE_URL ?>/assets/js/sf9-renderer.js"></script>
 <script>
+const BASE = '<?= BASE_URL ?>';
 showDesktopOnlyWarning();
 
 // Advisory student dataset for instant realtime search
@@ -947,7 +658,7 @@ function renderResults(list, query = '') {
   panel.innerHTML = list.map((s, idx) => {
     const initial = s.first_name ? s.first_name.charAt(0).toUpperCase() : 'S';
     return `
-      <div class="realtime-item" data-id="${s.id}" data-idx="${idx}" onclick="selectStudentForSF10(${s.id})">
+      <div class="realtime-item" data-id="${s.id}" data-idx="${idx}" onclick="selectStudentForSF9(${s.id})">
         <div class="d-flex align-items-center" style="min-width:0;">
           <div class="item-avatar">${initial}</div>
           <div class="item-info">
@@ -971,33 +682,59 @@ function escapeHtml(str) {
   })[m]);
 }
 
-function selectStudentForSF10(studentId) {
+function selectStudentForSF9(studentId) {
   const stu = ADVISORY_STUDENTS.find(s => s.id === studentId);
   if (!stu) return;
 
+  const select = document.getElementById('teacher-sf9-student');
   const input = document.getElementById('realtime-search-input');
-  const idInput = document.getElementById('sf10-student-id-input');
   const panel = document.getElementById('realtime-results-panel');
-  const sySelect = document.getElementById('sf10-sy-select');
+  const clearBtn = document.getElementById('clear-search-btn');
 
-  if (input) {
-    input.value = `${stu.last_name}, ${stu.first_name} ${stu.middle_name ? stu.middle_name + ' ' : ''}(${stu.grade_level} - ${stu.section})`;
-  }
-  if (idInput) {
-    idInput.value = stu.id;
-  }
-  if (panel) {
-    panel.style.display = 'none';
-  }
+  if (select) select.value = stu.id;
+  if (input) input.value = `${stu.last_name}, ${stu.first_name} ${stu.middle_name ? stu.middle_name + ' ' : ''}(${stu.grade_level} - ${stu.section})`;
+  if (panel) panel.style.display = 'none';
+  if (clearBtn) clearBtn.style.display = 'block';
 
-  // Submit form to render official DepEd SF10
+  const sySelect = document.getElementById('teacher-sf9-sy');
   const sy = sySelect ? sySelect.value : '';
-  window.location.href = `?type=sf10&student_id=${stu.id}&sy=${encodeURIComponent(sy)}`;
+  if (window.history && window.history.pushState) {
+    history.pushState(null, '', `?type=sf9&student_id=${stu.id}&sy=${encodeURIComponent(sy)}`);
+  }
+
+  loadTeacherSf9Report();
+}
+
+function onTeacherSf9DropdownChange() {
+  const select = document.getElementById('teacher-sf9-student');
+  const stuId = select ? parseInt(select.value) : 0;
+  const input = document.getElementById('realtime-search-input');
+  const clearBtn = document.getElementById('clear-search-btn');
+  const sySelect = document.getElementById('teacher-sf9-sy');
+  const sy = sySelect ? sySelect.value : '';
+
+  if (stuId) {
+    const stu = ADVISORY_STUDENTS.find(s => s.id === stuId);
+    if (stu && input) {
+      input.value = `${stu.last_name}, ${stu.first_name} ${stu.middle_name ? stu.middle_name + ' ' : ''}(${stu.grade_level} - ${stu.section})`;
+      if (clearBtn) clearBtn.style.display = 'block';
+    }
+    if (window.history && window.history.pushState) {
+      history.pushState(null, '', `?type=sf9&student_id=${stuId}&sy=${encodeURIComponent(sy)}`);
+    }
+  } else {
+    if (input) input.value = '';
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (window.history && window.history.pushState) {
+      history.pushState(null, '', `?type=sf9&sy=${encodeURIComponent(sy)}`);
+    }
+  }
+  loadTeacherSf9Report();
 }
 
 function clearRealtimeSearch() {
   const input = document.getElementById('realtime-search-input');
-  const idInput = document.getElementById('sf10-student-id-input');
+  const select = document.getElementById('teacher-sf9-student');
   const panel = document.getElementById('realtime-results-panel');
   const clearBtn = document.getElementById('clear-search-btn');
 
@@ -1005,8 +742,8 @@ function clearRealtimeSearch() {
     input.value = '';
     input.focus();
   }
-  if (idInput) {
-    idInput.value = '';
+  if (select) {
+    select.value = '';
   }
   if (clearBtn) {
     clearBtn.style.display = 'none';
@@ -1015,19 +752,7 @@ function clearRealtimeSearch() {
     renderResults(ADVISORY_STUDENTS);
     panel.style.display = 'block';
   }
-}
-
-function onSchoolYearChange() {
-  const idInput = document.getElementById('sf10-student-id-input');
-  const sySelect = document.getElementById('sf10-sy-select');
-  const studentId = idInput ? idInput.value : '';
-  const sy = sySelect ? sySelect.value : '';
-
-  if (studentId) {
-    window.location.href = `?type=sf10&student_id=${studentId}&sy=${encodeURIComponent(sy)}`;
-  } else {
-    window.location.href = `?type=sf10&sy=${encodeURIComponent(sy)}`;
-  }
+  loadTeacherSf9Report();
 }
 
 function onRealtimeSearchKeydown(e) {
@@ -1107,6 +832,14 @@ async function loadTeacherSf9Report() {
         <p class="small mb-0">Choose a student above to generate their SF9 Learner's Progress Report Card.</p>
       </div>`;
     return;
+  }
+
+  const stu = ADVISORY_STUDENTS.find(s => s.id === parseInt(stuId));
+  const searchInput = document.getElementById('realtime-search-input');
+  const clearBtn = document.getElementById('clear-search-btn');
+  if (stu && searchInput && !searchInput.value) {
+    searchInput.value = `${stu.last_name}, ${stu.first_name} ${stu.middle_name ? stu.middle_name + ' ' : ''}(${stu.grade_level} - ${stu.section})`;
+    if (clearBtn) clearBtn.style.display = 'block';
   }
 
   showLoading('Generating SF9 Report Card...', 'Loading advisory learner grades & Form 9 layout...');
