@@ -1,0 +1,1787 @@
+<?php
+/**
+ * SPSMIS System Prototype PDF Generator
+ * Generates an architectural UI wireframe prototype PDF for the Student Profiling System for Minanga School (SPSMIS)
+ * Covers all 3 User Roles: Administrator, Teacher, Student
+ * Covers all 23 Views, Database entities, and workflows.
+ */
+
+$html = <<<'HTML'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SPSMIS System Prototype Specifications</title>
+<style>
+  @page {
+    size: letter portrait;
+    margin: 0;
+  }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+    color: #111;
+    background: #e5e5e5;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .page {
+    width: 8.5in;
+    height: 11in;
+    margin: 0 auto;
+    padding: 38px 46px;
+    background: #fff;
+    position: relative;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+  @media screen {
+    .page {
+      margin: 20px auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+  }
+
+  /* Header Title */
+  .page-header {
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  .proto-title {
+    font-size: 11pt;
+    font-weight: 700;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: #111;
+    margin-bottom: 3px;
+  }
+  .proto-subtitle {
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #333;
+  }
+
+  /* Wireframe Container Box */
+  .wireframe-box {
+    border: 1.2px solid #111;
+    padding: 12px 16px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    position: relative;
+  }
+
+  /* Arrow Divider */
+  .flow-arrow {
+    text-align: center;
+    font-size: 16pt;
+    font-weight: bold;
+    color: #111;
+    margin: 6px 0;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  /* Box Title Bar */
+  .box-title-bar {
+    border: 1px solid #111;
+    text-align: center;
+    font-weight: 700;
+    font-size: 9pt;
+    padding: 4px 8px;
+    margin-bottom: 10px;
+    background: #fff;
+    letter-spacing: 0.3px;
+  }
+
+  /* Tab Bar */
+  .tab-bar {
+    display: flex;
+    border: 1px solid #111;
+    margin-bottom: 9px;
+  }
+  .tab-item {
+    flex: 1;
+    text-align: center;
+    padding: 3.5px 4px;
+    font-size: 7.5pt;
+    font-weight: 600;
+    border-right: 1px solid #111;
+    background: #fff;
+  }
+  .tab-item:last-child {
+    border-right: none;
+  }
+  .tab-item.active {
+    background: #f0f0f0;
+    font-weight: 700;
+  }
+
+  /* Form Elements */
+  .form-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 7.5pt;
+  }
+  .form-label {
+    width: 170px;
+    flex-shrink: 0;
+    font-weight: 500;
+    color: #111;
+  }
+  .form-input {
+    flex: 1;
+    border: 1px solid #111;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    font-size: 7.5pt;
+    background: #fff;
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .input-icon-right {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 8pt;
+  }
+  .eye-icon {
+    display: inline-block;
+    width: 12px;
+    height: 7px;
+    border: 1px solid #333;
+    border-radius: 50%;
+    position: relative;
+  }
+  .eye-icon::after {
+    content: '';
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: #333;
+    border-radius: 50%;
+    top: 1px;
+    left: 3.5px;
+  }
+
+  /* Buttons */
+  .wf-btn {
+    border: 1px solid #111;
+    padding: 3px 10px;
+    font-size: 7.5pt;
+    font-weight: 600;
+    background: #fff;
+    text-align: center;
+    display: inline-block;
+    cursor: pointer;
+  }
+  .wf-btn-sm {
+    padding: 1.5px 6px;
+    font-size: 7pt;
+  }
+
+  /* Action Bar */
+  .action-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 6px;
+  }
+  .sub-link {
+    font-size: 7.5pt;
+    text-decoration: underline;
+    font-style: italic;
+    color: #111;
+  }
+
+  /* Tables */
+  .wf-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #111;
+    font-size: 7.5pt;
+    margin-bottom: 6px;
+  }
+  .wf-table th {
+    border: 1px solid #111;
+    padding: 3.5px 5px;
+    background: #fafafa;
+    font-weight: 700;
+    text-align: center;
+  }
+  .wf-table td {
+    border: 1px solid #111;
+    padding: 3px 5px;
+    text-align: center;
+    vertical-align: middle;
+  }
+  .wf-table td.text-left {
+    text-align: left;
+  }
+
+  /* Two Column Split */
+  .split-layout {
+    display: flex;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+  }
+  .sidebar-col {
+    width: 140px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .sidebar-item {
+    border: 1px solid #111;
+    padding: 3.5px 6px;
+    font-size: 7pt;
+    font-weight: 500;
+    text-align: center;
+  }
+  .sidebar-item.active {
+    background: #f0f0f0;
+    font-weight: 700;
+  }
+  .content-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  /* Metric KPI Cards */
+  .kpi-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .kpi-card {
+    flex: 1;
+    border: 1px solid #111;
+    padding: 6px 4px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .folder-icon {
+    width: 24px;
+    height: 18px;
+    border: 1px solid #111;
+    position: relative;
+    margin-bottom: 3px;
+    background: #fff;
+  }
+  .folder-icon::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -1px;
+    width: 10px;
+    height: 4px;
+    border-top: 1px solid #111;
+    border-left: 1px solid #111;
+    border-right: 1px solid #111;
+    background: #fff;
+  }
+  .folder-icon::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: -4px;
+    bottom: -4px;
+    border: 1px solid #777;
+    background: #fafafa;
+    z-index: -1;
+  }
+  .kpi-title {
+    font-size: 6.8pt;
+    font-weight: 600;
+    color: #111;
+  }
+  .kpi-val {
+    font-size: 8.5pt;
+    font-weight: 700;
+    margin-top: 1px;
+  }
+
+  /* Chart Wireframe Box */
+  .chart-box {
+    border: 1px solid #111;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 6px;
+    position: relative;
+  }
+  .chart-header {
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 4px;
+    border-bottom: 1px dashed #999;
+    padding-bottom: 2px;
+  }
+  .chart-canvas-mock {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    padding: 4px;
+    gap: 4px;
+    border-left: 1px solid #333;
+    border-bottom: 1px solid #333;
+  }
+  .bar-mock {
+    width: 14px;
+    border: 1px solid #111;
+    background: #eee;
+  }
+
+  /* Alert / Prompt Box */
+  .wireframe-prompt {
+    border: 1px solid #111;
+    padding: 12px;
+    text-align: center;
+    font-size: 8.5pt;
+    margin: 8px 0;
+    background: #fafafa;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PAGE 1: AUTHENTICATION MODULE — LOGIN & RECOVERY
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="proto-title">PROTOTYPE</div>
+    <div class="proto-subtitle">AUTHENTICATION MODULE</div>
+  </div>
+
+  <!-- Top Container: Universal Role-Based Login -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Minanga Integrated School — Student Profiling and Management Information System</div>
+
+    <div class="tab-bar">
+      <div class="tab-item active">Student Login</div>
+      <div class="tab-item">Teacher Login</div>
+      <div class="tab-item">Administrator Login</div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Username / LRN:</div>
+      <div class="form-input"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Password:</div>
+      <div class="form-input">
+        <span class="input-icon-right"><span class="eye-icon"></span></span>
+      </div>
+    </div>
+
+    <!-- 3-Attempt Lockout Box -->
+    <div style="border:1px dashed #111;padding:3px 6px;font-size:6.8pt;margin:3px 0 6px;text-align:center;background:#fff8e1;">
+      Security Guard: 3-attempt threshold enabled. Account lockout timer: 15 seconds.
+    </div>
+
+    <div class="action-row">
+      <div>
+        <a class="sub-link" style="margin-right:12px;">Forgot Password?</a>
+        <a class="sub-link">Register Account (Student / Teacher)...</a>
+      </div>
+      <div class="wf-btn" style="min-width:65px;">Login</div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&darr;</div>
+
+  <!-- Bottom Container: 3-Step Security Question Password Reset -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Forgot Password & Security Question Recovery</div>
+
+    <div class="tab-bar">
+      <div class="tab-item active">1. Identify Username</div>
+      <div class="tab-item">2. Verify Security Question</div>
+      <div class="tab-item">3. Temporary Password</div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Registered Username / LRN:</div>
+      <div class="form-input"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Security Question:</div>
+      <div class="form-input" style="justify-content:space-between;">
+        <span>Select your registered security question...</span>
+        <span style="font-size:6pt;">&#9660;</span>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Your Security Answer:</div>
+      <div class="form-input"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Temporary Generated Password:</div>
+      <div class="form-input" style="font-weight:700;letter-spacing:1.5px;color:#111;">MIS-TEMP-9382</div>
+    </div>
+
+    <div class="action-row">
+      <a class="sub-link">Go Back to Login Page...</a>
+      <div class="wf-btn" style="min-width:85px;">Verify & Reset</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PAGE 2: AUTHENTICATION MODULE — ACCOUNT REGISTRATION
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="proto-title">PROTOTYPE</div>
+    <div class="proto-subtitle">AUTHENTICATION MODULE &mdash; REGISTRATION</div>
+  </div>
+
+  <!-- Top Container: Student Account Registration -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Student Self-Registration Portal</div>
+
+    <div class="form-row">
+      <div class="form-label">Learner Reference No. (LRN):</div>
+      <div class="form-input"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Student Full Name:</div>
+      <div class="form-input"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Grade Level & Section:</div>
+      <div style="flex:1;display:flex;gap:6px;">
+        <div class="form-input" style="justify-content:space-between;">
+          <span>Select Grade Level...</span><span style="font-size:6pt;">&#9660;</span>
+        </div>
+        <div class="form-input" style="justify-content:space-between;">
+          <span>Select Section...</span><span style="font-size:6pt;">&#9660;</span>
+        </div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Desired Username:</div>
+      <div class="form-input"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Password:</div>
+      <div class="form-input"><span class="input-icon-right"><span class="eye-icon"></span></span></div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Security Question & Answer:</div>
+      <div style="flex:1;display:flex;gap:6px;">
+        <div class="form-input" style="justify-content:space-between;">
+          <span>Select Security Question...</span><span style="font-size:6pt;">&#9660;</span>
+        </div>
+        <div class="form-input" style="width:130px;flex-shrink:0;">
+          <span>Enter Answer</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <a class="sub-link">Already have an account? Sign in</a>
+      <div class="wf-btn" style="min-width:90px;">Register Student</div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&darr;</div>
+
+  <!-- Bottom Container: Teacher / Faculty Registration -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Faculty / Teacher Registration & Class Assignment</div>
+
+    <div class="form-row">
+      <div class="form-label">Teacher Full Name & Title:</div>
+      <div class="form-input"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">DepEd Email Address:</div>
+      <div class="form-input"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Advisory Class (1 to 3):</div>
+      <div style="flex:1;display:flex;gap:6px;">
+        <div class="form-input" style="justify-content:space-between;">
+          <span>Class 1: Grade 10 - Section Rizal</span><span style="font-size:6pt;">&#9660;</span>
+        </div>
+        <div class="wf-btn wf-btn-sm">+ Add Class</div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Teaching Subjects:</div>
+      <div class="form-input"><span>e.g. Science, Mathematics, English</span></div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Username & Password:</div>
+      <div style="flex:1;display:flex;gap:6px;">
+        <div class="form-input"><span>Username</span></div>
+        <div class="form-input"><span>Password</span><span class="input-icon-right"><span class="eye-icon"></span></span></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Security Question & Answer:</div>
+      <div style="flex:1;display:flex;gap:6px;">
+        <div class="form-input" style="justify-content:space-between;">
+          <span>Select Question</span><span style="font-size:6pt;">&#9660;</span>
+        </div>
+        <div class="form-input"><span>Answer</span></div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <a class="sub-link">Return to Role Login Selection</a>
+      <div class="wf-btn" style="min-width:90px;">Register Faculty</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PAGE 3: STUDENT MODULE — DASHBOARD & ANNOUNCEMENTS
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="proto-title">PROTOTYPE</div>
+    <div class="proto-subtitle">STUDENT MODULE &mdash; DASHBOARD & ANNOUNCEMENTS</div>
+  </div>
+
+  <!-- Top Container: Student Dashboard Overview -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Student Portal &mdash; Student Dashboard</div>
+
+    <div class="split-layout">
+      <!-- Left Student Sidebar -->
+      <div class="sidebar-col">
+        <div class="sidebar-item active">My Dashboard</div>
+        <div class="sidebar-item">My SF10 Grades</div>
+        <div class="sidebar-item">Student Profile</div>
+        <div class="sidebar-item">Account Settings</div>
+        <div class="sidebar-item" style="margin-top:auto;">Log out</div>
+      </div>
+
+      <!-- Right Main Content -->
+      <div class="content-col">
+        <div style="border:1px solid #111;padding:4px 6px;margin-bottom:6px;font-size:7pt;background:#fafafa;">
+          <strong>Student:</strong> Juan Dela Cruz &nbsp;|&nbsp; <strong>LRN:</strong> 102938475612 &nbsp;|&nbsp; <strong>Grade 10 - Rizal</strong> (S.Y. 2025&ndash;2026)
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="folder-icon"></div>
+            <div class="kpi-title">School Year</div>
+            <div class="kpi-val">2025-2026</div>
+          </div>
+          <div class="kpi-card">
+            <div class="folder-icon"></div>
+            <div class="kpi-title">General Average</div>
+            <div class="kpi-val">89.25</div>
+          </div>
+          <div class="kpi-card">
+            <div class="folder-icon"></div>
+            <div class="kpi-title">Academic Standing</div>
+            <div class="kpi-val">Passed</div>
+          </div>
+        </div>
+
+        <div style="border:1px solid #111;padding:6px;flex:1;">
+          <div style="font-weight:700;font-size:7.5pt;margin-bottom:4px;border-bottom:1px solid #111;padding-bottom:2px;">
+            School Announcements & Advisories
+          </div>
+          <div style="font-size:7pt;line-height:1.3;margin-bottom:4px;">
+            &bull; <strong>Distribution of DepEd Form 9 (SF9) Report Cards:</strong> Scheduled this Friday at MIS Gymnasium.<br>
+            &bull; <strong>Final Term Examination Schedule:</strong> Review DepEd SF10 competencies for Term 1 to Term 3.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&darr;</div>
+
+  <!-- Bottom Container: Responsive Topbar & Mobile Bottom Nav -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Student Portal &mdash; Multi-Platform Navigation Interface</div>
+
+    <div style="font-size:7.5pt;font-weight:700;margin-bottom:4px;">Desktop Navigation Bar (&ge; 768px Viewport)</div>
+    <div style="border:1px solid #111;padding:4px 8px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:7pt;">
+      <div style="font-weight:700;">[MIS LOGO] Minanga Integrated School &bull; Student Portal</div>
+      <div style="display:flex;gap:12px;">
+        <span style="font-weight:700;text-decoration:underline;">Dashboard</span>
+        <span>My Grades</span>
+        <span>My Profile</span>
+        <span>Settings</span>
+      </div>
+      <div><span>Juan Dela Cruz (Grade 10)</span> &nbsp;|&nbsp; <span style="font-weight:600;">Logout</span></div>
+    </div>
+
+    <div style="font-size:7.5pt;font-weight:700;margin-bottom:4px;">Mobile Bottom Navigation Bar (&lt; 768px Viewport)</div>
+    <div style="border:1px solid #111;padding:6px 10px;display:flex;justify-content:space-around;font-size:7pt;background:#fafafa;">
+      <div style="text-align:center;">&#127968;<br><strong>Home</strong></div>
+      <div style="text-align:center;">&#128202;<br>Grades</div>
+      <div style="text-align:center;">&#128100;<br>Profile</div>
+      <div style="text-align:center;">&#9881;<br>Settings</div>
+    </div>
+
+    <div class="action-row" style="margin-top:auto;">
+      <div style="font-size:7pt;color:#444;">Responsive Layout: Phone (320px&ndash;767px) &bull; Tablet &bull; Desktop (1024px+)</div>
+      <div class="wf-btn">Switch Role View</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PAGE 4: STUDENT MODULE — ACADEMIC GRADES & SF10 VIEWER
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="proto-title">PROTOTYPE</div>
+    <div class="proto-subtitle">STUDENT MODULE &mdash; UNIT GRADES & SF10 VIEWER</div>
+  </div>
+
+  <!-- Top Container: SF10 Academic Grades Table -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Learner Academic Achievement & SF10 Grades Viewer</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:7pt;">
+      <div><strong>School Year:</strong> 2025&ndash;2026 &nbsp;|&nbsp; <strong>Grade Level:</strong> Grade 10 &nbsp;|&nbsp; <strong>Section:</strong> Rizal</div>
+      <div><strong>Curriculum:</strong> DepEd Standard (Term 1 &ndash; Term 3)</div>
+    </div>
+
+    <table class="wf-table">
+      <thead>
+        <tr>
+          <th style="width:35%;" class="text-left">Learning Area / Subject</th>
+          <th style="width:12%;">Term 1 (T1)</th>
+          <th style="width:12%;">Term 2 (T2)</th>
+          <th style="width:12%;">Term 3 (T3)</th>
+          <th style="width:14%;">Final Grade</th>
+          <th style="width:15%;">Remarks</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="text-left">Filipino</td><td>88</td><td>90</td><td>89</td><td><strong>89</strong></td><td>Passed</td></tr>
+        <tr><td class="text-left">English</td><td>87</td><td>89</td><td>90</td><td><strong>89</strong></td><td>Passed</td></tr>
+        <tr><td class="text-left">Mathematics</td><td>85</td><td>86</td><td>88</td><td><strong>86</strong></td><td>Passed</td></tr>
+        <tr><td class="text-left">Science</td><td>89</td><td>91</td><td>92</td><td><strong>91</strong></td><td>Passed</td></tr>
+        <tr><td class="text-left">Araling Panlipunan (AP)</td><td>90</td><td>92</td><td>91</td><td><strong>91</strong></td><td>Passed</td></tr>
+        <tr><td class="text-left">Edukasyon sa Pagpapakatao (EsP)</td><td>92</td><td>94</td><td>93</td><td><strong>93</strong></td><td>Passed</td></tr>
+        <tr><td class="text-left">Technology & Livelihood Educ. (TLE)</td><td>88</td><td>90</td><td>90</td><td><strong>89</strong></td><td>Passed</td></tr>
+        <tr><td class="text-left">MAPEH (Music, Arts, PE, Health)</td><td>91</td><td>93</td><td>92</td><td><strong>92</strong></td><td>Passed</td></tr>
+        <tr style="background:#f5f5f5;">
+          <td class="text-left"><strong>General Average</strong></td>
+          <td colspan="3" style="font-size:6.8pt;color:#444;">Auto Average of Terms</td>
+          <td><strong>88.75</strong></td>
+          <td><strong>PASSED</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="action-row">
+      <div style="font-size:7pt;">Passing Standard: 75.00 &bull; Auto-calculated formula: (T1 + T2 + T3) / 3</div>
+      <div class="wf-btn">Print Grade Slip</div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&darr;</div>
+
+  <!-- Bottom Container: Official Grade Slip (Print View) -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Official Student Grade Slip (Print & Verification View)</div>
+
+    <div style="border:1px solid #111;padding:8px;font-size:7pt;line-height:1.3;margin-bottom:8px;">
+      <div style="text-align:center;font-weight:700;margin-bottom:4px;">
+        CAGAYAN STATE UNIVERSITY &mdash; DEPED COOPERATION<br>
+        MINANGA INTEGRATED SCHOOL &bull; PIAT, CAGAYAN<br>
+        <span style="font-size:6.5pt;font-weight:normal;">OFFICIAL LEARNER RATING SHEET &bull; S.Y. 2025&ndash;2026</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;border-top:1px dashed #777;padding-top:4px;">
+        <div><strong>Student:</strong> Juan Manuel Dela Cruz<br><strong>LRN:</strong> 102938475612</div>
+        <div><strong>Grade & Section:</strong> Grade 10 - Rizal<br><strong>Date Issued:</strong> 2026-09-21</div>
+        <div><strong>General Average:</strong> 88.75<br><strong>Status:</strong> PROMOTED</div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;font-size:7pt;">
+      <div style="text-align:center;width:140px;border-top:1px solid #111;padding-top:2px;">
+        Maria Santos, LPT<br><span style="font-size:6.5pt;">Class Adviser</span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div class="wf-btn">Cancel</div>
+        <div class="wf-btn">Print Slip</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PAGE 5: STUDENT MODULE — PROFILE & GUARDIAN INFO
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="proto-title">PROTOTYPE</div>
+    <div class="proto-subtitle">STUDENT MODULE &mdash; PROFILE & GUARDIAN INFO</div>
+  </div>
+
+  <!-- Top Container: Student Profile Management -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Student Profile Management (DepEd SF1 Standard)</div>
+
+    <div class="tab-bar">
+      <div class="tab-item active">Personal Info</div>
+      <div class="tab-item">Parent / Guardian</div>
+      <div class="tab-item">Academic Background</div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Learner Reference Number (LRN):</div>
+      <div class="form-input"><span>102938475612</span></div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">First, Middle & Last Name:</div>
+      <div class="form-input"><span>Juan Manuel Dela Cruz</span></div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Sex & Birthdate:</div>
+      <div style="flex:1;display:flex;gap:6px;">
+        <div class="form-input"><span>Male</span></div>
+        <div class="form-input"><span>2010-04-15 (Age: 15)</span></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Mother Tongue & Religion:</div>
+      <div style="flex:1;display:flex;gap:6px;">
+        <div class="form-input"><span>Ibanag</span></div>
+        <div class="form-input"><span>Roman Catholic</span></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Complete Residential Address:</div>
+      <div class="form-input"><span>Minanga, Piat, Cagayan</span></div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Father & Mother's Name:</div>
+      <div style="flex:1;display:flex;gap:6px;">
+        <div class="form-input"><span>Rodrigo Dela Cruz</span></div>
+        <div class="form-input"><span>Elena Manuel Dela Cruz</span></div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <div style="font-size:7pt;color:#555;">Official DepEd profiling synchronization enabled.</div>
+      <div class="wf-btn">Edit Contact Details</div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&darr;</div>
+
+  <!-- Bottom Container: Student Self-Service Contact & Security Update -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Student Self-Service Credentials & Security Update</div>
+
+    <div class="form-row">
+      <div class="form-label">Emergency Contact Person:</div>
+      <div class="form-input"><span>Elena Manuel Dela Cruz</span></div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Emergency Mobile Number:</div>
+      <div class="form-input"><span>0917-123-4567</span></div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Current Account Password:</div>
+      <div class="form-input">
+        <span>&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span>
+        <span class="input-icon-right"><span class="eye-icon"></span></span>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">New Password & Confirm:</div>
+      <div style="flex:1;display:flex;gap:6px;">
+        <div class="form-input"><span>Enter New Password</span><span class="input-icon-right"><span class="eye-icon"></span></span></div>
+        <div class="form-input"><span>Confirm Password</span><span class="input-icon-right"><span class="eye-icon"></span></span></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Security Question & Answer:</div>
+      <div style="flex:1;display:flex;gap:6px;">
+        <div class="form-input" style="justify-content:space-between;">
+          <span>What is your mother's maiden name?</span><span style="font-size:6pt;">&#9660;</span>
+        </div>
+        <div class="form-input"><span>Manuel</span></div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <div class="wf-btn">Cancel</div>
+      <div class="wf-btn">Update Profile & Credentials</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PAGE 6: TEACHER MODULE — DASHBOARD & ADVISORY OVERVIEW
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="proto-title">PROTOTYPE</div>
+    <div class="proto-subtitle">TEACHER MODULE &mdash; DASHBOARD & ADVISORY</div>
+  </div>
+
+  <!-- Top Container: Teacher Portal Dashboard -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Teacher Portal &mdash; Faculty Advisory Workspace</div>
+
+    <div class="split-layout">
+      <!-- Left Teacher Sidebar -->
+      <div class="sidebar-col">
+        <div class="sidebar-item active">Dashboard</div>
+        <div class="sidebar-item">Student Profiles</div>
+        <div class="sidebar-item">Grade Management</div>
+        <div class="sidebar-item">Reports & SF9</div>
+        <div class="sidebar-item">Settings</div>
+        <div class="sidebar-item" style="margin-top:auto;">Log out</div>
+      </div>
+
+      <!-- Right Main Content -->
+      <div class="content-col">
+        <div style="border:1px solid #111;padding:4px 6px;margin-bottom:6px;font-size:7pt;background:#fafafa;">
+          <strong>Faculty:</strong> Maria Santos, LPT &nbsp;|&nbsp; <strong>Advisory:</strong> Grade 10 - Rizal &nbsp;|&nbsp; S.Y. 2025&ndash;2026
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="folder-icon"></div>
+            <div class="kpi-title">Advisory Students</div>
+            <div class="kpi-val">42</div>
+          </div>
+          <div class="kpi-card">
+            <div class="folder-icon"></div>
+            <div class="kpi-title">Male / Female</div>
+            <div class="kpi-val">20 / 22</div>
+          </div>
+          <div class="kpi-card">
+            <div class="folder-icon"></div>
+            <div class="kpi-title">Grading Status</div>
+            <div class="kpi-val">100% Complete</div>
+          </div>
+        </div>
+
+        <div style="border:1px solid #111;padding:6px;flex:1;">
+          <div style="font-weight:700;font-size:7.5pt;margin-bottom:4px;">Quick Advisory Actions</div>
+          <div style="display:flex;gap:6px;margin-top:6px;">
+            <div class="wf-btn" style="flex:1;">Open SF10 Grading Sheet</div>
+            <div class="wf-btn" style="flex:1;">Print SF9 Report Cards</div>
+            <div class="wf-btn" style="flex:1;">Class Masterlist</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&darr;</div>
+
+  <!-- Bottom Container: Multi-Class Advisory Switcher & Student Table -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Teacher Advisory Class Roster & Class Switcher</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:7pt;">
+      <div>
+        <strong>Select Assigned Class:</strong>
+        <span style="border:1px solid #111;padding:2px 8px;font-weight:700;">Grade 10 - Section Rizal &#9660;</span>
+      </div>
+      <div>Showing 42 Active Enrolled Students</div>
+    </div>
+
+    <table class="wf-table">
+      <thead>
+        <tr>
+          <th style="width:8%;">No.</th>
+          <th style="width:22%;">LRN</th>
+          <th style="width:30%;" class="text-left">Student Full Name</th>
+          <th style="width:10%;">Sex</th>
+          <th style="width:10%;">Age</th>
+          <th style="width:20%;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>102938475612</td><td class="text-left">Dela Cruz, Juan Manuel</td><td>Male</td><td>15</td><td><span class="wf-btn wf-btn-sm">View Profile</span></td></tr>
+        <tr><td>2</td><td>102938475613</td><td class="text-left">Garcia, Maria Clara</td><td>Female</td><td>15</td><td><span class="wf-btn wf-btn-sm">View Profile</span></td></tr>
+        <tr><td>3</td><td>102938475614</td><td class="text-left">Santos, Andres</td><td>Male</td><td>16</td><td><span class="wf-btn wf-btn-sm">View Profile</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="action-row">
+      <div style="font-size:7pt;">Desktop Required (1024px+) &bull; Teachers restricted to assigned advisory classes.</div>
+      <div class="wf-btn">Export Class Masterlist</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PAGE 7: TEACHER MODULE — STUDENT COMPREHENSIVE PROFILES
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="proto-title">PROTOTYPE</div>
+    <div class="proto-subtitle">TEACHER MODULE &mdash; STUDENT PROFILING</div>
+  </div>
+
+  <!-- Top Container: Teacher Student Profiles Browser -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Advisory Student Profiles & Demographic Directory</div>
+
+    <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;font-size:7pt;">
+      <div>Search:</div>
+      <div class="form-input" style="flex:1;"><span>Search by LRN or Student Name...</span></div>
+      <div>Filter Sex:</div>
+      <div class="form-input" style="width:80px;justify-content:space-between;"><span>All</span><span style="font-size:6pt;">&#9660;</span></div>
+      <div class="wf-btn">Search</div>
+      <div class="wf-btn">Clear</div>
+    </div>
+
+    <table class="wf-table">
+      <thead>
+        <tr>
+          <th>LRN</th>
+          <th class="text-left">Learner Name</th>
+          <th>Sex</th>
+          <th>Birthdate</th>
+          <th>Mother Tongue</th>
+          <th>Emergency Contact</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>102938475612</td><td class="text-left">Dela Cruz, Juan</td><td>Male</td><td>2010-04-15</td><td>Ibanag</td><td>0917-123-4567</td><td><span class="wf-btn wf-btn-sm">View Full SF1</span></td></tr>
+        <tr><td>102938475613</td><td class="text-left">Garcia, Maria Clara</td><td>Female</td><td>2010-08-22</td><td>Ilocano</td><td>0918-765-4321</td><td><span class="wf-btn wf-btn-sm">View Full SF1</span></td></tr>
+        <tr><td>102938475614</td><td class="text-left">Santos, Andres</td><td>Male</td><td>2009-12-05</td><td>Tagalog</td><td>0920-555-8899</td><td><span class="wf-btn wf-btn-sm">View Full SF1</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="action-row">
+      <div style="font-size:7pt;">Read-only browser for teachers &bull; Profile updates managed via Administrator.</div>
+      <div class="wf-btn">Print Roster</div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&darr;</div>
+
+  <!-- Bottom Container: Comprehensive Student Profile Modal -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Comprehensive DepEd Learner Profile (SF1 Detail Modal)</div>
+
+    <div style="border:1px solid #111;padding:8px;font-size:7pt;margin-bottom:6px;">
+      <div style="font-weight:700;margin-bottom:4px;border-bottom:1px solid #111;padding-bottom:2px;">
+        1. Learner Personal Details & Demographic Information
+      </div>
+      <div style="display:flex;justify-content:space-between;line-height:1.4;">
+        <div><strong>LRN:</strong> 102938475612<br><strong>Name:</strong> Juan Manuel Dela Cruz<br><strong>Sex:</strong> Male</div>
+        <div><strong>Birthdate:</strong> 2010-04-15<br><strong>Age:</strong> 15 years old<br><strong>Mother Tongue:</strong> Ibanag</div>
+        <div><strong>Religion:</strong> Roman Catholic<br><strong>Address:</strong> Minanga, Piat, Cagayan</div>
+      </div>
+    </div>
+
+    <div style="border:1px solid #111;padding:8px;font-size:7pt;margin-bottom:6px;">
+      <div style="font-weight:700;margin-bottom:4px;border-bottom:1px solid #111;padding-bottom:2px;">
+        2. Parent / Legal Guardian & Emergency Contact Background
+      </div>
+      <div style="display:flex;justify-content:space-between;line-height:1.4;">
+        <div><strong>Father:</strong> Rodrigo Dela Cruz<br><strong>Mother:</strong> Elena Manuel Dela Cruz</div>
+        <div><strong>Guardian:</strong> Elena Manuel Dela Cruz<br><strong>Relationship:</strong> Mother</div>
+        <div><strong>Contact No.:</strong> 0917-123-4567<br><strong>Email:</strong> elena.dc@gmail.com</div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <div class="wf-btn">Print SF1 Sheet</div>
+      <div class="wf-btn">Close Modal</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PAGE 8: TEACHER MODULE — SF10 GRADE MANAGEMENT & ENTRY
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="proto-title">PROTOTYPE</div>
+    <div class="proto-subtitle">TEACHER MODULE &mdash; SF10 GRADE MANAGEMENT</div>
+  </div>
+
+  <!-- Top Container: SF10 Grade Entry Grid -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">DepEd SF10 Term Grade Entry Grid (Quarterly / Term Grades)</div>
+
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;font-size:7pt;">
+      <div>S.Y.: <strong>2025-2026</strong></div>
+      <div>Grade: <strong>Grade 10</strong></div>
+      <div>Section: <strong>Rizal</strong></div>
+      <div>Subject:</div>
+      <div class="form-input" style="width:130px;justify-content:space-between;">
+        <span>Science</span><span style="font-size:6pt;">&#9660;</span>
+      </div>
+      <div style="margin-left:auto;font-size:6.8pt;color:#2e7d32;font-weight:700;">
+        &bull; Auto-Save Active
+      </div>
+    </div>
+
+    <table class="wf-table">
+      <thead>
+        <tr>
+          <th style="width:6%;">No.</th>
+          <th style="width:20%;">LRN</th>
+          <th style="width:28%;" class="text-left">Student Name</th>
+          <th style="width:11%;">Term 1 (T1)</th>
+          <th style="width:11%;">Term 2 (T2)</th>
+          <th style="width:11%;">Term 3 (T3)</th>
+          <th style="width:13%;">Final Grade</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>102938475612</td><td class="text-left">Dela Cruz, Juan</td><td>[ 89 ]</td><td>[ 91 ]</td><td>[ 92 ]</td><td><strong>91</strong> (Passed)</td></tr>
+        <tr><td>2</td><td>102938475613</td><td class="text-left">Garcia, Maria Clara</td><td>[ 93 ]</td><td>[ 94 ]</td><td>[ 95 ]</td><td><strong>94</strong> (Passed)</td></tr>
+        <tr><td>3</td><td>102938475614</td><td class="text-left">Santos, Andres</td><td>[ 74 ]</td><td>[ 76 ]</td><td>[ 78 ]</td><td><strong>76</strong> (Passed)</td></tr>
+        <tr><td>4</td><td>102938475615</td><td class="text-left">Tolentino, Rosa</td><td>[ 85 ]</td><td>[ 87 ]</td><td>[ 86 ]</td><td><strong>86</strong> (Passed)</td></tr>
+      </tbody>
+    </table>
+
+    <div class="action-row">
+      <div style="font-size:7pt;">Formula: Final Grade = (T1 + T2 + T3) / 3 &bull; Passing Grade &ge; 75.00</div>
+      <div style="display:flex;gap:6px;">
+        <div class="wf-btn">Export Excel / CSV</div>
+        <div class="wf-btn">Save All Grades</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&darr;</div>
+
+  <!-- Bottom Container: Grade Finalization Dialogue -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Grade Submission Finalization & Locking Dialogue</div>
+
+    <div class="wireframe-prompt">
+      <strong>Are you sure you want to finalize and lock the grades for Grade 10 - Section Rizal (Science)?</strong><br>
+      <span style="font-size:7pt;color:#555;">Once submitted, grades are locked and synced to the Master DepEd SF9 Report Card Generator.</span>
+    </div>
+
+    <div style="display:flex;justify-content:space-around;font-size:7pt;border:1px solid #111;padding:6px;margin-bottom:6px;">
+      <div><strong>Students Graded:</strong> 42 / 42</div>
+      <div><strong>Passing Rate:</strong> 100%</div>
+      <div><strong>Subject Teacher:</strong> Maria Santos, LPT</div>
+    </div>
+
+    <div class="action-row">
+      <div class="wf-btn">Cancel / Back to Grading</div>
+      <div class="wf-btn">Confirm & Lock Grades</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PAGE 9: TEACHER MODULE — OFFICIAL DEPED REPORTS & SF9
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="proto-title">PROTOTYPE</div>
+    <div class="proto-subtitle">TEACHER MODULE &mdash; DEPED FORM 9 (SF9) GENERATOR</div>
+  </div>
+
+  <!-- Top Container: Class Grade Summary Center -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Class Grade Summary Sheet & DepEd SF9 Center</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:7pt;">
+      <div><strong>Class:</strong> Grade 10 - Rizal &nbsp;|&nbsp; <strong>Adviser:</strong> Maria Santos, LPT &nbsp;|&nbsp; <strong>S.Y.:</strong> 2025-2026</div>
+      <div style="display:flex;gap:6px;">
+        <div class="wf-btn wf-btn-sm">Print Grade Summary</div>
+        <div class="wf-btn wf-btn-sm">Batch Print All SF9s</div>
+      </div>
+    </div>
+
+    <table class="wf-table">
+      <thead>
+        <tr>
+          <th>LRN</th>
+          <th class="text-left">Student Name</th>
+          <th>Fil</th>
+          <th>Eng</th>
+          <th>Math</th>
+          <th>Sci</th>
+          <th>AP</th>
+          <th>EsP</th>
+          <th>TLE</th>
+          <th>MAPEH</th>
+          <th>Gen Ave</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>102938475612</td><td class="text-left">Dela Cruz, Juan</td><td>89</td><td>89</td><td>86</td><td>91</td><td>91</td><td>93</td><td>89</td><td>92</td><td><strong>88.75</strong></td><td><span class="wf-btn wf-btn-sm">SF9 Card</span></td></tr>
+        <tr><td>102938475613</td><td class="text-left">Garcia, Maria</td><td>93</td><td>94</td><td>92</td><td>94</td><td>95</td><td>96</td><td>93</td><td>95</td><td><strong>94.00</strong></td><td><span class="wf-btn wf-btn-sm">SF9 Card</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="action-row">
+      <div style="font-size:7pt;">Locked to advisory class &bull; Real-time computation from sf9-renderer.js</div>
+      <div class="wf-btn">Export DepEd Class Record</div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&darr;</div>
+
+  <!-- Bottom Container: Official DepEd SF9 Report Card Print View -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Official DepEd Form 9 (SF9) Progress Report Card (11" &times; 8.5" Landscape Print View)</div>
+
+    <div style="border:1px solid #111;padding:6px;display:flex;gap:8px;flex:1;">
+      <!-- Left Panel: Learning Progress -->
+      <div style="flex:1;border-right:1px solid #111;padding-right:6px;font-size:6.8pt;">
+        <div style="text-align:center;font-weight:700;margin-bottom:3px;">REPORT ON LEARNING PROGRESS AND ACHIEVEMENT</div>
+        <table class="wf-table" style="font-size:6.5pt;margin-bottom:4px;">
+          <thead>
+            <tr><th class="text-left">Learning Areas</th><th>T1</th><th>T2</th><th>T3</th><th>Final</th><th>Remarks</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="text-left">Filipino</td><td>88</td><td>90</td><td>89</td><td>89</td><td>Passed</td></tr>
+            <tr><td class="text-left">English</td><td>87</td><td>89</td><td>90</td><td>89</td><td>Passed</td></tr>
+            <tr><td class="text-left">Mathematics</td><td>85</td><td>86</td><td>88</td><td>86</td><td>Passed</td></tr>
+            <tr><td class="text-left">Science</td><td>89</td><td>91</td><td>92</td><td>91</td><td>Passed</td></tr>
+            <tr><td class="text-left">Araling Panlipunan</td><td>90</td><td>92</td><td>91</td><td>91</td><td>Passed</td></tr>
+            <tr><td class="text-left">General Average</td><td colspan="3"></td><td><strong>88.75</strong></td><td>PASSED</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Right Panel: Core Values & Signatures -->
+      <div style="flex:1;font-size:6.8pt;display:flex;flex-direction:column;">
+        <div style="text-align:center;font-weight:700;margin-bottom:3px;">REPORT ON LEARNER'S OBSERVED VALUES</div>
+        <div style="font-size:6.5pt;line-height:1.3;margin-bottom:4px;">
+          &bull; <strong>Maka-Diyos:</strong> Always Observed (AO)<br>
+          &bull; <strong>Makatao:</strong> Always Observed (AO)<br>
+          &bull; <strong>Makakalikasan:</strong> Always Observed (AO)<br>
+          &bull; <strong>Makabansa:</strong> Always Observed (AO)
+        </div>
+        <div style="margin-top:auto;display:flex;justify-content:space-between;border-top:1px dashed #777;padding-top:4px;">
+          <div style="text-align:center;width:90px;border-top:1px solid #111;">Class Adviser</div>
+          <div style="text-align:center;width:90px;border-top:1px solid #111;">School Principal</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <div class="wf-btn">Close Preview</div>
+      <div class="wf-btn">Print DepEd Form 9</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PAGE 10: ADMINISTRATOR MODULE — DASHBOARD & KPI ANALYTICS
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="proto-title">PROTOTYPE</div>
+    <div class="proto-subtitle">ADMINISTRATOR MODULE &mdash; DASHBOARD & ANALYTICS</div>
+  </div>
+
+  <!-- Top Container: Admin Master Dashboard -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Admin Portal &mdash; Institutional Control Dashboard</div>
+
+    <div class="split-layout">
+      <!-- Left Admin Sidebar -->
+      <div class="sidebar-col">
+        <div class="sidebar-item active">Dashboard</div>
+        <div class="sidebar-item">Student Management</div>
+        <div class="sidebar-item">Teacher Management</div>
+        <div class="sidebar-item">Section Management</div>
+        <div class="sidebar-item">Subject Management</div>
+        <div class="sidebar-item">Reports</div>
+        <div class="sidebar-item">Report Signatories</div>
+        <div class="sidebar-item">Account Management</div>
+        <div class="sidebar-item">Analytics</div>
+        <div class="sidebar-item">Manage Security QT</div>
+        <div class="sidebar-item">Manage School Year</div>
+        <div class="sidebar-item" style="margin-top:auto;">Logout</div>
+      </div>
+
+      <!-- Right Main Content -->
+      <div class="content-col">
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="folder-icon"></div>
+            <div class="kpi-title">Total Students</div>
+            <div class="kpi-val">524</div>
+          </div>
+          <div class="kpi-card">
+            <div class="folder-icon"></div>
+            <div class="kpi-title">Faculty Teachers</div>
+            <div class="kpi-val">28</div>
+          </div>
+          <div class="kpi-card">
+            <div class="folder-icon"></div>
+            <div class="kpi-title">Class Sections</div>
+            <div class="kpi-val">14</div>
+          </div>
+          <div class="kpi-card">
+            <div class="folder-icon"></div>
+            <div class="kpi-title">Active S.Y.</div>
+            <div class="kpi-val">2025-2026</div>
+          </div>
+        </div>
+
+        <div style="border:1px solid #111;padding:6px;flex:1;display:flex;gap:6px;">
+          <div class="chart-box">
+            <div class="chart-header">Enrollment by Grade Level</div>
+            <div class="chart-canvas-mock">
+              <div class="bar-mock" style="height:35px;"></div>
+              <div class="bar-mock" style="height:45px;"></div>
+              <div class="bar-mock" style="height:55px;"></div>
+              <div class="bar-mock" style="height:65px;"></div>
+              <div class="bar-mock" style="height:50px;"></div>
+            </div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-header">Gender Distribution</div>
+            <div style="flex:1;display:flex;align-items:center;justify-content:center;font-size:7pt;">
+              <div style="width:40px;height:40px;border-radius:50%;border:3px solid #111;display:flex;align-items:center;justify-content:center;">
+                51% M
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&darr;</div>
+
+  <!-- Bottom Container: Quick Administrative Actions -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">System Quick Actions & Data Synchronization Hub</div>
+
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <div class="wf-btn" style="flex:1;padding:6px;">+ Register New Student</div>
+      <div class="wf-btn" style="flex:1;padding:6px;">+ Add Faculty Teacher</div>
+      <div class="wf-btn" style="flex:1;padding:6px;">Generate Masterlist (SF1)</div>
+      <div class="wf-btn" style="flex:1;padding:6px;">Database Integrity Check</div>
+    </div>
+
+    <div style="border:1px solid #111;padding:6px;font-size:7pt;background:#fafafa;">
+      <strong>System Notice:</strong> Automated system memory check (<code>system_memory_check.php</code>) verified: 0 errors across Database schema, API endpoints, Role auth guards, and Theme assets.
+    </div>
+
+    <div class="action-row">
+      <div style="font-size:7pt;">Desktop Mode Required (1024px+) &bull; Minanga Integrated School</div>
+      <div class="wf-btn">Export Analytics Data</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PAGE 11: ADMINISTRATOR MODULE — STUDENT PROFILING CRUD
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="proto-title">PROTOTYPE</div>
+    <div class="proto-subtitle">ADMINISTRATOR MODULE &mdash; STUDENT PROFILING</div>
+  </div>
+
+  <!-- Top Container: Student Masterlist Management -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Student Profiling Master Database & Roster Console</div>
+
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;font-size:7pt;">
+      <div>Filter Grade:</div>
+      <div class="form-input" style="width:85px;justify-content:space-between;"><span>Grade 10</span><span style="font-size:6pt;">&#9660;</span></div>
+      <div>Section:</div>
+      <div class="form-input" style="width:85px;justify-content:space-between;"><span>Rizal</span><span style="font-size:6pt;">&#9660;</span></div>
+      <div class="form-input" style="flex:1;"><span>Search LRN or Student Name...</span></div>
+      <div class="wf-btn">+ Add Student</div>
+    </div>
+
+    <table class="wf-table">
+      <thead>
+        <tr>
+          <th>LRN</th>
+          <th class="text-left">Student Full Name</th>
+          <th>Grade & Section</th>
+          <th>Sex</th>
+          <th>Age</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>102938475612</td><td class="text-left">Dela Cruz, Juan Manuel</td><td>Grade 10 - Rizal</td><td>Male</td><td>15</td><td>Active</td><td><span class="wf-btn wf-btn-sm">View</span> <span class="wf-btn wf-btn-sm">Edit</span> <span class="wf-btn wf-btn-sm">Delete</span></td></tr>
+        <tr><td>102938475613</td><td class="text-left">Garcia, Maria Clara</td><td>Grade 10 - Rizal</td><td>Female</td><td>15</td><td>Active</td><td><span class="wf-btn wf-btn-sm">View</span> <span class="wf-btn wf-btn-sm">Edit</span> <span class="wf-btn wf-btn-sm">Delete</span></td></tr>
+        <tr><td>102938475614</td><td class="text-left">Santos, Andres</td><td>Grade 10 - Rizal</td><td>Male</td><td>16</td><td>Active</td><td><span class="wf-btn wf-btn-sm">View</span> <span class="wf-btn wf-btn-sm">Edit</span> <span class="wf-btn wf-btn-sm">Delete</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="action-row">
+      <div style="font-size:7pt;">Total Records: 524 Students &bull; 9 Database Tables Synchronized</div>
+      <div class="wf-btn">Export Masterlist</div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&darr;</div>
+
+  <!-- Bottom Container: Add / Edit Student Modal -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Add / Edit Student Profiling Modal (DepEd Comprehensive SF1)</div>
+
+    <div class="tab-bar">
+      <div class="tab-item active">1. Personal Info</div>
+      <div class="tab-item">2. Family & Guardian</div>
+      <div class="tab-item">3. Academic Enrollment</div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">12-Digit LRN & Full Name:</div>
+      <div style="flex:1;display:flex;gap:6px;">
+        <div class="form-input" style="width:110px;flex-shrink:0;"><span>102938475612</span></div>
+        <div class="form-input"><span>First Name</span></div>
+        <div class="form-input"><span>Middle Name</span></div>
+        <div class="form-input"><span>Last Name</span></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Sex, Birthdate & Age:</div>
+      <div style="flex:1;display:flex;gap:6px;">
+        <div class="form-input" style="width:80px;flex-shrink:0;justify-content:space-between;"><span>Male</span><span style="font-size:6pt;">&#9660;</span></div>
+        <div class="form-input"><span>YYYY-MM-DD</span></div>
+        <div class="form-input" style="width:60px;flex-shrink:0;"><span>Age</span></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Mother Tongue & Religion:</div>
+      <div style="flex:1;display:flex;gap:6px;">
+        <div class="form-input"><span>Mother Tongue</span></div>
+        <div class="form-input"><span>Religion</span></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Permanent Address:</div>
+      <div class="form-input"><span>Barangay, Municipality, Province</span></div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Father, Mother & Guardian:</div>
+      <div style="flex:1;display:flex;gap:6px;">
+        <div class="form-input"><span>Father's Name</span></div>
+        <div class="form-input"><span>Mother's Name</span></div>
+        <div class="form-input"><span>Guardian Name</span></div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <div class="wf-btn">Cancel</div>
+      <div class="wf-btn">Save Student Record</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PAGE 12: ADMINISTRATOR MODULE — FACULTY & CLASS SECTIONS
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="proto-title">PROTOTYPE</div>
+    <div class="proto-subtitle">ADMINISTRATOR MODULE &mdash; FACULTY & SECTIONS</div>
+  </div>
+
+  <!-- Top Container: Teacher Management -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Faculty & Teacher Roster Management</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:7pt;">
+      <div class="form-input" style="width:260px;"><span>Search faculty by name or email...</span></div>
+      <div class="wf-btn">+ Add New Teacher</div>
+    </div>
+
+    <table class="wf-table">
+      <thead>
+        <tr>
+          <th class="text-left">Teacher Name</th>
+          <th>Username / Email</th>
+          <th>Assigned Advisory Classes</th>
+          <th>Teaching Subjects</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="text-left">Maria Santos, LPT</td><td>msantos@deped.gov.ph</td><td>Grade 10 - Rizal</td><td>Filipino, EsP</td><td>Active</td><td><span class="wf-btn wf-btn-sm">Edit</span> <span class="wf-btn wf-btn-sm">Classes</span> <span class="wf-btn wf-btn-sm">Delete</span></td></tr>
+        <tr><td class="text-left">Pedro Penduko, LPT</td><td>ppenduko@deped.gov.ph</td><td>Grade 9 - Luna</td><td>Science, Math</td><td>Active</td><td><span class="wf-btn wf-btn-sm">Edit</span> <span class="wf-btn wf-btn-sm">Classes</span> <span class="wf-btn wf-btn-sm">Delete</span></td></tr>
+        <tr><td class="text-left">Jose Rizal, LPT</td><td>jrizal@deped.gov.ph</td><td>Grade 8 - Mabini</td><td>English, AP</td><td>Active</td><td><span class="wf-btn wf-btn-sm">Edit</span> <span class="wf-btn wf-btn-sm">Classes</span> <span class="wf-btn wf-btn-sm">Delete</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="action-row">
+      <div style="font-size:7pt;">Supports 1-to-3 Advisory Class assignments per faculty via <code>teacher_classes</code>.</div>
+      <div class="wf-btn">Export Faculty List</div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&darr;</div>
+
+  <!-- Bottom Container: Class Sections & Subject Catalogue -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Class Section & Subject Catalogue Configuration</div>
+
+    <div style="display:flex;gap:12px;flex:1;">
+      <!-- Sections List -->
+      <div style="flex:1;border-right:1px solid #111;padding-right:8px;">
+        <div style="font-weight:700;font-size:7.5pt;margin-bottom:4px;">Manage Class Sections</div>
+        <div style="display:flex;gap:4px;margin-bottom:6px;">
+          <div class="form-input" style="width:70px;justify-content:space-between;"><span>Grade 10</span><span style="font-size:6pt;">&#9660;</span></div>
+          <div class="form-input"><span>Section Name</span></div>
+          <div class="wf-btn wf-btn-sm">+ Add</div>
+        </div>
+        <table class="wf-table" style="font-size:6.8pt;">
+          <thead><tr><th>Grade</th><th>Section Name</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>Grade 10</td><td>Rizal</td><td><span class="wf-btn wf-btn-sm">Delete</span></td></tr>
+            <tr><td>Grade 10</td><td>Bonifacio</td><td><span class="wf-btn wf-btn-sm">Delete</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Subject Catalogue -->
+      <div style="flex:1;">
+        <div style="font-weight:700;font-size:7.5pt;margin-bottom:4px;">Manage Subject Catalogue</div>
+        <div style="display:flex;gap:4px;margin-bottom:6px;">
+          <div class="form-input" style="width:70px;justify-content:space-between;"><span>JHS</span><span style="font-size:6pt;">&#9660;</span></div>
+          <div class="form-input"><span>Subject Name</span></div>
+          <div class="wf-btn wf-btn-sm">+ Add</div>
+        </div>
+        <table class="wf-table" style="font-size:6.8pt;">
+          <thead><tr><th>Subject Name</th><th>Grade Group</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>Science</td><td>Junior High (JHS)</td><td><span class="wf-btn wf-btn-sm">Delete</span></td></tr>
+            <tr><td>Mathematics</td><td>Junior High (JHS)</td><td><span class="wf-btn wf-btn-sm">Delete</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <div style="font-size:7pt;">Catalogue auto-populates SF10 grading sheets for teachers.</div>
+      <div class="wf-btn">Save Changes</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PAGE 13: ADMINISTRATOR MODULE — ACADEMIC CALENDAR & SECURITY
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="proto-title">PROTOTYPE</div>
+    <div class="proto-subtitle">ADMINISTRATOR MODULE &mdash; CALENDAR & SECURITY</div>
+  </div>
+
+  <!-- Top Container: School Year Management -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Academic Calendar & Active School Year Management</div>
+
+    <div style="border:1px solid #111;padding:4px 6px;margin-bottom:6px;font-size:7pt;background:#fafafa;">
+      Active school year sets default enrollment parameters and grading calculations across Admin, Teacher, and Student portals.
+    </div>
+
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+      <div class="form-input" style="width:120px;"><span>e.g. 2026-2027</span></div>
+      <div class="form-input" style="width:100px;"><span>Start Date</span></div>
+      <div class="form-input" style="width:100px;"><span>End Date</span></div>
+      <div class="wf-btn">+ Add School Year</div>
+    </div>
+
+    <table class="wf-table">
+      <thead>
+        <tr>
+          <th>School Year</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>2025&ndash;2026</strong></td><td>2025-08-15</td><td>2026-06-30</td><td><span style="font-weight:700;">[ CURRENT ACTIVE ]</span></td><td><span class="wf-btn wf-btn-sm">Edit</span></td></tr>
+        <tr><td>2024&ndash;2025</td><td>2024-08-15</td><td>2025-06-30</td><td>Archived</td><td><span class="wf-btn wf-btn-sm">Set Active</span> <span class="wf-btn wf-btn-sm">Edit</span></td></tr>
+        <tr><td>2026&ndash;2027</td><td>2026-08-15</td><td>2027-06-30</td><td>Upcoming</td><td><span class="wf-btn wf-btn-sm">Set Active</span> <span class="wf-btn wf-btn-sm">Edit</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="action-row">
+      <div style="font-size:7pt;">Only one school year may have <code>is_active = 1</code> at a time.</div>
+      <div class="wf-btn">Apply Calendar</div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&darr;</div>
+
+  <!-- Bottom Container: Security Questions Catalogue -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Global Security Question Bank (Password Recovery Masterlist)</div>
+
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+      <div class="form-input" style="flex:1;"><span>Enter new security question...</span></div>
+      <div class="wf-btn">+ Add Security Question</div>
+    </div>
+
+    <table class="wf-table">
+      <thead>
+        <tr>
+          <th style="width:8%;">ID</th>
+          <th style="width:62%;" class="text-left">Security Question Text</th>
+          <th style="width:18%;">Registered Users</th>
+          <th style="width:12%;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td class="text-left">What is the name of your first pet?</td><td>142 Users</td><td><span class="wf-btn wf-btn-sm">Edit</span> <span class="wf-btn wf-btn-sm">Delete</span></td></tr>
+        <tr><td>2</td><td class="text-left">What is your mother's maiden name?</td><td>215 Users</td><td><span class="wf-btn wf-btn-sm">Edit</span> <span class="wf-btn wf-btn-sm">Delete</span></td></tr>
+        <tr><td>3</td><td class="text-left">What city or municipality were you born in?</td><td>88 Users</td><td><span class="wf-btn wf-btn-sm">Edit</span> <span class="wf-btn wf-btn-sm">Delete</span></td></tr>
+        <tr><td>4</td><td class="text-left">What was the name of your elementary school?</td><td>79 Users</td><td><span class="wf-btn wf-btn-sm">Edit</span> <span class="wf-btn wf-btn-sm">Delete</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="action-row">
+      <div style="font-size:7pt;">Universal catalogue utilized in 3-step password recovery workflow.</div>
+      <div class="wf-btn">Save Bank</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PAGE 14: ADMINISTRATOR MODULE — USER ACCOUNTS & AUDIT
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="proto-title">PROTOTYPE</div>
+    <div class="proto-subtitle">ADMINISTRATOR MODULE &mdash; USER ACCOUNTS</div>
+  </div>
+
+  <!-- Top Container: User Accounts Directory -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">System User Accounts Directory & Role Access Control</div>
+
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;font-size:7pt;">
+      <div>Role:</div>
+      <div class="form-input" style="width:90px;justify-content:space-between;"><span>All Roles</span><span style="font-size:6pt;">&#9660;</span></div>
+      <div>Status:</div>
+      <div class="form-input" style="width:80px;justify-content:space-between;"><span>Active</span><span style="font-size:6pt;">&#9660;</span></div>
+      <div class="form-input" style="flex:1;"><span>Search username or name...</span></div>
+      <div class="wf-btn">+ Create User</div>
+    </div>
+
+    <table class="wf-table">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th class="text-left">Full Name</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Created At</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>admin</td><td class="text-left">System Administrator</td><td>Administrator</td><td>Active</td><td>2025-01-10</td><td><span class="wf-btn wf-btn-sm">Edit</span> <span class="wf-btn wf-btn-sm">Reset PW</span></td></tr>
+        <tr><td>msantos</td><td class="text-left">Maria Santos, LPT</td><td>Teacher</td><td>Active</td><td>2025-06-12</td><td><span class="wf-btn wf-btn-sm">Toggle</span> <span class="wf-btn wf-btn-sm">Reset PW</span></td></tr>
+        <tr><td>102938475612</td><td class="text-left">Juan Dela Cruz</td><td>Student</td><td>Active</td><td>2025-08-20</td><td><span class="wf-btn wf-btn-sm">Toggle</span> <span class="wf-btn wf-btn-sm">Reset PW</span></td></tr>
+        <tr><td>jdoe</td><td class="text-left">John Doe</td><td>Student</td><td>Inactive (Locked)</td><td>2025-08-21</td><td><span class="wf-btn wf-btn-sm">Activate</span> <span class="wf-btn wf-btn-sm">Reset PW</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="action-row">
+      <div style="font-size:7pt;">Account lockout threshold: 3 failed attempts &bull; Managed via <code>users</code> table.</div>
+      <div class="wf-btn">Export Accounts</div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&darr;</div>
+
+  <!-- Bottom Container: Create User Account & Status Modal -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Create User Account & Access Status Dialogue</div>
+
+    <div class="form-row">
+      <div class="form-label">User Role:</div>
+      <div class="form-input" style="justify-content:space-between;">
+        <span>Select Account Role (Administrator / Teacher / Student)</span><span style="font-size:6pt;">&#9660;</span>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Account Full Name:</div>
+      <div class="form-input"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Username / Identifier:</div>
+      <div class="form-input"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Initial Password:</div>
+      <div class="form-input"><span class="input-icon-right"><span class="eye-icon"></span></span></div>
+    </div>
+
+    <div class="wireframe-prompt" style="padding:6px;margin:6px 0;font-size:7.5pt;">
+      <strong>Account Status Override:</strong> Toggling account status immediately revokes or grants active session access to the portal.
+    </div>
+
+    <div class="action-row">
+      <div class="wf-btn">Cancel</div>
+      <div class="wf-btn">Create User Account</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PAGE 15: ADMINISTRATOR MODULE — OFFICIAL DEPED REPORTS & SIGNATORIES
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <div class="proto-title">PROTOTYPE</div>
+    <div class="proto-subtitle">ADMINISTRATOR MODULE &mdash; REPORTS & SIGNATORIES</div>
+  </div>
+
+  <!-- Top Container: DepEd Official Reports Engine -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">DepEd Official Institutional Reports & Masterlist Engine</div>
+
+    <div class="form-row">
+      <div class="form-label">Select Report Type:</div>
+      <div class="form-input" style="justify-content:space-between;">
+        <span>DepEd School Form 1 (SF1 Masterlist) / Gender Breakdown / SF9 Batch Cards</span>
+        <span style="font-size:6pt;">&#9660;</span>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">School Year & Grade Filter:</div>
+      <div style="flex:1;display:flex;gap:6px;">
+        <div class="form-input" style="justify-content:space-between;"><span>S.Y. 2025-2026</span><span style="font-size:6pt;">&#9660;</span></div>
+        <div class="form-input" style="justify-content:space-between;"><span>Grade 10 (All Sections)</span><span style="font-size:6pt;">&#9660;</span></div>
+      </div>
+    </div>
+
+    <div style="border:1px solid #111;padding:6px;font-size:6.8pt;line-height:1.3;margin-bottom:8px;">
+      <div style="text-align:center;font-weight:700;">REPUBLIC OF THE PHILIPPINES &bull; DEPARTMENT OF EDUCATION &bull; REGION II</div>
+      <div style="text-align:center;">SCHOOLS DIVISION OF CAGAYAN &bull; MINANGA INTEGRATED SCHOOL (PIAT, CAGAYAN)</div>
+      <div style="display:flex;justify-content:space-around;margin-top:4px;border-top:1px dashed #777;padding-top:4px;">
+        <div><strong>Total Enrolled:</strong> 524</div>
+        <div><strong>Total Males:</strong> 268 (51.1%)</div>
+        <div><strong>Total Females:</strong> 256 (48.9%)</div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <div class="wf-btn">Preview Report</div>
+      <div style="display:flex;gap:6px;">
+        <div class="wf-btn">Print Report</div>
+        <div class="wf-btn">Export PDF / CSV</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&darr;</div>
+
+  <!-- Bottom Container: Report Signatories Setup & Admin Security -->
+  <div class="wireframe-box">
+    <div class="box-title-bar">Report Signatories Customization & System Credentials</div>
+
+    <div class="form-row">
+      <div class="form-label">Prepared By (Adviser / Registrar):</div>
+      <div style="flex:1;display:flex;gap:6px;">
+        <div class="form-input"><span>Maria Santos, LPT</span></div>
+        <div class="form-input" style="width:110px;flex-shrink:0;"><span>Class Adviser</span></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Noted By (School Principal):</div>
+      <div style="flex:1;display:flex;gap:6px;">
+        <div class="form-input"><span>Dr. Roberto A. Martinez</span></div>
+        <div class="form-input" style="width:110px;flex-shrink:0;"><span>School Principal II</span></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Update Admin Password:</div>
+      <div style="flex:1;display:flex;gap:6px;">
+        <div class="form-input"><span>Current Password</span></div>
+        <div class="form-input"><span>New Password</span><span class="input-icon-right"><span class="eye-icon"></span></span></div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <div>
+        <a class="sub-link" style="margin-right:12px;">System Developers Profile Modal...</a>
+        <a class="sub-link">Logout of SPSMIS</a>
+      </div>
+      <div class="wf-btn">Update Signatories & Credentials</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
+HTML;
+
+$htmlPath = __DIR__ . '/spsmis_system_prototype.html';
+file_put_contents($htmlPath, $html);
+echo "Generated HTML at: $htmlPath\n";
+
+$pdfPath = __DIR__ . '/spsmis_prototype_system.pdf';
+$chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+$tempDir = __DIR__ . '/temp_chrome_profile';
+
+$cmd = sprintf(
+    '"%s" --headless=new --user-data-dir="%s" --no-pdf-header-footer --print-to-pdf="%s" "file:///%s"',
+    $chromePath,
+    $tempDir,
+    $pdfPath,
+    str_replace('\\', '/', $htmlPath)
+);
+
+echo "Executing Chrome headless print-to-pdf...\n";
+exec($cmd, $output, $returnVar);
+
+if (file_exists($pdfPath) && filesize($pdfPath) > 0) {
+    echo "SUCCESS: Generated PDF at: $pdfPath (" . filesize($pdfPath) . " bytes)\n";
+    // Also copy to prototype_system_spsmis.pdf so the user has easy access
+    copy($pdfPath, __DIR__ . '/prototype_system_spsmis.pdf');
+    echo "Copied to: " . __DIR__ . "/prototype_system_spsmis.pdf\n";
+} else {
+    echo "ERROR: Failed to generate PDF. Return code: $returnVar\n";
+}
+
+// Clean up temp dir
+if (is_dir($tempDir)) {
+    exec("rmdir /s /q \"$tempDir\"");
+}
