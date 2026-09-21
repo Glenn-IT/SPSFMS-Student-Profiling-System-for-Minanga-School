@@ -708,8 +708,8 @@ $principalName = $activeStudent['principal'] ?? 'School Head';
             <?php
             $allFinals = [];
 
-            if ($selectedId === 'sample_tvl_12' || empty($studentGradeRows)):
-              // Render exact TVL-ICT 12 categories from SF9-TVL-ICT12.pdf
+            if ($selectedId === 'sample_tvl_12'):
+              // Render exact TVL-ICT 12 categories from SF9-TVL-ICT12.pdf (sample/demo only)
               foreach ($defaultTvlCategories as $catName => $subjs):
             ?>
               <tr>
@@ -733,19 +733,28 @@ $principalName = $activeStudent['principal'] ?? 'School Head';
             <?php endforeach; ?>
 
             <?php else:
-              // Render Real Student Grades from Database
+              // Render real student's grades (or dashes if none recorded yet)
               $gradeMap = [];
               foreach ($studentGradeRows as $r) { $gradeMap[$r['subject']] = $r; }
               $subjList = getSubjectsForGrade($grade, $pdo);
-              foreach ($subjList as $subName):
-                $r = $gradeMap[$subName] ?? null;
-                $t1 = $r ? ($r['t1'] ?? $r['q1'] ?? null) : null;
-                $t2 = $r ? ($r['t2'] ?? $r['q2'] ?? null) : null;
-                $t3 = $r ? ($r['t3'] ?? $r['q3'] ?? null) : null;
-                $terms = array_filter([$t1, $t2, $t3], fn($v) => is_numeric($v));
-                $fg = !empty($terms) ? round(array_sum($terms) / count($terms)) : '—';
-                $rem = is_numeric($fg) ? (($fg >= 75) ? 'Passed' : 'Failed') : '—';
-                if (is_numeric($fg)) { $allFinals[] = $fg; }
+
+              if (empty($subjList)):
+            ?>
+              <tr>
+                <td colspan="6" class="text-center text-muted" style="padding: 12px; font-style: italic;">
+                  No subjects configured for this grade level.
+                </td>
+              </tr>
+            <?php else:
+                foreach ($subjList as $subName):
+                  $r = $gradeMap[$subName] ?? null;
+                  $t1 = $r ? ($r['t1'] ?? $r['q1'] ?? null) : null;
+                  $t2 = $r ? ($r['t2'] ?? $r['q2'] ?? null) : null;
+                  $t3 = $r ? ($r['t3'] ?? $r['q3'] ?? null) : null;
+                  $terms = array_filter([$t1, $t2, $t3], fn($v) => is_numeric($v));
+                  $fg = !empty($terms) ? round(array_sum($terms) / count($terms)) : '—';
+                  $rem = is_numeric($fg) ? (($fg >= 75) ? 'Passed' : 'Failed') : '—';
+                  if (is_numeric($fg)) { $allFinals[] = $fg; }
             ?>
               <tr class="sf9-subject-row">
                 <td class="sf9-subj-name editable-field" contenteditable="false"><?= htmlspecialchars($subName) ?></td>
@@ -755,7 +764,7 @@ $principalName = $activeStudent['principal'] ?? 'School Head';
                 <td class="text-center grade-final fw-bold"><?= $fg ?></td>
                 <td class="text-center grade-remarks fw-bold"><?= $rem ?></td>
               </tr>
-            <?php endforeach; endif; ?>
+            <?php endforeach; endif; endif; ?>
 
             <!-- General Average Row -->
             <?php

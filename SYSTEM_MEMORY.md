@@ -60,6 +60,7 @@ SPSFMS/
 │   │   ├── signatories.php             # Report signatory customization
 │   │   ├── accounts.php                # System users & account status toggling
 │   │   ├── analytics.php               # Demographic charts & enrollment analytics
+│   │   ├── announcements.php           # Announcements CRUD (post/edit/delete notices to students & teachers)
 │   │   ├── settings.php                # Admin profile, credentials, security QT
 │   │   ├── security-questions.php      # Global security question catalogue
 │   │   └── school-years.php            # Academic calendar & active school year management
@@ -106,8 +107,10 @@ SPSFMS/
 │   │   └── index.php                   # GET/POST/PUT/DELETE: Security question bank
 │   ├── school-years/
 │   │   └── index.php                   # GET/POST: School years CRUD & active activation
-│   └── analytics/
+│   ├── analytics/
 │       └── index.php                   # GET: Aggregated enrollment & demographic data
+│   └── announcements/
+│       └── index.php                   # GET/POST/PUT/DELETE: Announcements CRUD (admin-only)
 │
 └── assets/
     ├── css/

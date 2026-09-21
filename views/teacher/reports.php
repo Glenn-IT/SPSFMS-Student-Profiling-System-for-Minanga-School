@@ -432,7 +432,7 @@ $selectedStudentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 0;
                     <th class="text-center">Graded Subjects</th>
                     <th class="text-center">General Average</th>
                     <th class="text-center">Status</th>
-                    <th class="text-center no-print" style="width:90px;">SF10</th>
+                    <th class="text-center no-print" style="width:90px;">SF9</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -451,8 +451,8 @@ $selectedStudentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 0;
                     <td class="text-center fw-bold fs-6"><?= $avg ?? '—' ?></td>
                     <td class="text-center" style="color:<?= $remarks==='Passed'?'#16a34a':($remarks==='Failed'?'#dc2626':'inherit') ?>;font-weight:700;"><?= $remarks ?></td>
                     <td class="text-center no-print">
-                      <a href="?type=sf10&student_id=<?= $s['id'] ?>&sy=<?= urlencode($sy) ?>" class="btn btn-xs btn-outline-success py-1 px-2" style="font-size:.78rem;" title="View & Print SF10">
-                        <i class="fas fa-file-invoice me-1"></i>SF10
+                      <a href="?type=sf9&student_id=<?= $s['id'] ?>&sy=<?= urlencode($sy) ?>" class="btn btn-xs btn-outline-success py-1 px-2" style="font-size:.78rem;" title="View &amp; Print SF9">
+                        <i class="fas fa-file-invoice me-1"></i>SF9
                       </a>
                     </td>
                   </tr>

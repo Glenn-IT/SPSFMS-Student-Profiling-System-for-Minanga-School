@@ -208,11 +208,6 @@ include __DIR__ . '/../../includes/student-navbar.php';
                 General Average: <?= number_format($avg, 2) ?>
               </div>
             <?php endif; ?>
-            <?php if ($student): ?>
-              <a href="<?= BASE_URL ?>/test-sf9.php?student_id=<?= $student['id'] ?>&sy=<?= urlencode(SCHOOL_YEAR) ?>" target="_blank" class="btn btn-sm btn-outline-success fw-bold">
-                <i class="fas fa-print me-1"></i>Print SF9
-              </a>
-            <?php endif; ?>
           </div>
         </div>
 
