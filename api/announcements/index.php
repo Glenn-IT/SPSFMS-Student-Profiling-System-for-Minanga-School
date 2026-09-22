@@ -2,24 +2,42 @@
 require_once __DIR__ . '/../../config/database.php';
 header('Content-Type: application/json');
 
-if (empty($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
+if (empty($_SESSION['user'])) {
     http_response_code(401);
     echo json_encode(['ok' => false, 'message' => 'Unauthorized']);
     exit;
 }
 
-$method = $_SERVER['REQUEST_METHOD'];
+$userRole = $_SESSION['user']['role'] ?? '';
+$method   = $_SERVER['REQUEST_METHOD'];
 
 // GET — list announcements
 if ($method === 'GET') {
-    $audience = $_GET['audience'] ?? '';
-    if ($audience && in_array($audience, ['all', 'student', 'teacher'])) {
-        $stmt = $pdo->prepare('SELECT * FROM announcements WHERE audience = ? ORDER BY posted_at DESC');
-        $stmt->execute([$audience]);
+    if ($userRole === 'admin') {
+        $audience = $_GET['audience'] ?? '';
+        if ($audience && in_array($audience, ['all', 'student', 'teacher'])) {
+            $stmt = $pdo->prepare('SELECT * FROM announcements WHERE audience = ? ORDER BY posted_at DESC');
+            $stmt->execute([$audience]);
+        } else {
+            $stmt = $pdo->query('SELECT * FROM announcements ORDER BY posted_at DESC');
+        }
+    } elseif ($userRole === 'teacher') {
+        $stmt = $pdo->query("SELECT * FROM announcements WHERE audience IN ('all', 'teacher') ORDER BY posted_at DESC");
+    } elseif ($userRole === 'student') {
+        $stmt = $pdo->query("SELECT * FROM announcements WHERE audience IN ('all', 'student') ORDER BY posted_at DESC");
     } else {
-        $stmt = $pdo->query('SELECT * FROM announcements ORDER BY posted_at DESC');
+        http_response_code(403);
+        echo json_encode(['ok' => false, 'message' => 'Forbidden']);
+        exit;
     }
     echo json_encode(['ok' => true, 'announcements' => $stmt->fetchAll()]);
+    exit;
+}
+
+// All write operations (POST, PUT, DELETE) require admin role
+if ($userRole !== 'admin') {
+    http_response_code(403);
+    echo json_encode(['ok' => false, 'message' => 'Forbidden. Admin access required.']);
     exit;
 }
 

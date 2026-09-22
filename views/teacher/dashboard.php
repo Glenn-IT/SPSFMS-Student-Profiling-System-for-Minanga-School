@@ -43,6 +43,10 @@ $classStudents = $classStmt->fetchAll();
 $totalStudents = count($classStudents);
 $graded = count(array_filter($classStudents, fn($s) => $s['graded_subjects'] > 0));
 $pending = $totalStudents - $graded;
+
+// Fetch announcements visible to teachers ('all' and 'teacher')
+$annStmt = $pdo->query("SELECT * FROM announcements WHERE audience IN ('all','teacher') ORDER BY posted_at DESC LIMIT 5");
+$announcements = $annStmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -130,51 +134,116 @@ $pending = $totalStudents - $graded;
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <div class="d-flex align-items-center gap-2">
-          <span><i class="fas fa-chalkboard me-2" style="color:var(--secondary);"></i>Advisory Class Roster — <strong><?= htmlspecialchars($advisoryGrade) ?> <?= htmlspecialchars($advisorySection) ?></strong></span>
-          <span class="badge bg-success bg-opacity-15 text-success fw-semibold" style="font-size:.75rem;"><?= $totalStudents ?> Students</span>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <div class="input-group input-group-sm" style="width:220px;">
-            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
-            <input type="text" id="advisorySearch" class="form-control" placeholder="Search student...">
+    <div class="row g-4">
+      <!-- Left: Advisory Class Roster -->
+      <div class="col-xl-8 col-lg-7">
+        <div class="card h-100 mb-0">
+          <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+              <span><i class="fas fa-chalkboard me-2" style="color:var(--secondary);"></i>Advisory Class Roster — <strong><?= htmlspecialchars($advisoryGrade) ?> <?= htmlspecialchars($advisorySection) ?></strong></span>
+              <span class="badge bg-success bg-opacity-15 text-success fw-semibold" style="font-size:.75rem;"><?= $totalStudents ?> Students</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <div class="input-group input-group-sm" style="width:200px;">
+                <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                <input type="text" id="advisorySearch" class="form-control" placeholder="Search student...">
+              </div>
+              <a href="grades.php" class="btn btn-sm" style="background:var(--secondary);color:#fff;">Manage Grades</a>
+            </div>
           </div>
-          <a href="grades.php" class="btn btn-sm" style="background:var(--secondary);color:#fff;">Manage Grades</a>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-modern mb-0" id="advisoryTable">
+                <thead><tr><th>#</th><th>LRN</th><th>Full Name</th><th>Sex</th><th>Age</th><th>Graded Subjects</th><th class="text-center">Action</th></tr></thead>
+                <tbody>
+                  <?php if (empty($classStudents)): ?>
+                  <tr><td colspan="7" class="text-center py-4 text-muted">No students enrolled in <?= htmlspecialchars($advisoryGrade) ?> - Section <?= htmlspecialchars($advisorySection) ?>.</td></tr>
+                  <?php else: foreach ($classStudents as $i => $s): ?>
+                  <tr>
+                    <td><?= $i+1 ?></td>
+                    <td><span style="font-family:monospace;font-size:.82rem;"><?= htmlspecialchars($s['lrn']) ?></span></td>
+                    <td><strong><?= htmlspecialchars($s['last_name']) ?></strong>, <?= htmlspecialchars($s['first_name'].' '.($s['middle_name']??'')) ?></td>
+                    <td><?= htmlspecialchars($s['sex']) ?></td>
+                    <td><?= $s['age'] ?></td>
+                    <td>
+                      <?php if ($s['graded_subjects'] > 0): ?>
+                      <span class="badge bg-success bg-opacity-15 text-success fw-semibold"><?= $s['graded_subjects'] ?> subjects</span>
+                      <?php else: ?>
+                      <span class="badge bg-warning bg-opacity-15 text-warning fw-semibold">No grades yet</span>
+                      <?php endif; ?>
+                    </td>
+                    <td class="text-center">
+                      <a href="grades.php?student_id=<?= $s['id'] ?>" class="btn btn-sm" style="background:var(--secondary);color:#fff;font-size:.78rem;padding:4px 10px;border-radius:6px;white-space:nowrap;">
+                        <i class="fas fa-edit me-1"></i>Manage Grade
+                      </a>
+                    </td>
+                  </tr>
+                  <?php endforeach; endif; ?>
+                  <tr id="advisoryNoMatch" class="d-none"><td colspan="7" class="text-center py-4 text-muted">No matching students found.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-modern mb-0" id="advisoryTable">
-            <thead><tr><th>#</th><th>LRN</th><th>Full Name</th><th>Sex</th><th>Age</th><th>Graded Subjects</th><th class="text-center">Action</th></tr></thead>
-            <tbody>
-              <?php if (empty($classStudents)): ?>
-              <tr><td colspan="7" class="text-center py-4 text-muted">No students enrolled in <?= htmlspecialchars($advisoryGrade) ?> - Section <?= htmlspecialchars($advisorySection) ?>.</td></tr>
-              <?php else: foreach ($classStudents as $i => $s): ?>
-              <tr>
-                <td><?= $i+1 ?></td>
-                <td><span style="font-family:monospace;font-size:.82rem;"><?= htmlspecialchars($s['lrn']) ?></span></td>
-                <td><strong><?= htmlspecialchars($s['last_name']) ?></strong>, <?= htmlspecialchars($s['first_name'].' '.($s['middle_name']??'')) ?></td>
-                <td><?= htmlspecialchars($s['sex']) ?></td>
-                <td><?= $s['age'] ?></td>
-                <td>
-                  <?php if ($s['graded_subjects'] > 0): ?>
-                  <span class="badge bg-success bg-opacity-15 text-success fw-semibold"><?= $s['graded_subjects'] ?> subjects</span>
-                  <?php else: ?>
-                  <span class="badge bg-warning bg-opacity-15 text-warning fw-semibold">No grades yet</span>
-                  <?php endif; ?>
-                </td>
-                <td class="text-center">
-                  <a href="grades.php?student_id=<?= $s['id'] ?>" class="btn btn-sm" style="background:var(--secondary);color:#fff;font-size:.78rem;padding:4px 10px;border-radius:6px;white-space:nowrap;">
-                    <i class="fas fa-edit me-1"></i>Manage Grade
-                  </a>
-                </td>
-              </tr>
-              <?php endforeach; endif; ?>
-              <tr id="advisoryNoMatch" class="d-none"><td colspan="7" class="text-center py-4 text-muted">No matching students found.</td></tr>
-            </tbody>
-          </table>
+
+      <!-- Right: Announcements & Quick Actions -->
+      <div class="col-xl-4 col-lg-5 d-flex flex-column gap-3">
+        <!-- Announcements Feed Card -->
+        <div class="card shadow-sm">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <span class="fw-semibold"><i class="fas fa-bullhorn me-2" style="color:var(--secondary);"></i>School Announcements</span>
+            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size:.75rem;"><?= count($announcements) ?></span>
+          </div>
+          <div class="card-body p-3">
+            <?php if (empty($announcements)): ?>
+              <div class="text-center py-4 text-muted small">
+                <i class="fas fa-bell-slash d-block mb-2 text-muted opacity-50" style="font-size: 1.5rem;"></i>
+                No announcements posted for teachers at this time.
+              </div>
+            <?php else: ?>
+              <div class="d-flex flex-column gap-2" style="max-height: 380px; overflow-y: auto;">
+                <?php foreach ($announcements as $ann): ?>
+                  <div class="p-3 rounded-3" style="background:#f8fafc; border-left:4px solid var(--secondary); box-shadow: 0 1px 3px rgba(0,0,0,.03);">
+                    <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+                      <h6 class="fw-bold mb-0 text-dark" style="font-size:.86rem;"><?= htmlspecialchars($ann['title']) ?></h6>
+                      <span class="badge <?= $ann['audience'] === 'teacher' ? 'bg-warning bg-opacity-15 text-warning text-dark' : 'bg-primary bg-opacity-10 text-primary' ?> border" style="font-size:.65rem; white-space:nowrap;">
+                        <?= $ann['audience'] === 'teacher' ? 'Teachers' : 'Everyone' ?>
+                      </span>
+                    </div>
+                    <div class="text-muted small mb-2" style="line-height:1.4; font-size:.8rem; white-space:pre-line;"><?= htmlspecialchars($ann['body']) ?></div>
+                    <div class="d-flex align-items-center text-muted" style="font-size:.7rem;">
+                      <i class="far fa-clock me-1" style="color:var(--secondary);"></i>
+                      <span><?= date('F j, Y · g:i A', strtotime($ann['posted_at'])) ?></span>
+                    </div>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+            <?php endif; ?>
+          </div>
+        </div>
+
+        <!-- Teacher Quick Actions Card -->
+        <div class="card shadow-sm">
+          <div class="card-header">
+            <span class="fw-semibold"><i class="fas fa-bolt me-2" style="color:var(--secondary);"></i>Quick Actions</span>
+          </div>
+          <div class="card-body p-3">
+            <div class="d-grid gap-2">
+              <a href="grades.php" class="btn btn-outline-success btn-sm text-start d-flex align-items-center justify-content-between">
+                <span><i class="fas fa-clipboard-list me-2"></i>Enter Class Grades (SF10)</span>
+                <i class="fas fa-chevron-right small opacity-50"></i>
+              </a>
+              <a href="reports.php" class="btn btn-outline-secondary btn-sm text-start d-flex align-items-center justify-content-between">
+                <span><i class="fas fa-file-alt me-2"></i>Generate SF9 &amp; SF10 Reports</span>
+                <i class="fas fa-chevron-right small opacity-50"></i>
+              </a>
+              <a href="student-profiles.php" class="btn btn-outline-secondary btn-sm text-start d-flex align-items-center justify-content-between">
+                <span><i class="fas fa-users me-2"></i>Browse Student Profiles</span>
+                <i class="fas fa-chevron-right small opacity-50"></i>
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>

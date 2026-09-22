@@ -65,7 +65,7 @@ SPSFMS/
 │   │   ├── security-questions.php      # Global security question catalogue
 │   │   └── school-years.php            # Academic calendar & active school year management
 │   ├── teacher/
-│   │   ├── dashboard.php               # Advisory overview & grading completion status
+│   │   ├── dashboard.php               # Advisory overview, grading completion status & school announcements feed
 │   │   ├── student-profiles.php        # Read-only student browser for teachers
 │   │   ├── grades.php                  # SF10 grade entry grid (Q1-Q4, remarks, auto-save)
 │   │   ├── reports.php                 # Printable class grade summary & official DepEd Form 9 (SF9) report cards
@@ -110,7 +110,7 @@ SPSFMS/
 │   ├── analytics/
 │       └── index.php                   # GET: Aggregated enrollment & demographic data
 │   └── announcements/
-│       └── index.php                   # GET/POST/PUT/DELETE: Announcements CRUD (admin-only)
+│       └── index.php                   # GET (role-aware: admin/teacher/student), POST/PUT/DELETE (admin CRUD)
 │
 └── assets/
     ├── css/
