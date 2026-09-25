@@ -10,6 +10,19 @@ if (!empty($_SESSION['user'])) {
 
 $role = $_GET['role'] ?? 'student';
 if (!in_array($role, ['teacher', 'student'])) $role = 'student';
+
+// Pre-fetch assigned advisory classes so taken classes cannot be assigned to another teacher
+$assignedClasses = [];
+try {
+    $assignedStmt = $pdo->query("
+        SELECT tc.grade_level, tc.section, u.name AS teacher_name 
+        FROM teacher_classes tc 
+        JOIN users u ON u.id = tc.teacher_id
+    ");
+    while ($r = $assignedStmt->fetch(PDO::FETCH_ASSOC)) {
+        $assignedClasses[$r['grade_level'] . '|' . $r['section']] = $r['teacher_name'];
+    }
+} catch (Exception $e) {}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -19,6 +32,7 @@ if (!in_array($role, ['teacher', 'student'])) $role = 'student';
   <style>
     body { min-height:100vh; background:linear-gradient(135deg,#1a73e8 0%,#0d47a1 100%); display:flex; align-items:center; justify-content:center; padding:1.5rem 1rem; }
     .register-card { background:#fff; border-radius:16px; box-shadow:0 8px 40px rgba(0,0,0,.25); padding:2.5rem 2rem; width:100%; max-width:440px; animation:fadeIn .35s ease; }
+    .register-card.teacher-card { max-width: 500px; }
     .role-badge { display:inline-flex; align-items:center; gap:.4rem; padding:.3rem .9rem; border-radius:20px; font-size:.78rem; font-weight:600; margin-bottom:1.25rem; }
     .role-badge.teacher { background:var(--secondary-light); color:var(--secondary); }
     .role-badge.student { background:var(--warning-light); color:#b06a00; }
@@ -53,7 +67,7 @@ $cfg = [
   'student' => ['label'=>'Student', 'icon'=>'fa-user-graduate'],
 ][$role];
 ?>
-<div class="register-card">
+<div class="register-card <?= $role === 'teacher' ? 'teacher-card' : '' ?>">
   <div class="login-header">
     <div class="login-icon <?= $role ?>"><i class="fas <?= $cfg['icon'] ?>"></i></div>
     <span class="role-badge <?= $role ?>"><i class="fas fa-circle" style="font-size:.4rem;"></i> <?= $cfg['label'] ?></span>
@@ -182,6 +196,9 @@ $cfg = [
 <script>
   const BASE = '<?= BASE_URL ?>';
   const ROLE = '<?= $role ?>';
+  const GRADE_LEVELS = <?= json_encode(GRADE_LEVELS) ?>;
+  const SECTION_MAP  = <?= json_encode(SECTION_MAP) ?>;
+  const ASSIGNED_CLASSES = <?= json_encode($assignedClasses) ?>;
 
   const DEFAULT_SECTIONS = {
     'Kindergarten': ['Sampaguita'],
@@ -199,22 +216,36 @@ $cfg = [
     'Grade 12': ['STEM', 'ABM', 'HUMSS', 'GAS', 'TVL - ICT', 'TVL - HE']
   };
 
+  const sectionCache = {};
+
   async function fetchSections(gradeVal) {
     if (!gradeVal) return [];
-    let dbList = [];
+    if (sectionCache[gradeVal]) return sectionCache[gradeVal];
+    let list = [];
     try {
       const res  = await fetch(`${BASE}/api/sections/index.php?grade_level=${encodeURIComponent(gradeVal)}`);
       const data = await res.json();
       if (data.ok && data.sections && data.sections.length > 0) {
-        dbList = data.sections.map(s => s.section_name);
+        data.sections.forEach(s => {
+          list.push(s.section_name);
+          if (s.assigned_id || s.adviser_name) {
+            ASSIGNED_CLASSES[`${s.grade_level}|${s.section_name}`] = s.adviser_name || 'Assigned';
+          }
+        });
       }
     } catch (e) {
       console.error(e);
     }
-    if (dbList.length > 0) {
-      return dbList;
+    if (list.length === 0) {
+      if (SECTION_MAP[gradeVal] && SECTION_MAP[gradeVal].length > 0) {
+        list = [...SECTION_MAP[gradeVal]];
+      } else if (DEFAULT_SECTIONS[gradeVal]) {
+        list = [...DEFAULT_SECTIONS[gradeVal]];
+      }
     }
-    return DEFAULT_SECTIONS[gradeVal] ? [...DEFAULT_SECTIONS[gradeVal]] : [];
+    const unique = [...new Set(list)];
+    sectionCache[gradeVal] = unique;
+    return unique;
   }
 
   async function loadSectionsFor(sectionSelId, gradeSelId) {
@@ -255,48 +286,95 @@ $cfg = [
     for (let idx = 0; idx < regClassState.length; idx++) {
       const item = regClassState[idx];
       const rowEl = document.createElement('div');
-      rowEl.className = 'row g-2 align-items-center bg-white p-2 rounded-2 border shadow-sm';
+      rowEl.className = 'bg-white p-2.5 rounded-3 border shadow-sm';
+      rowEl.style.padding = '0.75rem';
 
-      let gradeOptions = `<option value="">— Select Grade —</option>`;
+      let gradeOptions = `<option value="">Select Grade</option>`;
       GRADE_LEVELS.forEach(g => {
         gradeOptions += `<option value="${g}" ${item.grade === g ? 'selected' : ''}>${g}</option>`;
       });
 
       let secDisabled = !item.grade ? 'disabled' : '';
-      let secOptions = !item.grade ? `<option value="">— Select Grade first —</option>` : `<option value="">— Select Section —</option>`;
+      let secOptions = !item.grade ? `<option value="">Select grade first</option>` : `<option value="">Loading...</option>`;
 
       rowEl.innerHTML = `
-        <div class="col-12 col-md-5">
-          <label class="form-label mb-1 small text-muted">Class ${idx + 1} Grade</label>
-          <select class="form-select form-select-sm reg-grade-sel" onchange="onRegGradeChange(${idx}, this.value)">
-            ${gradeOptions}
-          </select>
-        </div>
-        <div class="col-10 col-md-6">
-          <label class="form-label mb-1 small text-muted">Section</label>
-          <select class="form-select form-select-sm reg-section-sel" ${secDisabled} onchange="onRegSectionChange(${idx}, this.value)">
-            ${secOptions}
-          </select>
-        </div>
-        <div class="col-2 col-md-1 text-end d-flex align-items-end justify-content-end">
+        <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom">
+          <span class="badge bg-light text-primary border fw-semibold px-2 py-1" style="font-size:0.75rem;">
+            <i class="fas fa-chalkboard me-1"></i>Class ${idx + 1}
+          </span>
           ${regClassState.length > 1 ? `
-            <button type="button" class="btn btn-outline-danger btn-sm p-1 px-2" style="margin-top: 1.4rem;" onclick="removeRegClassRow(${idx})" title="Remove class">
-              <i class="fas fa-trash-alt"></i>
+            <button type="button" class="btn btn-link text-danger p-0 text-decoration-none" style="font-size:0.8rem;" onclick="removeRegClassRow(${idx})" title="Remove class">
+              <i class="fas fa-trash-alt me-1"></i>Remove
             </button>
-          ` : `<div style="width:24px;"></div>`}
+          ` : ''}
+        </div>
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="form-label mb-1 small text-muted">Grade Level</label>
+            <select class="form-select form-select-sm reg-grade-sel" onchange="onRegGradeChange(${idx}, this.value)">
+              ${gradeOptions}
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label mb-1 small text-muted">Section</label>
+            <select class="form-select form-select-sm reg-section-sel" ${secDisabled} onchange="onRegSectionChange(${idx}, this.value)">
+              ${secOptions}
+            </select>
+          </div>
         </div>
       `;
 
       container.appendChild(rowEl);
 
       if (item.grade) {
+        populateSectionOptionsForRow(rowEl.querySelector('.reg-section-sel'), idx, item.grade, item.section);
+      }
+    }
+  }
+
+  async function populateSectionOptionsForRow(secSel, idx, gradeVal, currentSection) {
+    if (!secSel) return;
+    const rawList = await fetchSections(gradeVal);
+    // Filter out already taken sections:
+    // 1) Taken in database by existing teachers
+    // 2) Taken in another row of this registration form
+    const available = rawList.filter(s => {
+      const key = `${gradeVal}|${s}`;
+      if (ASSIGNED_CLASSES[key]) return false;
+      const takenByOtherRow = regClassState.some((r, rIdx) => rIdx !== idx && r.grade === gradeVal && r.section === s);
+      if (takenByOtherRow) return false;
+      return true;
+    });
+
+    if (available.length === 0) {
+      secSel.innerHTML = `<option value="" disabled selected>No sections available</option>`;
+      secSel.disabled = true;
+      if (regClassState[idx]) regClassState[idx].section = '';
+    } else {
+      let html = `<option value="">Select Section</option>`;
+      available.forEach(s => {
+        html += `<option value="${s}" ${currentSection === s ? 'selected' : ''}>${s}</option>`;
+      });
+      secSel.innerHTML = html;
+      secSel.disabled = false;
+      if (currentSection && !available.includes(currentSection)) {
+        if (regClassState[idx]) regClassState[idx].section = '';
+      }
+    }
+  }
+
+  function refreshAllSectionDropdowns() {
+    const container = document.getElementById('reg-classes-container');
+    if (!container) return;
+    const rows = container.children;
+    for (let idx = 0; idx < regClassState.length; idx++) {
+      const item = regClassState[idx];
+      const rowEl = rows[idx];
+      if (rowEl && item && item.grade) {
         const secSel = rowEl.querySelector('.reg-section-sel');
-        fetchSections(item.grade).then(secList => {
-          if (item.section && !secList.includes(item.section)) secList.push(item.section);
-          secSel.innerHTML = `<option value="">— Select Section —</option>` +
-            secList.map(s => `<option value="${s}" ${item.section === s ? 'selected' : ''}>${s}</option>`).join('');
-          secSel.disabled = false;
-        });
+        if (secSel) {
+          populateSectionOptionsForRow(secSel, idx, item.grade, item.section);
+        }
       }
     }
   }
@@ -313,6 +391,7 @@ $cfg = [
     if (regClassState[idx]) {
       regClassState[idx].section = val;
     }
+    refreshAllSectionDropdowns();
   }
 
   function addRegClassRow() {

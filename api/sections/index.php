@@ -2,23 +2,48 @@
 require_once __DIR__ . '/../../config/database.php';
 header('Content-Type: application/json');
 
-if (empty($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-    http_response_code(401);
-    echo json_encode(['ok' => false, 'message' => 'Unauthorized']);
-    exit;
-}
-
 $method = $_SERVER['REQUEST_METHOD'];
 
-// GET — list sections
+// POST, PUT, DELETE require admin privilege
+if ($method !== 'GET') {
+    if (empty($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
+        http_response_code(401);
+        echo json_encode(['ok' => false, 'message' => 'Unauthorized']);
+        exit;
+    }
+}
+
+// GET — list sections with adviser status
 if ($method === 'GET') {
     $grade = $_GET['grade_level'] ?? '';
+    $onlyAvailable = !empty($_GET['available']);
+
+    $sql = "
+        SELECT s.*, tc.id AS assigned_id, u.name AS adviser_name
+        FROM sections s
+        LEFT JOIN teacher_classes tc ON tc.grade_level = s.grade_level AND tc.section = s.section_name
+        LEFT JOIN users u ON u.id = tc.teacher_id
+    ";
+
+    $where = [];
+    $params = [];
+
     if ($grade) {
-        $stmt = $pdo->prepare('SELECT * FROM sections WHERE grade_level = ? ORDER BY id ASC');
-        $stmt->execute([$grade]);
-    } else {
-        $stmt = $pdo->query('SELECT * FROM sections ORDER BY FIELD(grade_level, "Kindergarten","Grade 1","Grade 2","Grade 3","Grade 4","Grade 5","Grade 6","Grade 7","Grade 8","Grade 9","Grade 10","Grade 11","Grade 12"), id ASC');
+        $where[] = 's.grade_level = ?';
+        $params[] = $grade;
     }
+    if ($onlyAvailable) {
+        $where[] = 'tc.id IS NULL';
+    }
+
+    if (!empty($where)) {
+        $sql .= ' WHERE ' . implode(' AND ', $where);
+    }
+
+    $sql .= ' ORDER BY FIELD(s.grade_level, "Kindergarten","Grade 1","Grade 2","Grade 3","Grade 4","Grade 5","Grade 6","Grade 7","Grade 8","Grade 9","Grade 10","Grade 11","Grade 12"), s.id ASC';
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     echo json_encode(['ok' => true, 'sections' => $stmt->fetchAll()]);
     exit;
 }

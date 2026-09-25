@@ -33,20 +33,15 @@ if (!in_array($role, ['teacher', 'student'], true)) {
     exit;
 }
 
-// ── Required common fields ────────────────────────────────────────────────────
-if (!$username || !$password || !$name || !$email) {
+// ── Required initial fields ───────────────────────────────────────────────────
+if (!$username || !$password) {
     http_response_code(400);
-    echo json_encode(['ok' => false, 'message' => 'Name, username, email, and password are required.']);
+    echo json_encode(['ok' => false, 'message' => 'Username and password are required.']);
     exit;
 }
 if (strlen($password) < 6) {
     http_response_code(400);
     echo json_encode(['ok' => false, 'message' => 'Password must be at least 6 characters.']);
-    exit;
-}
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    http_response_code(400);
-    echo json_encode(['ok' => false, 'message' => 'Please enter a valid email address.']);
     exit;
 }
 
@@ -143,9 +138,24 @@ if ($role === 'teacher') {
         echo json_encode(['ok' => false, 'message' => 'An account already exists for this LRN.']);
         exit;
     }
-    $name       = $student['first_name'] . ' ' . ($student['middle_name'] ? $student['middle_name'] . ' ' : '') . $student['last_name'];
+    $name       = trim($student['first_name'] . ' ' . ($student['middle_name'] ? $student['middle_name'] . ' ' : '') . $student['last_name']);
     $gradeLevel = $student['grade_level'];
     $section    = $student['section'];
+    if (empty($email) && !empty($student['email'])) {
+        $email = trim($student['email']);
+    }
+}
+
+// ── Validate resolved name & email ───────────────────────────────────────────
+if (!$name) {
+    http_response_code(400);
+    echo json_encode(['ok' => false, 'message' => 'Full name is required.']);
+    exit;
+}
+if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    http_response_code(400);
+    echo json_encode(['ok' => false, 'message' => 'Please enter a valid email address.']);
+    exit;
 }
 
 // ── Check duplicate username / email ─────────────────────────────────────────

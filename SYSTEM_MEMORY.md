@@ -98,6 +98,7 @@ SPSFMS/
 │   ├── accounts/
 │   │   ├── index.php                   # GET: All user accounts
 │   │   ├── create.php                  # POST: Create user account
+│   │   ├── eligible-students.php       # GET: Students without accounts & LRN verification
 │   │   ├── toggle.php                  # POST: Toggle active/inactive status
 │   │   ├── update-profile.php          # POST: Edit user profile details
 │   │   └── update-security.php         # POST: Update security question/answer

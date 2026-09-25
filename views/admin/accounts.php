@@ -126,9 +126,33 @@ $inactive = $total - $active;
         <!-- Student fields -->
         <div id="student-fields" style="display:none;">
           <div class="mb-3">
-            <label class="form-label">Student LRN <span class="text-danger">*</span></label>
-            <input type="text" id="ca-lrn" class="form-control" placeholder="12-digit LRN">
-            <div class="form-text">Student's name will be pulled automatically from their profile.</div>
+            <label class="form-label fw-semibold">Select Unregistered Student</label>
+            <select id="ca-student-select" class="form-select" onchange="onStudentSelectChange()">
+              <option value="">-- Loading unregistered students... --</option>
+            </select>
+            <div class="form-text">Active students without a login account appear here.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Student LRN <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+              <input type="text" id="ca-lrn" class="form-control" placeholder="Enter or paste 12-digit LRN" maxlength="12" oninput="onLrnInput()">
+              <button class="btn btn-outline-secondary" type="button" onclick="verifyEnteredLrn()" title="Verify LRN">
+                <i class="fas fa-search me-1"></i> Verify
+              </button>
+            </div>
+            <div class="form-text">Paste LRN or select from dropdown above to automatically link student profile.</div>
+          </div>
+
+          <!-- Student Profile Auto-Preview Card -->
+          <div id="ca-student-preview" class="p-3 rounded mb-3 border d-none" style="background:#f8fafc;">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <i class="fas fa-user-check text-success" id="ca-preview-icon"></i>
+              <strong id="ca-student-preview-name" class="text-dark"></strong>
+            </div>
+            <div class="small text-muted" id="ca-student-preview-meta"></div>
+            <div class="small text-danger mt-1 d-none" id="ca-student-account-warning"></div>
           </div>
         </div>
 
@@ -261,11 +285,16 @@ async function toggleStatus(id, newStatus) {
 
 /* ── Create Account modal ── */
 let caModal;
+let eligibleStudents = [];
 
 function openCreateModal() {
   if (!caModal) caModal = new bootstrap.Modal(document.getElementById('createAccountModal'));
   ['ca-name','ca-position','ca-lrn','ca-username','ca-email','ca-password','ca-confirm']
-    .forEach(id => document.getElementById(id).value = '');
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+  hideStudentPreview();
   document.getElementById('ca-error').classList.add('d-none');
   document.getElementById('ca-submit-btn').disabled = false;
   document.getElementById('ca-submit-btn').innerHTML = '<i class="fas fa-user-plus me-1"></i> Create Account';
@@ -280,6 +309,180 @@ function setRole(role) {
   document.getElementById('student-fields').style.display = isTeacher ? 'none' : '';
   document.getElementById('role-teacher-btn').className = 'btn flex-fill ' + (isTeacher ? 'btn-primary' : 'btn-light');
   document.getElementById('role-student-btn').className = 'btn flex-fill ' + (!isTeacher ? 'btn-primary' : 'btn-light');
+
+  hideStudentPreview();
+  if (!isTeacher) {
+    loadEligibleStudents();
+  }
+}
+
+async function loadEligibleStudents() {
+  const sel = document.getElementById('ca-student-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Loading unregistered students...</option>';
+
+  try {
+    const res = await fetch(BASE + '/api/accounts/eligible-students.php');
+    const d = await res.json();
+    if (!d.ok) throw new Error(d.message);
+    eligibleStudents = d.students || [];
+
+    if (eligibleStudents.length === 0) {
+      sel.innerHTML = '<option value="">No unregistered students found (all students have accounts)</option>';
+      return;
+    }
+
+    let opts = '<option value="">-- Choose from ' + eligibleStudents.length + ' unregistered student(s) --</option>';
+    eligibleStudents.forEach(s => {
+      const fullName = s.first_name + ' ' + (s.middle_name ? s.middle_name + ' ' : '') + s.last_name;
+      opts += `<option value="${s.lrn}" data-first="${escAttr(s.first_name)}" data-name="${escAttr(fullName)}" data-grade="${escAttr(s.grade_level)}" data-section="${escAttr(s.section)}" data-email="${escAttr(s.email || '')}">${s.lrn} — ${escHtml(s.last_name)}, ${escHtml(s.first_name)} (${escHtml(s.grade_level)} - ${escHtml(s.section)})</option>`;
+    });
+    sel.innerHTML = opts;
+  } catch (err) {
+    sel.innerHTML = '<option value="">Failed to load eligible students</option>';
+  }
+}
+
+function onStudentSelectChange() {
+  const sel = document.getElementById('ca-student-select');
+  const lrnInput = document.getElementById('ca-lrn');
+  const opt = sel.options[sel.selectedIndex];
+
+  if (!opt || !opt.value) {
+    hideStudentPreview();
+    return;
+  }
+
+  const lrn = opt.value;
+  lrnInput.value = lrn;
+  const fullName = opt.getAttribute('data-name') || '';
+  const firstName = opt.getAttribute('data-first') || '';
+  const grade = opt.getAttribute('data-grade') || '';
+  const section = opt.getAttribute('data-section') || '';
+  const email = opt.getAttribute('data-email') || '';
+
+  showStudentPreview({
+    lrn: lrn,
+    first_name: firstName,
+    name: fullName,
+    grade_level: grade,
+    section: section,
+    email: email
+  }, false);
+}
+
+function showStudentPreview(st, hasAccount, existingUser) {
+  const card = document.getElementById('ca-student-preview');
+  const nameEl = document.getElementById('ca-student-preview-name');
+  const metaEl = document.getElementById('ca-student-preview-meta');
+  const warnEl = document.getElementById('ca-student-account-warning');
+  const icon = document.getElementById('ca-preview-icon');
+  const submitBtn = document.getElementById('ca-submit-btn');
+
+  if (!card) return;
+  card.classList.remove('d-none');
+
+  const fullName = st.name || (st.first_name + ' ' + (st.middle_name ? st.middle_name + ' ' : '') + st.last_name);
+  nameEl.textContent = fullName;
+  metaEl.innerHTML = `First Name: <strong class="text-primary">${escHtml(st.first_name)}</strong> · Level: <strong>${escHtml(st.grade_level)}</strong> · Section: <strong>${escHtml(st.section)}</strong>`;
+
+  // Pre-fill hidden/ca-name field so payload carries the student's full name
+  document.getElementById('ca-name').value = fullName;
+
+  if (hasAccount) {
+    card.style.background = '#fef2f2';
+    card.style.borderColor = '#fca5a5';
+    icon.className = 'fas fa-exclamation-triangle text-danger';
+    warnEl.textContent = `❌ An account already exists for this student (Username: ${existingUser?.username || 'registered'}).`;
+    warnEl.classList.remove('d-none');
+    submitBtn.disabled = true;
+  } else {
+    card.style.background = '#f0fdf4';
+    card.style.borderColor = '#86efac';
+    icon.className = 'fas fa-user-check text-success';
+    warnEl.classList.add('d-none');
+    submitBtn.disabled = false;
+
+    // Auto-suggest username & email if empty
+    const uInput = document.getElementById('ca-username');
+    const eInput = document.getElementById('ca-email');
+    if (!uInput.value.trim()) {
+      const cleanFirst = st.first_name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const cleanLast = (st.last_name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      uInput.value = cleanLast ? `${cleanFirst}.${cleanLast}` : cleanFirst;
+    }
+    if (!eInput.value.trim()) {
+      if (st.email && st.email.includes('@')) {
+        eInput.value = st.email;
+      } else if (uInput.value.trim()) {
+        eInput.value = `${uInput.value.trim()}@student.minanga.edu.ph`;
+      }
+    }
+  }
+}
+
+function hideStudentPreview() {
+  const card = document.getElementById('ca-student-preview');
+  if (card) card.classList.add('d-none');
+  const submitBtn = document.getElementById('ca-submit-btn');
+  if (submitBtn) submitBtn.disabled = false;
+}
+
+let lrnTimer;
+function onLrnInput() {
+  clearTimeout(lrnTimer);
+  const lrn = document.getElementById('ca-lrn').value.trim();
+  if (lrn.length < 5) {
+    hideStudentPreview();
+    return;
+  }
+  lrnTimer = setTimeout(verifyEnteredLrn, 300);
+}
+
+async function verifyEnteredLrn() {
+  const lrn = document.getElementById('ca-lrn').value.trim();
+  if (!lrn) {
+    hideStudentPreview();
+    return;
+  }
+
+  // Check in cached eligible students first
+  const match = eligibleStudents.find(s => s.lrn === lrn);
+  if (match) {
+    const sel = document.getElementById('ca-student-select');
+    if (sel) sel.value = lrn;
+    showStudentPreview(match, false);
+    return;
+  }
+
+  // Otherwise query API for full verification (including check if already has account)
+  try {
+    const res = await fetch(`${BASE}/api/accounts/eligible-students.php?check_lrn=${encodeURIComponent(lrn)}`);
+    const d = await res.json();
+    if (!d.ok || !d.exists) {
+      const card = document.getElementById('ca-student-preview');
+      const nameEl = document.getElementById('ca-student-preview-name');
+      const metaEl = document.getElementById('ca-student-preview-meta');
+      const warnEl = document.getElementById('ca-student-account-warning');
+      const icon = document.getElementById('ca-preview-icon');
+      const submitBtn = document.getElementById('ca-submit-btn');
+      if (card) {
+        card.classList.remove('d-none');
+        card.style.background = '#fffbeb';
+        card.style.borderColor = '#fcd34d';
+        icon.className = 'fas fa-question-circle text-warning';
+        nameEl.textContent = 'Student Not Found';
+        metaEl.textContent = `No active student record matches LRN ${lrn}. Please verify or create the student in Student Management first.`;
+        warnEl.classList.add('d-none');
+      }
+      if (submitBtn) submitBtn.disabled = true;
+      return;
+    }
+
+    showStudentPreview(d.student, d.has_account, d.existing_user);
+  } catch (err) {
+    console.error('LRN verification error:', err);
+  }
 }
 
 function showCaError(msg) {
@@ -304,7 +507,7 @@ async function submitCreateAccount() {
   if (password.length < 6) return showCaError('Password must be at least 6 characters.');
   if (password !== confirm) return showCaError('Passwords do not match.');
   if (role === 'teacher' && (!name || !position)) return showCaError('Full name and position are required for teachers.');
-  if (role === 'student' && !lrn) return showCaError('LRN is required for student accounts.');
+  if (role === 'student' && !lrn) return showCaError('Please select a student or enter an LRN.');
 
   const btn = document.getElementById('ca-submit-btn');
   btn.disabled = true;
@@ -327,7 +530,7 @@ async function submitCreateAccount() {
 
     caModal.hide();
     showToast(`Account for ${data.user.name} created successfully!`, 'success');
-    // Auto update live data and stat cards
+    // Refresh eligible students and live accounts
     await loadAccounts();
 
   } catch (err) {
@@ -335,6 +538,10 @@ async function submitCreateAccount() {
     btn.disabled = false;
     btn.innerHTML = '<i class="fas fa-user-plus me-1"></i> Create Account';
   }
+}
+
+function escAttr(str) {
+  return (str || '').replace(/"/g, '&quot;');
 }
 
 function escHtml(str) {

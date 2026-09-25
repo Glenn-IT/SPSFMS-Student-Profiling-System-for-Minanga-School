@@ -43,25 +43,7 @@ define('GRADE_LEVELS', [
 ]);
 
 function getDynamicSectionMap(): array {
-    $map = [];
-    foreach (GRADE_LEVELS as $g) { $map[$g] = []; }
-
-    if (isset($GLOBALS['pdo']) && $GLOBALS['pdo'] instanceof PDO) {
-        try {
-            $stmt = $GLOBALS['pdo']->query("SELECT grade_level, section_name FROM sections ORDER BY id ASC");
-            $rows = $stmt->fetchAll();
-            if (!empty($rows)) {
-                foreach ($rows as $r) {
-                    if (isset($map[$r['grade_level']])) {
-                        $map[$r['grade_level']][] = $r['section_name'];
-                    }
-                }
-                return $map;
-            }
-        } catch (Exception $e) {}
-    }
-
-    return [
+    $defaultMap = [
         'Kindergarten' => ['Sampaguita'],
         'Grade 1'  => ['Mabini'],
         'Grade 2'  => ['Mabini'],
@@ -76,6 +58,31 @@ function getDynamicSectionMap(): array {
         'Grade 11' => ['STEM','ABM','HUMSS'],
         'Grade 12' => ['STEM','ABM','HUMSS'],
     ];
+
+    $map = [];
+    foreach (GRADE_LEVELS as $g) { $map[$g] = []; }
+
+    if (isset($GLOBALS['pdo']) && $GLOBALS['pdo'] instanceof PDO) {
+        try {
+            $stmt = $GLOBALS['pdo']->query("SELECT grade_level, section_name FROM sections ORDER BY id ASC");
+            $rows = $stmt->fetchAll();
+            if (!empty($rows)) {
+                foreach ($rows as $r) {
+                    if (isset($map[$r['grade_level']])) {
+                        $map[$r['grade_level']][] = $r['section_name'];
+                    }
+                }
+                foreach (GRADE_LEVELS as $g) {
+                    if (empty($map[$g]) && isset($defaultMap[$g])) {
+                        $map[$g] = $defaultMap[$g];
+                    }
+                }
+                return $map;
+            }
+        } catch (Exception $e) {}
+    }
+
+    return $defaultMap;
 }
 
 define('SECTION_MAP', getDynamicSectionMap());
