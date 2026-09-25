@@ -79,9 +79,11 @@ if ($method === 'POST') {
         exit;
     }
 
+    $studentSy = !empty($d['school_year']) ? trim($d['school_year']) : getActiveSchoolYear($pdo);
+
     $stmt = $pdo->prepare("INSERT INTO students
         (lrn,grade_level,section,first_name,middle_name,last_name,sex,birthdate,age,mother_tongue,religion,address,mother_name,father_name,guardian_name,guardian_relation,contact,email,school_year,status)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'2025-2026','active')");
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'active')");
     $stmt->execute([
         $d['lrn'], $d['grade_level'], $d['section'],
         $d['first_name'], $d['middle_name'] ?? null, $d['last_name'],
@@ -90,6 +92,7 @@ if ($method === 'POST') {
         $d['mother_name'] ?? null, $d['father_name'] ?? null,
         $d['guardian_name'] ?? null, $d['guardian_relation'] ?? null,
         $d['contact'] ?? null, $d['email'] ?? null,
+        $studentSy
     ]);
     $id = $pdo->lastInsertId();
     $new = $pdo->prepare('SELECT * FROM students WHERE id = ?');

@@ -62,8 +62,9 @@ $sectionJson  = json_encode(SECTION_MAP);
             <label class="form-label mb-1">School Year</label>
             <select id="filter-sy" class="form-select" onchange="renderTable()">
               <option value="">All Years</option>
-              <option value="2025-2026" selected>2025–2026</option>
-              <option value="2024-2025">2024–2025</option>
+              <?php foreach (getSchoolYearsList($pdo) as $syItem): ?>
+              <option value="<?= htmlspecialchars($syItem['year_label']) ?>" <?= $syItem['year_label']==='2025-2026'?'selected':'' ?>><?= htmlspecialchars($syItem['year_label']) ?><?= $syItem['is_active'] ? ' (Active)' : '' ?></option>
+              <?php endforeach; ?>
             </select>
           </div>
           <div class="col-md-1">

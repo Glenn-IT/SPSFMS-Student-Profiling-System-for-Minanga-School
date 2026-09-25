@@ -56,7 +56,7 @@ SPSFMS/
 │   │   ├── teachers.php                # Teacher management (adviser & subject assignments)
 │   │   ├── sections.php                # Class sections management
 │   │   ├── subjects.php                # Subject catalogue management (Elem, JHS, SHS)
-│   │   ├── reports.php                 # Masterlist, gender breakdown, and DepEd Form 9 (SF9) reports
+│   │   ├── reports.php                 # Student Masterlist and DepEd Form 9 (SF9) reports
 │   │   ├── signatories.php             # Report signatory customization
 │   │   ├── accounts.php                # System users & account status toggling
 │   │   ├── analytics.php               # Demographic charts & enrollment analytics

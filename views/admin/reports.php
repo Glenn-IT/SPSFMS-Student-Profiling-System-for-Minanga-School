@@ -8,10 +8,30 @@ $sigData = getSignatories($pdo, $user);
 $type      = $_GET['type']       ?? '';
 $grade     = $_GET['grade']      ?? '';
 $section   = $_GET['section']    ?? '';
-$sy        = $_GET['sy']         ?? SCHOOL_YEAR;
+$sy        = isset($_GET['sy']) ? trim($_GET['sy']) : null;
 $search    = $_GET['search']     ?? '';
 $studentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 0;
 $period    = isset($_GET['period']) ? (int)$_GET['period'] : 0;
+
+if ($type === 'gender') {
+    header('Location: ' . BASE_URL . '/views/admin/reports.php');
+    exit;
+}
+
+// Smart default for school year if not specified:
+// If active school year has students, use it; otherwise fallback to the school year with student records
+if ($sy === null) {
+    $activeSy = getActiveSchoolYear($pdo);
+    $chkSy = $pdo->prepare("SELECT COUNT(*) FROM students WHERE status='active' AND school_year = ?");
+    $chkSy->execute([$activeSy]);
+    if ((int)$chkSy->fetchColumn() > 0) {
+        $sy = $activeSy;
+    } else {
+        // Fallback to the latest school year that actually has students, or default to active
+        $recentSy = $pdo->query("SELECT school_year FROM students WHERE status='active' GROUP BY school_year ORDER BY id DESC LIMIT 1")->fetchColumn();
+        $sy = $recentSy ?: $activeSy;
+    }
+}
 
 $students = [];
 if ($type && $type !== 'sf9') {
@@ -19,7 +39,7 @@ if ($type && $type !== 'sf9') {
     $params = [];
     if ($grade)   { $where[] = 'grade_level=?'; $params[] = $grade; }
     if ($section) { $where[] = 'section=?';     $params[] = $section; }
-    if ($sy)      { $where[] = 'school_year=?'; $params[] = $sy; }
+    if ($sy !== '') { $where[] = 'school_year=?'; $params[] = $sy; }
     if ($search)  { $where[] = '(first_name LIKE ? OR last_name LIKE ? OR lrn LIKE ?)'; array_push($params, "%$search%", "%$search%", "%$search%"); }
     $stmt = $pdo->prepare('SELECT * FROM students WHERE '.implode(' AND ',$where).' ORDER BY grade_level,last_name,first_name');
     $stmt->execute($params);
@@ -116,10 +136,9 @@ $sectionMapJson = json_encode(SECTION_MAP);
     <div class="row g-3 no-print">
       <?php foreach ([
         ['masterlist','fa-id-card','Student Masterlist','Complete student records with all fields','primary'],
-        ['gender','fa-venus-mars','Gender Summary','Gender breakdown by grade level','warning'],
         ['sf9','fa-award','SF9 Report Card','DepEd Form 9 Learner’s Progress Report Card (US Letter Landscape)','success'],
       ] as [$t,$icon,$label,$desc,$color]): ?>
-      <div class="col-md-4">
+      <div class="col-md-6">
         <a href="?type=<?= $t ?>&sy=<?= htmlspecialchars($sy) ?>" style="text-decoration:none;">
           <div class="card h-100" style="cursor:pointer;transition:.2s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.12)'" onmouseout="this.style.boxShadow=''">
             <div class="card-body text-center py-4">
@@ -256,8 +275,10 @@ $sectionMapJson = json_encode(SECTION_MAP);
           <div class="col-md-2">
             <label class="form-label mb-1">School Year</label>
             <select id="sy-select" class="form-select">
-              <option value="2025-2026" <?= $sy==='2025-2026'?'selected':'' ?>>2025–2026</option>
-              <option value="2024-2025" <?= $sy==='2024-2025'?'selected':'' ?>>2024–2025</option>
+              <option value="" <?= $sy===''?'selected':'' ?>>All School Years</option>
+              <?php foreach (getSchoolYearsList($pdo) as $syItem): ?>
+              <option value="<?= htmlspecialchars($syItem['year_label']) ?>" <?= ($syItem['year_label'] === $sy) ? 'selected' : '' ?>><?= htmlspecialchars($syItem['year_label']) ?><?= $syItem['is_active'] ? ' (Active)' : '' ?></option>
+              <?php endforeach; ?>
             </select>
           </div>
           <!-- Live Search -->
@@ -272,7 +293,7 @@ $sectionMapJson = json_encode(SECTION_MAP);
           </div>
           <!-- Signatories Settings Shortcut -->
           <div class="col-md-2">
-            <a href="<?= BASE_URL ?>/views/admin/signatories.php" class="btn btn-outline-secondary w-100" title="Configure Report Signatories">
+            <a href="<?= BASE_URL ?>/views/admin/signatories.php?return_to=<?= urlencode($_SERVER['REQUEST_URI'] ?? '') ?>" class="btn btn-outline-secondary w-100" title="Configure Report Signatories">
               <i class="fas fa-file-signature me-1"></i>Signatories
             </a>
           </div>
@@ -299,34 +320,14 @@ $sectionMapJson = json_encode(SECTION_MAP);
               <div style="font-size:.95rem;color:#333;font-weight:400;margin-bottom:1.75rem;"><?= SCHOOL_ADDRESS ?></div>
 
               <h3 class="text-center text-uppercase text-dark fw-bold mb-1" id="report-title" style="letter-spacing:0.5px;">
-                <?= $type === 'gender' ? 'GENDER SUMMARY' : 'STUDENT MASTERLIST' ?>
+                STUDENT MASTERLIST
               </h3>
               <div style="font-size:.95rem;color:#333;" class="text-center" id="report-subtitle">
-                School Year <span id="report-sy"><?= htmlspecialchars($sy) ?></span><?= $grade ? ' · '.$grade : '' ?>
+                School Year <span id="report-sy"><?= htmlspecialchars($sy ?: 'All School Years') ?></span><?= $grade ? ' · '.$grade : '' ?>
               </div>
             </div>
           </div>
         </div>
-
-        <?php if ($type === 'gender'): ?>
-        <?php
-          $gStmt = $pdo->prepare("SELECT grade_level, sex, COUNT(*) as cnt FROM students WHERE status='active' AND school_year=? GROUP BY grade_level, sex ORDER BY grade_level");
-          $gStmt->execute([$sy]);
-          $gRows = $gStmt->fetchAll();
-          $gMap = [];
-          foreach ($gRows as $r) $gMap[$r['grade_level']][$r['sex']] = $r['cnt'];
-        ?>
-        <table class="table table-bordered table-sm">
-          <thead><tr><th>Grade Level</th><th>Male</th><th>Female</th><th>Total</th></tr></thead>
-          <tbody>
-            <?php $totalM=$totalF=0; foreach (GRADE_LEVELS as $gl): $m=$gMap[$gl]['Male']??0; $f=$gMap[$gl]['Female']??0; $totalM+=$m; $totalF+=$f; ?>
-            <tr><td><?= $gl ?></td><td><?= $m ?></td><td><?= $f ?></td><td><strong><?= $m+$f ?></strong></td></tr>
-            <?php endforeach; ?>
-          </tbody>
-          <tfoot><tr class="fw-bold"><td>TOTAL</td><td><?= $totalM ?></td><td><?= $totalF ?></td><td><?= $totalM+$totalF ?></td></tr></tfoot>
-        </table>
-
-        <?php else: ?>
 
         <!-- Masterlist table — live-updated by JS -->
         <div id="masterlist-table-wrap">
@@ -339,7 +340,15 @@ $sectionMapJson = json_encode(SECTION_MAP);
             </thead>
             <tbody id="masterlist-body">
               <?php if (empty($students)): ?>
-              <tr><td colspan="9" class="text-center text-muted py-3">No records found.</td></tr>
+              <tr>
+                <td colspan="9" class="text-center text-muted py-4">
+                  <div class="mb-2"><i class="fas fa-user-graduate fa-2x text-secondary opacity-50"></i></div>
+                  <div class="fw-semibold">No enrolled students found for S.Y. <?= htmlspecialchars($sy ?: 'Selected Filter') ?></div>
+                  <div class="small text-muted mt-1">
+                    Try selecting a previous school year (e.g. <strong>2025–2026</strong>) or <strong>All School Years</strong> from the filter above.
+                  </div>
+                </td>
+              </tr>
               <?php else: foreach ($students as $i => $s): ?>
               <tr>
                 <td><?= $i+1 ?></td>
@@ -361,8 +370,6 @@ $sectionMapJson = json_encode(SECTION_MAP);
             </tfoot>
           </table>
         </div>
-
-        <?php endif; ?>
 
         <!-- Signatories -->
         <div class="signatories" id="signatories-block">
@@ -439,6 +446,10 @@ showDesktopOnlyWarning();
       status:  'active',
     });
 
+    const syLabel = sySelect.options[sySelect.selectedIndex]?.text || sySelect.value || 'All School Years';
+    const repSyEl = document.getElementById('report-sy');
+    if (repSyEl) repSyEl.textContent = sySelect.value ? sySelect.value : 'All School Years';
+
     try {
       const res  = await fetch(`${BASE_URL}/api/students/index.php?${params}`);
       const data = await res.json();
@@ -448,7 +459,11 @@ showDesktopOnlyWarning();
       const students = data.students;
 
       if (students.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-3">No records found.</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">
+          <div class="mb-2"><i class="fas fa-user-graduate fa-2x text-secondary opacity-50"></i></div>
+          <div class="fw-semibold">No enrolled students found for ${escHtml(syLabel)}.</div>
+          <div class="small text-muted mt-1">Try selecting <strong>All School Years</strong> or <strong>2025–2026</strong> from the filter above.</div>
+        </td></tr>`;
         tfoot.innerHTML = '';
         return;
       }

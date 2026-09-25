@@ -50,8 +50,9 @@ $activePage = 'signatories';
         <p>Configure default signatories (Prepared by &amp; Noted by) printed on official school reports</p>
       </div>
       <div>
-        <a href="<?= BASE_URL ?>/views/admin/reports.php" class="btn btn-outline-primary rounded-pill px-3">
-          <i class="fas fa-file-alt me-1"></i> View Reports
+        <?php $returnUrl = !empty($_GET['return_to']) ? $_GET['return_to'] : BASE_URL . '/views/admin/reports.php?type=masterlist'; ?>
+        <a href="<?= htmlspecialchars($returnUrl) ?>" class="btn btn-outline-primary rounded-pill px-3">
+          <i class="fas fa-arrow-left me-1"></i> Back to Reports
         </a>
       </div>
     </div>

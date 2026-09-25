@@ -53,7 +53,7 @@ http://localhost/SPSFMS-Student-Profiling-System-for-Minanga-School/
 
 - **Dashboard** — KPI cards (Total, Elementary, JHS, SHS counts) + 3 live Chart.js charts (enrollment, gender, per-grade breakdown)
 - **Student Management** — Add, View, Edit, Search, and Filter student records (backed by MySQL)
-- **Reports** — Enrollment List, Student Masterlist, Gender Summary with print support
+- **Reports** — Student Masterlist and DepEd Form 9 (SF9) with print support
 - **Account Management** — View all user accounts, toggle active/inactive status
 - **Analytics** — Enrollment by grade level, gender distribution, section breakdown
 - **Settings** — Profile update, password change, security question, logout
