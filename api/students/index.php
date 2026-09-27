@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/constants.php';
 header('Content-Type: application/json');
 
 if (empty($_SESSION['user']) || !in_array($_SESSION['user']['role'], ['admin','teacher'])) {

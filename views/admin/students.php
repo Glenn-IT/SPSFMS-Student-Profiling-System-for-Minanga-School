@@ -63,7 +63,7 @@ $sectionJson  = json_encode(SECTION_MAP);
             <select id="filter-sy" class="form-select" onchange="renderTable()">
               <option value="">All Years</option>
               <?php foreach (getSchoolYearsList($pdo) as $syItem): ?>
-              <option value="<?= htmlspecialchars($syItem['year_label']) ?>" <?= $syItem['year_label']==='2025-2026'?'selected':'' ?>><?= htmlspecialchars($syItem['year_label']) ?><?= $syItem['is_active'] ? ' (Active)' : '' ?></option>
+              <option value="<?= htmlspecialchars($syItem['year_label']) ?>" <?= $syItem['is_active'] ? 'selected' : '' ?>><?= htmlspecialchars($syItem['year_label']) ?><?= $syItem['is_active'] ? ' (Active)' : '' ?></option>
               <?php endforeach; ?>
             </select>
           </div>
@@ -99,9 +99,16 @@ $sectionJson  = json_encode(SECTION_MAP);
         <form id="student-form">
           <input type="hidden" id="form-student-id">
           <div class="row g-3">
-            <div class="col-md-4"><label class="form-label">LRN *</label><input type="text" id="f-lrn" class="form-control" maxlength="12" required></div>
-            <div class="col-md-4"><label class="form-label">Grade Level *</label><select id="f-grade" class="form-select" required onchange="updateFormSection()"><option value="">Select Grade</option></select></div>
-            <div class="col-md-4"><label class="form-label">Section *</label><select id="f-section" class="form-select" required><option value="">Select Section</option></select></div>
+            <div class="col-md-3"><label class="form-label">LRN *</label><input type="text" id="f-lrn" class="form-control" maxlength="12" required></div>
+            <div class="col-md-3"><label class="form-label">School Year *</label>
+              <select id="f-sy" class="form-select" required>
+                <?php foreach (getSchoolYearsList($pdo) as $syItem): ?>
+                <option value="<?= htmlspecialchars($syItem['year_label']) ?>" <?= $syItem['is_active'] ? 'selected' : '' ?>><?= htmlspecialchars($syItem['year_label']) ?><?= $syItem['is_active'] ? ' (Active)' : '' ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="col-md-3"><label class="form-label">Grade Level *</label><select id="f-grade" class="form-select" required onchange="updateFormSection()"><option value="">Select Grade</option></select></div>
+            <div class="col-md-3"><label class="form-label">Section *</label><select id="f-section" class="form-select" required><option value="">Select Section</option></select></div>
             <div class="col-md-4"><label class="form-label">First Name *</label><input type="text" id="f-first" class="form-control name-only" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers" required></div>
             <div class="col-md-4"><label class="form-label">Middle Name</label><input type="text" id="f-middle" class="form-control name-only" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers"></div>
             <div class="col-md-4"><label class="form-label">Last Name *</label><input type="text" id="f-last" class="form-control name-only" pattern="[A-Za-zÑñ' .\-]+" title="Letters only, no numbers" required></div>
@@ -264,6 +271,8 @@ function openAddModal() {
   document.getElementById('student-form').reset();
   document.getElementById('form-student-id').value = '';
   document.getElementById('f-section').innerHTML = '<option value="">Select Section</option>';
+  const activeSyOption = document.querySelector('#f-sy option[selected]') || document.querySelector('#f-sy option');
+  if (activeSyOption) document.getElementById('f-sy').value = activeSyOption.value;
   resetReligionOptions();
   studentModal.show();
 }
@@ -274,6 +283,9 @@ function editStudent(id) {
   document.getElementById('modal-title').textContent = 'Edit Student';
   document.getElementById('form-student-id').value = s.id;
   document.getElementById('f-lrn').value = s.lrn;
+  if (s.school_year) {
+    document.getElementById('f-sy').value = s.school_year;
+  }
   document.getElementById('f-grade').value = s.grade_level; updateFormSection();
   setTimeout(() => document.getElementById('f-section').value = s.section, 50);
   document.getElementById('f-first').value = s.first_name;
@@ -306,6 +318,7 @@ async function saveStudent() {
   const id = document.getElementById('form-student-id').value;
   const data = {
     lrn: document.getElementById('f-lrn').value.trim(),
+    school_year: document.getElementById('f-sy').value,
     grade_level: document.getElementById('f-grade').value,
     section: document.getElementById('f-section').value,
     first_name: document.getElementById('f-first').value.trim(),
@@ -350,15 +363,20 @@ async function saveStudent() {
   try {
     const url = id ? BASE+'/api/students/manage.php?id='+id : BASE+'/api/students/index.php';
     const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
-    const result = await res.json();
+    let result;
+    try {
+      result = await res.json();
+    } catch (parseErr) {
+      throw new Error('Server returned an unexpected response format.');
+    }
     hideLoading();
-    if (!result.ok) { showToast(result.message,'error'); return; }
+    if (!result.ok) { showToast(result.message || 'Error saving student.','error'); return; }
     showToast(id ? 'Student updated successfully!':'Student added successfully!','success');
     studentModal.hide();
     loadStudents();
   } catch (err) {
     hideLoading();
-    showToast('An error occurred while saving student.', 'error');
+    showToast(err.message || 'An error occurred while saving student.', 'error');
   } finally {
     saveBtn.disabled = false;
     saveBtn.innerHTML = originalLabel;
@@ -377,6 +395,7 @@ function viewStudent(id) {
         <span class="badge-active">Active</span>
       </div>
       ${field('LRN',`<span style="font-family:monospace">${s.lrn}</span>`)}
+      ${field('School Year',s.school_year||'—')}
       ${field('Grade Level',s.grade_level)}
       ${field('Section',s.section)}
       ${field('Sex',s.sex)}

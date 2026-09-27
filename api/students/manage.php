@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/constants.php';
 header('Content-Type: application/json');
 
 if (empty($_SESSION['user']) || !in_array($_SESSION['user']['role'], ['admin','teacher','student'])) {
@@ -79,10 +80,22 @@ if ($method === 'POST') {
         exit;
     }
 
-    // Determine values. If student is editing, protect academic classification (LRN, grade level, section)
+    // Check if new LRN is taken by another student
+    if ($role === 'admin' && !empty($d['lrn']) && $d['lrn'] !== $currStudent['lrn']) {
+        $checkLrn = $pdo->prepare('SELECT id FROM students WHERE lrn = ? AND id != ?');
+        $checkLrn->execute([$d['lrn'], $id]);
+        if ($checkLrn->fetch()) {
+            http_response_code(409);
+            echo json_encode(['ok'=>false,'message'=>'LRN already exists for another student.']);
+            exit;
+        }
+    }
+
+    // Determine values. If student is editing, protect academic classification (LRN, grade level, section, school year)
     $lrn        = ($role === 'admin') ? ($d['lrn'] ?? $currStudent['lrn']) : $currStudent['lrn'];
     $gradeLevel = ($role === 'admin') ? ($d['grade_level'] ?? $currStudent['grade_level']) : $currStudent['grade_level'];
     $section    = ($role === 'admin') ? ($d['section'] ?? $currStudent['section']) : $currStudent['section'];
+    $schoolYear = ($role === 'admin' && !empty($d['school_year'])) ? trim($d['school_year']) : $currStudent['school_year'];
     $firstName  = trim($d['first_name'] ?? '');
     $middleName = trim($d['middle_name'] ?? '');
     $lastName   = trim($d['last_name'] ?? '');
@@ -110,7 +123,7 @@ if ($method === 'POST') {
         lrn=?, grade_level=?, section=?, first_name=?, middle_name=?, last_name=?,
         sex=?, birthdate=?, age=?, mother_tongue=?, religion=?, address=?,
         mother_name=?, father_name=?, guardian_name=?, guardian_relation=?,
-        contact=?, email=?
+        contact=?, email=?, school_year=?
         WHERE id=?");
     $stmt->execute([
         $lrn, $gradeLevel, $section,
@@ -120,19 +133,29 @@ if ($method === 'POST') {
         $mother ?: null, $father ?: null,
         $guardian ?: null, $relation ?: null,
         $contact ?: null, $email ?: null,
+        $schoolYear,
         $id
     ]);
 
     // Synchronize users table if a matching student account exists
     $fullName = trim($firstName . ' ' . ($middleName ? $middleName . ' ' : '') . $lastName);
-    $uSync = $pdo->prepare("UPDATE users SET name = ?, email = COALESCE(?, email) WHERE (lrn = ? OR id = ?)");
-    $uSync->execute([$fullName, $email ?: null, $lrn, $_SESSION['user']['id']]);
-
-    if ($role === 'student') {
-        $_SESSION['user']['name'] = $fullName;
-        if ($email) {
-            $_SESSION['user']['email'] = $email;
+    try {
+        if ($role === 'student') {
+            $uSync = $pdo->prepare("UPDATE users SET name = ?, email = COALESCE(?, email) WHERE id = ? AND role = 'student'");
+            $uSync->execute([$fullName, $email ?: null, $_SESSION['user']['id']]);
+            $_SESSION['user']['name'] = $fullName;
+            if ($email) {
+                $_SESSION['user']['email'] = $email;
+            }
+        } elseif ($role === 'admin') {
+            // Update student user account if one exists matching this student's LRN
+            $targetLrn = !empty($currStudent['lrn']) ? $currStudent['lrn'] : $lrn;
+            $uSync = $pdo->prepare("UPDATE users SET name = ?, email = COALESCE(?, email), lrn = ?, grade_level = ?, section = ? WHERE lrn = ? AND role = 'student'");
+            $uSync->execute([$fullName, $email ?: null, $lrn, $gradeLevel, $section, $targetLrn]);
         }
+    } catch (PDOException $syncErr) {
+        // Safe fallback in case of user email conflict
+        error_log("Student user account sync error: " . $syncErr->getMessage());
     }
 
     $upd = $pdo->prepare('SELECT * FROM students WHERE id = ?');
