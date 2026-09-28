@@ -13,11 +13,6 @@ $search    = $_GET['search']     ?? '';
 $studentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 0;
 $period    = isset($_GET['period']) ? (int)$_GET['period'] : 0;
 
-if ($type === 'gender') {
-    header('Location: ' . BASE_URL . '/views/admin/reports.php');
-    exit;
-}
-
 // Smart default for school year if not specified:
 // If active school year has students, use it; otherwise fallback to the school year with student records
 if ($sy === null) {
@@ -34,7 +29,7 @@ if ($sy === null) {
 }
 
 $students = [];
-if ($type && $type !== 'sf9') {
+if ($type && $type !== 'sf9' && $type !== 'gender') {
     $where = ['status="active"'];
     $params = [];
     if ($grade)   { $where[] = 'grade_level=?'; $params[] = $grade; }
@@ -44,6 +39,116 @@ if ($type && $type !== 'sf9') {
     $stmt = $pdo->prepare('SELECT * FROM students WHERE '.implode(' AND ',$where).' ORDER BY grade_level,last_name,first_name');
     $stmt->execute($params);
     $students = $stmt->fetchAll();
+}
+
+// Data preparation for Gender Summary Report
+$genderKpi = ['total' => 0, 'male' => 0, 'female' => 0, 'pct_male' => 0, 'pct_female' => 0];
+$genderGradeData = [];
+$genderSectionData = [];
+
+if ($type === 'gender') {
+    $gWhere = ['status="active"'];
+    $gParams = [];
+    if ($grade)   { $gWhere[] = 'grade_level=?'; $gParams[] = $grade; }
+    if ($section) { $gWhere[] = 'section=?';     $gParams[] = $section; }
+    if ($sy !== '' && $sy !== null) { $gWhere[] = 'school_year=?'; $gParams[] = $sy; }
+
+    $gWhereSql = implode(' AND ', $gWhere);
+
+    // KPI Totals
+    $kpiStmt = $pdo->prepare("SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN sex = 'Male' THEN 1 ELSE 0 END) as male_count,
+        SUM(CASE WHEN sex = 'Female' THEN 1 ELSE 0 END) as female_count
+        FROM students WHERE $gWhereSql");
+    $kpiStmt->execute($gParams);
+    $kpiRow = $kpiStmt->fetch(PDO::FETCH_ASSOC) ?: ['total' => 0, 'male_count' => 0, 'female_count' => 0];
+    
+    $tot = (int)($kpiRow['total'] ?? 0);
+    $m   = (int)($kpiRow['male_count'] ?? 0);
+    $f   = (int)($kpiRow['female_count'] ?? 0);
+    $genderKpi = [
+        'total'      => $tot,
+        'male'       => $m,
+        'female'     => $f,
+        'pct_male'   => $tot > 0 ? round(($m / $tot) * 100, 1) : 0,
+        'pct_female' => $tot > 0 ? round(($f / $tot) * 100, 1) : 0,
+    ];
+
+    // Grade Level aggregation
+    $grStmt = $pdo->prepare("SELECT 
+        grade_level,
+        SUM(CASE WHEN sex = 'Male' THEN 1 ELSE 0 END) as male_count,
+        SUM(CASE WHEN sex = 'Female' THEN 1 ELSE 0 END) as female_count,
+        COUNT(*) as total_count
+        FROM students WHERE $gWhereSql
+        GROUP BY grade_level");
+    $grStmt->execute($gParams);
+    $grRows = $grStmt->fetchAll(PDO::FETCH_ASSOC);
+    $grMap = [];
+    foreach ($grRows as $gr) {
+        $grMap[$gr['grade_level']] = [
+            'male'   => (int)$gr['male_count'],
+            'female' => (int)$gr['female_count'],
+            'total'  => (int)$gr['total_count'],
+        ];
+    }
+    $targetLevels = $grade ? [$grade] : GRADE_LEVELS;
+    foreach ($targetLevels as $gl) {
+        $glMale = $grMap[$gl]['male'] ?? 0;
+        $glFem  = $grMap[$gl]['female'] ?? 0;
+        $glTot  = $grMap[$gl]['total'] ?? ($glMale + $glFem);
+        $genderGradeData[] = [
+            'grade_level' => $gl,
+            'male'        => $glMale,
+            'female'      => $glFem,
+            'total'       => $glTot,
+            'pct_male'    => $glTot > 0 ? round(($glMale / $glTot) * 100, 1) : 0,
+            'pct_female'  => $glTot > 0 ? round(($glFem / $glTot) * 100, 1) : 0,
+        ];
+    }
+    if (!$grade) {
+        foreach ($grMap as $gName => $gInfo) {
+            if (!in_array($gName, GRADE_LEVELS)) {
+                $genderGradeData[] = [
+                    'grade_level' => $gName,
+                    'male'        => $gInfo['male'],
+                    'female'      => $gInfo['female'],
+                    'total'       => $gInfo['total'],
+                    'pct_male'    => $gInfo['total'] > 0 ? round(($gInfo['male'] / $gInfo['total']) * 100, 1) : 0,
+                    'pct_female'  => $gInfo['total'] > 0 ? round(($gInfo['female'] / $gInfo['total']) * 100, 1) : 0,
+                ];
+            }
+        }
+    }
+
+    // Section-level aggregation
+    $secStmt = $pdo->prepare("SELECT 
+        grade_level,
+        section,
+        SUM(CASE WHEN sex = 'Male' THEN 1 ELSE 0 END) as male_count,
+        SUM(CASE WHEN sex = 'Female' THEN 1 ELSE 0 END) as female_count,
+        COUNT(*) as total_count
+        FROM students WHERE $gWhereSql
+        GROUP BY grade_level, section
+        ORDER BY grade_level, section");
+    $secStmt->execute($gParams);
+    $secRows = $secStmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($secRows as $sr) {
+        $srMale = (int)$sr['male_count'];
+        $srFem  = (int)$sr['female_count'];
+        $srTot  = (int)$sr['total_count'];
+        $genderSectionData[] = [
+            'grade_level' => $sr['grade_level'],
+            'section'     => $sr['section'],
+            'adviser'     => $adviserMap[$sr['grade_level'].'|'.$sr['section']] ?? '—',
+            'male'        => $srMale,
+            'female'      => $srFem,
+            'total'       => $srTot,
+            'pct_male'    => $srTot > 0 ? round(($srMale / $srTot) * 100, 1) : 0,
+            'pct_female'  => $srTot > 0 ? round(($srFem / $srTot) * 100, 1) : 0,
+        ];
+    }
 }
 
 $allActiveStudents = $pdo->query("SELECT id, lrn, first_name, middle_name, last_name, grade_level, section FROM students WHERE status='active' ORDER BY grade_level, last_name, first_name")->fetchAll(PDO::FETCH_ASSOC);
@@ -65,7 +170,13 @@ $sectionMapJson = json_encode(SECTION_MAP);
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <?php $pageTitle = 'Reports — Admin'; include __DIR__ . '/../../includes/head.php'; ?>
+  <?php 
+    $pageTitle = 'Reports — Admin';
+    if ($type === 'gender') $pageTitle = 'Gender Summary Report — Admin';
+    elseif ($type === 'masterlist') $pageTitle = 'Student Masterlist — Admin';
+    elseif ($type === 'sf9') $pageTitle = 'SF9 Report Card — Admin';
+    include __DIR__ . '/../../includes/head.php'; 
+  ?>
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/theme.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/admin.css">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/sf9.css">
@@ -74,8 +185,12 @@ $sectionMapJson = json_encode(SECTION_MAP);
       .no-print { display:none !important; }
       .sidebar,.top-navbar { display:none !important; }
       .main-content { margin:0 !important; }
-      .signatories { margin-top: 3rem; }
+      .signatories { margin-top: 3rem; page-break-inside: avoid; }
       .report-header-logo { max-height: 95px !important; display: inline-block !important; vertical-align: top !important; }
+      .card { border: 1px solid #dee2e6 !important; box-shadow: none !important; }
+      .table-bordered th, .table-bordered td { border: 1px solid #555 !important; }
+      .table thead th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .progress, .progress-bar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
     .report-header { text-align: center; margin-bottom: 1.75rem; }
     .report-header h3 { font-weight: 800; color: #000; letter-spacing: 0.5px; }
@@ -123,22 +238,51 @@ $sectionMapJson = json_encode(SECTION_MAP);
 <div class="app-wrapper">
   <div class="main-content page-content">
     <nav class="top-navbar no-print">
-      <div><div class="page-title">Reports</div>
-        <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0"><li class="breadcrumb-item text-muted">Admin</li><li class="breadcrumb-item active">Reports</li></ol></nav>
+      <div>
+        <div class="page-title">
+          <?= $type === 'gender' ? 'Gender Summary Report' : ($type === 'sf9' ? 'SF9 Report Card' : ($type === 'masterlist' ? 'Student Masterlist' : 'Reports')) ?>
+        </div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item text-muted">Admin</li>
+            <?php if ($type): ?>
+            <li class="breadcrumb-item"><a href="reports.php" class="text-decoration-none">Reports</a></li>
+            <li class="breadcrumb-item active">
+              <?= $type === 'gender' ? 'Gender Summary' : ($type === 'sf9' ? 'SF9 Report Card' : 'Masterlist') ?>
+            </li>
+            <?php else: ?>
+            <li class="breadcrumb-item active">Reports</li>
+            <?php endif; ?>
+          </ol>
+        </nav>
       </div>
       <div class="ms-auto"><div class="user-menu"><div class="user-avatar"><?= strtoupper(substr($user['name'],0,1)) ?></div><div><div class="user-name"><?= htmlspecialchars($user['name']) ?></div><div class="user-role">Administrator</div></div></div></div>
     </nav>
 
-    <div class="page-header no-print"><h3>Reports</h3><p>Generate and print student enrollment reports</p></div>
+    <div class="page-header no-print">
+      <h3>
+        <?= $type === 'gender' ? 'Gender Summary Report' : ($type === 'sf9' ? 'SF9 Report Card' : ($type === 'masterlist' ? 'Student Masterlist' : 'Reports')) ?>
+      </h3>
+      <p>
+        <?= $type === 'gender' 
+          ? 'Enrollment demographics and gender distribution breakdown by grade level and section' 
+          : ($type === 'sf9' 
+              ? 'Generate official DepEd Form 9 (SF9) Progress Report Card' 
+              : ($type === 'masterlist' 
+                  ? 'Complete enrolled student masterlist with contact and guardian details' 
+                  : 'Generate and print student enrollment reports and DepEd forms')) ?>
+      </p>
+    </div>
 
     <!-- Report type selector -->
     <?php if (!$type): ?>
     <div class="row g-3 no-print">
       <?php foreach ([
-        ['masterlist','fa-id-card','Student Masterlist','Complete student records with all fields','primary'],
+        ['masterlist','fa-id-card','Student Masterlist','Complete student records with all fields and live search','primary'],
+        ['gender','fa-venus-mars','Gender Summary Report','Enrollment and gender distribution breakdown by grade and section','info'],
         ['sf9','fa-award','SF9 Report Card','DepEd Form 9 Learner’s Progress Report Card (US Letter Landscape)','success'],
       ] as [$t,$icon,$label,$desc,$color]): ?>
-      <div class="col-md-6">
+      <div class="col-md-4">
         <a href="?type=<?= $t ?>&sy=<?= htmlspecialchars($sy) ?>" style="text-decoration:none;">
           <div class="card h-100" style="cursor:pointer;transition:.2s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.12)'" onmouseout="this.style.boxShadow=''">
             <div class="card-body text-center py-4">
@@ -239,6 +383,290 @@ $sectionMapJson = json_encode(SECTION_MAP);
         <i class="fas fa-file-invoice fa-3x mb-3 text-secondary opacity-50"></i>
         <h5>Select a Learner to Preview SF9</h5>
         <p class="small mb-0">Choose a student and grading term above to generate the official DepEd Form 9 Progress Report Card.</p>
+      </div>
+    </div>
+
+    <?php elseif ($type === 'gender'): ?>
+
+    <!-- Gender Report Filters -->
+    <form method="GET" action="reports.php" class="card mb-3 no-print" id="genderFilterForm">
+      <input type="hidden" name="type" value="gender">
+      <div class="card-body">
+        <div class="row g-2 align-items-end">
+          <!-- Grade Level -->
+          <div class="col-md-2">
+            <label class="form-label mb-1" style="font-size:0.8rem;font-weight:600">Grade Level</label>
+            <select name="grade" id="gender-grade-select" class="form-select form-select-sm" onchange="onGenderGradeChange()">
+              <option value="">All Grades</option>
+              <?php foreach (GRADE_LEVELS as $gl): ?>
+              <option value="<?= $gl ?>" <?= $grade===$gl?'selected':'' ?>><?= $gl ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <!-- Section (dynamic) -->
+          <div class="col-md-2">
+            <label class="form-label mb-1" style="font-size:0.8rem;font-weight:600">Section</label>
+            <select name="section" id="gender-section-select" class="form-select form-select-sm" onchange="this.form.submit()">
+              <option value="">All Sections</option>
+              <?php
+                $currSecs = $grade && isset(SECTION_MAP[$grade]) ? SECTION_MAP[$grade] : [];
+                foreach ($currSecs as $sec):
+              ?>
+              <option value="<?= $sec ?>" <?= $section===$sec?'selected':'' ?>><?= $sec ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <!-- School Year -->
+          <div class="col-md-2">
+            <label class="form-label mb-1" style="font-size:0.8rem;font-weight:600">School Year</label>
+            <select name="sy" id="gender-sy-select" class="form-select form-select-sm" onchange="this.form.submit()">
+              <option value="" <?= $sy===''?'selected':'' ?>>All School Years</option>
+              <?php foreach (getSchoolYearsList($pdo) as $syItem): ?>
+              <option value="<?= htmlspecialchars($syItem['year_label']) ?>" <?= ($syItem['year_label'] === $sy) ? 'selected' : '' ?>><?= htmlspecialchars($syItem['year_label']) ?><?= $syItem['is_active'] ? ' (Active)' : '' ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <!-- Actions -->
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-primary btn-sm w-100"><i class="fas fa-filter me-1"></i>Apply Filter</button>
+          </div>
+          <div class="col-md-2">
+            <a href="<?= BASE_URL ?>/views/admin/signatories.php?return_to=<?= urlencode($_SERVER['REQUEST_URI'] ?? '') ?>" class="btn btn-outline-secondary btn-sm w-100" title="Configure Report Signatories">
+              <i class="fas fa-file-signature me-1"></i>Signatories
+            </a>
+          </div>
+          <div class="col-md-1">
+            <button type="button" class="btn btn-light btn-sm w-100 border" onclick="window.print()" title="Print Report"><i class="fas fa-print"></i></button>
+          </div>
+          <div class="col-md-1">
+            <a href="reports.php" class="btn btn-light btn-sm w-100 border" title="Back to Reports menu"><i class="fas fa-times"></i></a>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <!-- Gender Report Document Output -->
+    <div class="card">
+      <div class="card-body p-4">
+        <!-- DepEd Header -->
+        <div class="report-header text-center mb-4">
+          <div class="d-inline-flex align-items-start justify-content-center gap-4">
+            <img src="<?= BASE_URL ?>/img/MIS-Logo.jpg" alt="School Logo" class="report-header-logo" style="margin-top: 4px;">
+            <div class="text-center">
+              <div style="font-size:.95rem;color:#222;font-weight:400;margin-bottom:.2rem;">Republic of the Philippines · Department of Education</div>
+              <div style="font-size:1.15rem;color:#000;font-weight:700;margin-bottom:.2rem;"><?= SCHOOL_NAME ?></div>
+              <div style="font-size:.95rem;color:#333;font-weight:400;margin-bottom:1.5rem;"><?= SCHOOL_ADDRESS ?></div>
+
+              <h3 class="text-center text-uppercase text-dark fw-bold mb-1" style="letter-spacing:0.5px;">
+                ENROLLMENT GENDER SUMMARY REPORT
+              </h3>
+              <div style="font-size:.95rem;color:#444;" class="text-center">
+                School Year <?= htmlspecialchars($sy ?: 'All School Years') ?><?= $grade ? ' · '.$grade : '' ?><?= $section ? ' · Section '.$section : '' ?>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Demographic KPI Cards -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-3 col-sm-6">
+            <div class="card border h-100 p-3 shadow-none text-center" style="background:#f8faff;border-left:4px solid var(--primary,#1a56db)!important;">
+              <div class="text-muted small fw-semibold text-uppercase">Total Enrolled</div>
+              <div class="fs-2 fw-bold text-dark mt-1"><?= number_format($genderKpi['total']) ?></div>
+              <div class="text-muted" style="font-size:0.75rem;">Active Learners</div>
+            </div>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <div class="card border h-100 p-3 shadow-none text-center" style="background:#f4f8ff;border-left:4px solid #0d6efd!important;">
+              <div class="text-muted small fw-semibold text-uppercase"><i class="fas fa-mars text-primary me-1"></i>Male Learners</div>
+              <div class="fs-2 fw-bold text-primary mt-1"><?= number_format($genderKpi['male']) ?></div>
+              <div class="text-primary fw-semibold" style="font-size:0.75rem;"><?= $genderKpi['pct_male'] ?>% of total</div>
+            </div>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <div class="card border h-100 p-3 shadow-none text-center" style="background:#fff6f9;border-left:4px solid #e83e8c!important;">
+              <div class="text-muted small fw-semibold text-uppercase"><i class="fas fa-venus me-1" style="color:#e83e8c;"></i>Female Learners</div>
+              <div class="fs-2 fw-bold mt-1" style="color:#e83e8c;"><?= number_format($genderKpi['female']) ?></div>
+              <div class="fw-semibold" style="color:#e83e8c;font-size:0.75rem;"><?= $genderKpi['pct_female'] ?>% of total</div>
+            </div>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <div class="card border h-100 p-3 shadow-none text-center" style="background:#fbfbfb;border-left:4px solid #6c757d!important;">
+              <div class="text-muted small fw-semibold text-uppercase">Gender Ratio</div>
+              <div class="fs-2 fw-bold text-secondary mt-1">
+                <?php
+                  if ($genderKpi['female'] > 0 && $genderKpi['male'] > 0) {
+                    echo round($genderKpi['male'] / $genderKpi['female'], 2) . ' : 1';
+                  } elseif ($genderKpi['male'] > 0) {
+                    echo '100% M';
+                  } elseif ($genderKpi['female'] > 0) {
+                    echo '100% F';
+                  } else {
+                    echo '—';
+                  }
+                ?>
+              </div>
+              <div class="text-muted" style="font-size:0.75rem;">(Male : Female Ratio)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grade-Level Summary Table -->
+        <div class="mb-4">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <h6 class="fw-bold text-dark mb-0">
+              <i class="fas fa-layer-group me-2 text-primary"></i>Grade-Level Gender Distribution
+            </h6>
+            <span class="badge bg-light text-dark border fw-normal" style="font-size:0.75rem;">Summary by Grade</span>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm align-middle mb-0">
+              <thead class="table-light text-center">
+                <tr>
+                  <th style="width:25%;" class="text-start ps-3">Grade Level</th>
+                  <th style="width:12%;">Male</th>
+                  <th style="width:12%;">Female</th>
+                  <th style="width:14%;">Total</th>
+                  <th style="width:12%;">% Male</th>
+                  <th style="width:12%;">% Female</th>
+                  <th style="width:13%;">Distribution</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php if (empty($genderGradeData) || $genderKpi['total'] === 0): ?>
+                <tr>
+                  <td colspan="7" class="text-center text-muted py-4">
+                    <i class="fas fa-info-circle me-1"></i> No enrolled student records found matching the selected filter.
+                  </td>
+                </tr>
+                <?php else: ?>
+                <?php foreach ($genderGradeData as $row): ?>
+                <tr>
+                  <td class="fw-semibold text-start ps-3"><?= htmlspecialchars($row['grade_level']) ?></td>
+                  <td class="text-center"><?= number_format($row['male']) ?></td>
+                  <td class="text-center"><?= number_format($row['female']) ?></td>
+                  <td class="text-center fw-bold"><?= number_format($row['total']) ?></td>
+                  <td class="text-center text-primary"><?= $row['pct_male'] ?>%</td>
+                  <td class="text-center" style="color:#e83e8c;"><?= $row['pct_female'] ?>%</td>
+                  <td class="text-center">
+                    <?php if ($row['total'] > 0): ?>
+                    <div class="progress" style="height: 10px; min-width: 80px;" title="Male: <?= $row['pct_male'] ?>%, Female: <?= $row['pct_female'] ?>%">
+                      <div class="progress-bar bg-primary" role="progressbar" style="width: <?= $row['pct_male'] ?>%"></div>
+                      <div class="progress-bar" role="progressbar" style="width: <?= $row['pct_female'] ?>%; background-color:#e83e8c;"></div>
+                    </div>
+                    <?php else: ?>
+                    <span class="text-muted small">—</span>
+                    <?php endif; ?>
+                  </td>
+                </tr>
+                <?php endforeach; ?>
+                <?php endif; ?>
+              </tbody>
+              <tfoot class="table-light fw-bold text-center">
+                <tr>
+                  <td class="text-start ps-3">TOTAL</td>
+                  <td><?= number_format($genderKpi['male']) ?></td>
+                  <td><?= number_format($genderKpi['female']) ?></td>
+                  <td><?= number_format($genderKpi['total']) ?></td>
+                  <td class="text-primary"><?= $genderKpi['pct_male'] ?>%</td>
+                  <td style="color:#e83e8c;"><?= $genderKpi['pct_female'] ?>%</td>
+                  <td>
+                    <?php if ($genderKpi['total'] > 0): ?>
+                    <div class="progress" style="height: 10px; min-width: 80px;">
+                      <div class="progress-bar bg-primary" role="progressbar" style="width: <?= $genderKpi['pct_male'] ?>%"></div>
+                      <div class="progress-bar" role="progressbar" style="width: <?= $genderKpi['pct_female'] ?>%; background-color:#e83e8c;"></div>
+                    </div>
+                    <?php else: ?>
+                    <span class="text-muted small">—</span>
+                    <?php endif; ?>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- Section-Level Breakdown Table -->
+        <div class="mb-4">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <h6 class="fw-bold text-dark mb-0">
+              <i class="fas fa-th-list me-2 text-primary"></i>Section Breakdown & Class Adviser Assignment
+            </h6>
+            <span class="badge bg-light text-dark border fw-normal" style="font-size:0.75rem;">Disaggregated by Section</span>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm align-middle mb-0">
+              <thead class="table-light text-center">
+                <tr>
+                  <th style="width:5%;">#</th>
+                  <th style="width:18%;" class="text-start ps-2">Grade Level</th>
+                  <th style="width:17%;" class="text-start ps-2">Section</th>
+                  <th style="width:24%;" class="text-start ps-2">Class Adviser</th>
+                  <th style="width:9%;">Male</th>
+                  <th style="width:9%;">Female</th>
+                  <th style="width:9%;">Total</th>
+                  <th style="width:9%;">% Male</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php if (empty($genderSectionData)): ?>
+                <tr>
+                  <td colspan="8" class="text-center text-muted py-4">
+                    <i class="fas fa-info-circle me-1"></i> No section student records found matching the selected filter.
+                  </td>
+                </tr>
+                <?php else: ?>
+                <?php foreach ($genderSectionData as $idx => $sRow): ?>
+                <tr>
+                  <td class="text-center text-muted"><?= $idx + 1 ?></td>
+                  <td class="text-start ps-2"><?= htmlspecialchars($sRow['grade_level']) ?></td>
+                  <td class="text-start ps-2 fw-semibold"><?= htmlspecialchars($sRow['section']) ?></td>
+                  <td class="text-start ps-2"><?= htmlspecialchars($sRow['adviser']) ?></td>
+                  <td class="text-center"><?= number_format($sRow['male']) ?></td>
+                  <td class="text-center"><?= number_format($sRow['female']) ?></td>
+                  <td class="text-center fw-bold"><?= number_format($sRow['total']) ?></td>
+                  <td class="text-center text-primary"><?= $sRow['pct_male'] ?>%</td>
+                </tr>
+                <?php endforeach; ?>
+                <?php endif; ?>
+              </tbody>
+              <tfoot class="table-light fw-bold text-center">
+                <tr>
+                  <td colspan="4" class="text-start ps-3">TOTAL (<?= count($genderSectionData) ?> Section<?= count($genderSectionData) === 1 ? '' : 's' ?>)</td>
+                  <td><?= number_format($genderKpi['male']) ?></td>
+                  <td><?= number_format($genderKpi['female']) ?></td>
+                  <td><?= number_format($genderKpi['total']) ?></td>
+                  <td class="text-primary"><?= $genderKpi['pct_male'] ?>%</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- Official Signatories Block -->
+        <div class="signatories" id="signatories-block">
+          <div class="signatory-block">
+            <div class="sig-label">Prepared by</div>
+            <div class="sig-name"><?= htmlspecialchars($sigData['prepared_by_name']) ?></div>
+            <div class="sig-position"><?= htmlspecialchars($sigData['prepared_by_title']) ?></div>
+          </div>
+          <div class="signatory-block">
+            <div class="sig-label">Noted by</div>
+            <div class="sig-name"><?= htmlspecialchars($sigData['noted_by_name'] ?: ' ') ?></div>
+            <div class="sig-position"><?= htmlspecialchars($sigData['noted_by_title']) ?></div>
+          </div>
+          <div class="signatory-block">
+            <div class="sig-label">Date Generated</div>
+            <div class="sig-name"><?= date('F j, Y') ?></div>
+            <div class="sig-position"><?= date('g:i A') ?></div>
+          </div>
+        </div>
+
+        <div style="font-size:.75rem;color:var(--gray-400);text-align:right;margin-top:1.5rem;" class="no-print">
+          Generated: <?= date('F j, Y \a\t g:i A') ?> · <?= htmlspecialchars($sigData['prepared_by_name']) ?>
+        </div>
       </div>
     </div>
 
@@ -404,6 +832,31 @@ $sectionMapJson = json_encode(SECTION_MAP);
 <script src="<?= BASE_URL ?>/assets/js/sf9-renderer.js"></script>
 <script>
 showDesktopOnlyWarning();
+
+<?php if ($type === 'gender'): ?>
+(function() {
+  const SECTION_MAP = <?= $sectionMapJson ?>;
+  window.onGenderGradeChange = function() {
+    const gradeSelect = document.getElementById('gender-grade-select');
+    const secSelect   = document.getElementById('gender-section-select');
+    const form        = document.getElementById('genderFilterForm');
+    if (!gradeSelect || !secSelect) return;
+    
+    const g = gradeSelect.value;
+    const secs = (g && SECTION_MAP[g]) ? SECTION_MAP[g] : [];
+    
+    secSelect.innerHTML = '<option value="">All Sections</option>';
+    secs.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s;
+      opt.textContent = s;
+      secSelect.appendChild(opt);
+    });
+    
+    if (form) form.submit();
+  };
+})();
+<?php endif; ?>
 
 <?php if ($type === 'masterlist'): ?>
 (function () {

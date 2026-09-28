@@ -3,8 +3,31 @@ require_once __DIR__ . '/../../includes/auth_check.php';
 $user = requireAuth('teacher');
 $activePage = 'grades';
 
-$myClasses = getTeacherAdvisoryClasses($pdo, $user['id']);
-$studentList = $pdo->query("SELECT id,last_name,first_name,middle_name,lrn,grade_level,section FROM students WHERE status='active' ORDER BY grade_level,section,last_name,first_name")->fetchAll();
+// Fetch fresh teacher profile details to ensure up-to-date advisory assignment
+$uStmt = $pdo->prepare("SELECT * FROM users WHERE id = ? LIMIT 1");
+$uStmt->execute([$user['id']]);
+$freshUser = $uStmt->fetch() ?: $user;
+
+$myClasses = getTeacherAdvisoryClasses($pdo, $freshUser['id']);
+$hasAdvisory = !empty($myClasses);
+
+$studentList = [];
+if ($hasAdvisory) {
+    $advisoryClauses = [];
+    $advisoryParams  = [];
+    foreach ($myClasses as $cls) {
+        $advisoryClauses[] = "(grade_level = ? AND section = ?)";
+        $advisoryParams[]  = $cls['grade_level'];
+        $advisoryParams[]  = $cls['section'];
+    }
+    $sql = "SELECT id, last_name, first_name, middle_name, lrn, grade_level, section 
+            FROM students 
+            WHERE status = 'active' AND (" . implode(' OR ', $advisoryClauses) . ") 
+            ORDER BY grade_level, section, last_name, first_name";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($advisoryParams);
+    $studentList = $stmt->fetchAll();
+}
 $preselectedStudentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : (isset($_GET['id']) ? (int)$_GET['id'] : 0);
 ?>
 <!DOCTYPE html>
@@ -58,11 +81,17 @@ $preselectedStudentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 
           <div class="col-md-6">
           <?php endif; ?>
             <label class="form-label">Select Student</label>
-            <select id="student-select" class="form-select" onchange="loadGrades()">
-              <option value="">— Choose a student —</option>
+            <select id="student-select" class="form-select" onchange="loadGrades()" <?= empty($studentList) ? 'disabled' : '' ?>>
+              <?php if (!$hasAdvisory): ?>
+              <option value="">— No advisory class assigned —</option>
+              <?php elseif (empty($studentList)): ?>
+              <option value="">— No enrolled students in your advisory class —</option>
+              <?php else: ?>
+              <option value="">— Choose a student (<?= count($studentList) ?> available) —</option>
               <?php foreach ($studentList as $s): ?>
               <option value="<?= $s['id'] ?>" data-class="<?= htmlspecialchars($s['grade_level'].'|'.$s['section']) ?>" <?= $preselectedStudentId === (int)$s['id'] ? 'selected' : '' ?>><?= htmlspecialchars($s['last_name'].', '.$s['first_name'].' '.($s['middle_name']??'')) ?> (<?= $s['grade_level'] ?> - <?= $s['section'] ?>)</option>
               <?php endforeach; ?>
+              <?php endif; ?>
             </select>
           </div>
           <div class="col-md-2">
@@ -74,7 +103,7 @@ $preselectedStudentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 
             </select>
           </div>
           <div class="col-md-3">
-            <button class="btn w-100" style="background:var(--secondary);color:#fff;" onclick="saveAllGrades()"><i class="fas fa-save me-2"></i>Save All Grades</button>
+            <button class="btn w-100" style="background:var(--secondary);color:#fff;" onclick="saveAllGrades()" <?= empty($studentList) ? 'disabled' : '' ?>><i class="fas fa-save me-2"></i>Save All Grades</button>
           </div>
         </div>
       </div>
@@ -135,10 +164,27 @@ $preselectedStudentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 
       </div>
     </div>
 
+    <?php if (!$hasAdvisory): ?>
+    <div class="card p-5 text-center text-muted" id="no-advisory-msg">
+      <i class="fas fa-chalkboard-teacher fa-3x mb-3 text-secondary opacity-50"></i>
+      <h5>No Advisory Class Assigned</h5>
+      <p class="small mb-0">You currently do not have an advisory class assigned. Please contact the administrator.</p>
+    </div>
+    <?php elseif (empty($studentList)): ?>
+    <div class="card p-5 text-center text-muted" id="no-enrolled-msg">
+      <i class="fas fa-user-graduate fa-3x mb-3 text-secondary opacity-50"></i>
+      <h5>No Enrolled Students</h5>
+      <p class="small mb-0">
+        There are currently no active students enrolled in your advisory class
+        (<strong><?= htmlspecialchars(implode(', ', array_map(fn($c) => $c['grade_level'].' - '.$c['section'], $myClasses))) ?></strong>).
+      </p>
+    </div>
+    <?php else: ?>
     <div id="no-student-msg" class="text-center text-muted py-5">
       <i class="fas fa-clipboard-list fa-3x mb-3" style="color:var(--gray-300);"></i>
       <p>Select a student from the dropdown above to view their SF10 grade card.</p>
     </div>
+    <?php endif; ?>
   </div>
 </div>
 
@@ -180,7 +226,8 @@ async function loadGrades() {
   const sy = document.getElementById('sy-select').value;
   if (!studentId) {
     document.getElementById('sf10-container').style.display = 'none';
-    document.getElementById('no-student-msg').style.display = 'block';
+    const noMsg = document.getElementById('no-student-msg');
+    if (noMsg) noMsg.style.display = 'block';
     return;
   }
   showLoading('Loading Student Grades...', 'Fetching academic record from database...');
@@ -231,7 +278,8 @@ async function loadGrades() {
     document.getElementById('general-average').textContent = avg;
     document.getElementById('general-remarks').textContent = avg !== '—' ? (parseFloat(avg) >= 75 ? 'Passed' : 'Failed') : '—';
     document.getElementById('sf10-container').style.display = 'block';
-    document.getElementById('no-student-msg').style.display = 'none';
+    const noMsg = document.getElementById('no-student-msg');
+    if (noMsg) noMsg.style.display = 'none';
   } catch (err) {
     hideLoading();
     showToast('An error occurred while loading grades.', 'error');

@@ -21,6 +21,23 @@ if ($method === 'GET') {
     $student = $sStmt->fetch();
     if (!$student) { http_response_code(404); echo json_encode(['ok'=>false,'message'=>'Student not found']); exit; }
 
+    // If teacher, enforce advisory class restriction
+    if ($_SESSION['user']['role'] === 'teacher') {
+        $teacherClasses = getTeacherAdvisoryClasses($pdo, $_SESSION['user']['id']);
+        $isMyStudent = false;
+        foreach ($teacherClasses as $tc) {
+            if ($tc['grade_level'] === $student['grade_level'] && $tc['section'] === $student['section']) {
+                $isMyStudent = true;
+                break;
+            }
+        }
+        if (!$isMyStudent) {
+            http_response_code(403);
+            echo json_encode(['ok'=>false,'message'=>'Access denied: Student is not in your assigned advisory class.']);
+            exit;
+        }
+    }
+
     // Get subjects for this grade
     $subjects = getSubjectsForGrade($student['grade_level'], $pdo);
 
@@ -109,6 +126,23 @@ if ($method === 'POST') {
 
     if (!$studentId || !$subject) {
         http_response_code(400); echo json_encode(['ok'=>false,'message'=>'student_id and subject required']); exit;
+    }
+
+    // If teacher, enforce advisory class restriction
+    if ($_SESSION['user']['role'] === 'teacher') {
+        $teacherClasses = getTeacherAdvisoryClasses($pdo, $_SESSION['user']['id']);
+        $isMyStudent = false;
+        foreach ($teacherClasses as $tc) {
+            if ($tc['grade_level'] === $gradeLevel && $tc['section'] === $section) {
+                $isMyStudent = true;
+                break;
+            }
+        }
+        if (!$isMyStudent) {
+            http_response_code(403);
+            echo json_encode(['ok'=>false,'message'=>'Access denied: You can only edit grades for students in your assigned advisory class.']);
+            exit;
+        }
     }
 
     // Compute final: average of 3 terms (T1 - T3)

@@ -10,32 +10,30 @@ $freshUser = $uStmt->fetch() ?: $user;
 
 // Get all advisory classes
 $myClasses = getTeacherAdvisoryClasses($pdo, $freshUser['id']);
-if (empty($myClasses)) {
-    $myClasses = [['grade_level' => 'Grade 1', 'section' => 'Mabini']];
-}
+$hasAdvisory = !empty($myClasses);
 
 $selectedClass = $_GET['class'] ?? 'all';
 $where  = ['s.status = "active"'];
 $params = [];
 
-if ($selectedClass !== 'all' && is_numeric($selectedClass) && isset($myClasses[(int)$selectedClass])) {
-    $c = $myClasses[(int)$selectedClass];
-    $where[] = 's.grade_level = ? AND s.section = ?';
-    $params[] = $c['grade_level'];
-    $params[] = $c['section'];
-} else {
-    // Show all students across all assigned advisory classes
-    $classOr = [];
-    foreach ($myClasses as $c) {
-        $classOr[] = '(s.grade_level = ? AND s.section = ?)';
+if ($hasAdvisory) {
+    if ($selectedClass !== 'all' && is_numeric($selectedClass) && isset($myClasses[(int)$selectedClass])) {
+        $c = $myClasses[(int)$selectedClass];
+        $where[] = 's.grade_level = ? AND s.section = ?';
         $params[] = $c['grade_level'];
         $params[] = $c['section'];
-    }
-    if (!empty($classOr)) {
-        $where[] = '(' . implode(' OR ', $classOr) . ')';
     } else {
-        $where[] = '1 = 0';
+        // Show all students across all assigned advisory classes
+        $classOr = [];
+        foreach ($myClasses as $c) {
+            $classOr[] = '(s.grade_level = ? AND s.section = ?)';
+            $params[] = $c['grade_level'];
+            $params[] = $c['section'];
+        }
+        $where[] = '(' . implode(' OR ', $classOr) . ')';
     }
+} else {
+    $where[] = '1 = 0';
 }
 
 $stmt = $pdo->prepare('SELECT * FROM students s WHERE '.implode(' AND ',$where).' ORDER BY s.grade_level, s.section, s.last_name, s.first_name');

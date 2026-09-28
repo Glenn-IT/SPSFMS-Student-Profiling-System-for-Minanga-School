@@ -10,39 +10,47 @@ $freshUser = $uStmt->fetch() ?: $user;
 
 // Get all advisory classes assigned to teacher
 $myClasses = getTeacherAdvisoryClasses($pdo, $freshUser['id']);
-if (empty($myClasses)) {
-    $myClasses = [['grade_level' => 'Grade 1', 'section' => 'Mabini']];
-}
+$hasAdvisory = !empty($myClasses);
 
 // Determine active advisory class from GET param (?class=index or ?grade=...&section=...)
 $selectedClassIndex = 0;
-if (isset($_GET['class']) && is_numeric($_GET['class'])) {
-    $cIdx = (int)$_GET['class'];
-    if (isset($myClasses[$cIdx])) {
-        $selectedClassIndex = $cIdx;
-    }
-} elseif (!empty($_GET['grade']) && !empty($_GET['section'])) {
-    foreach ($myClasses as $idx => $cls) {
-        if ($cls['grade_level'] === $_GET['grade'] && $cls['section'] === $_GET['section']) {
-            $selectedClassIndex = $idx;
-            break;
+$activeClass        = null;
+$advisoryGrade      = '';
+$advisorySection    = '';
+$classStudents      = [];
+$totalStudents      = 0;
+$graded             = 0;
+$pending            = 0;
+
+if ($hasAdvisory) {
+    if (isset($_GET['class']) && is_numeric($_GET['class'])) {
+        $cIdx = (int)$_GET['class'];
+        if (isset($myClasses[$cIdx])) {
+            $selectedClassIndex = $cIdx;
+        }
+    } elseif (!empty($_GET['grade']) && !empty($_GET['section'])) {
+        foreach ($myClasses as $idx => $cls) {
+            if ($cls['grade_level'] === $_GET['grade'] && $cls['section'] === $_GET['section']) {
+                $selectedClassIndex = $idx;
+                break;
+            }
         }
     }
+
+    $activeClass     = $myClasses[$selectedClassIndex] ?? $myClasses[0];
+    $advisoryGrade   = $activeClass['grade_level'];
+    $advisorySection = $activeClass['section'];
+
+    $sy = SCHOOL_YEAR;
+
+    $classStmt = $pdo->prepare("SELECT s.*, COUNT(g.id) as graded_subjects FROM students s LEFT JOIN grades g ON g.student_id=s.id AND g.school_year=? WHERE s.grade_level=? AND s.section=? AND s.status='active' GROUP BY s.id ORDER BY s.last_name");
+    $classStmt->execute([$sy, $advisoryGrade, $advisorySection]);
+    $classStudents = $classStmt->fetchAll();
+
+    $totalStudents = count($classStudents);
+    $graded = count(array_filter($classStudents, fn($s) => $s['graded_subjects'] > 0));
+    $pending = $totalStudents - $graded;
 }
-
-$activeClass     = $myClasses[$selectedClassIndex] ?? $myClasses[0];
-$advisoryGrade   = $activeClass['grade_level'];
-$advisorySection = $activeClass['section'];
-
-$sy = SCHOOL_YEAR;
-
-$classStmt = $pdo->prepare("SELECT s.*, COUNT(g.id) as graded_subjects FROM students s LEFT JOIN grades g ON g.student_id=s.id AND g.school_year=? WHERE s.grade_level=? AND s.section=? AND s.status='active' GROUP BY s.id ORDER BY s.last_name");
-$classStmt->execute([$sy, $advisoryGrade, $advisorySection]);
-$classStudents = $classStmt->fetchAll();
-
-$totalStudents = count($classStudents);
-$graded = count(array_filter($classStudents, fn($s) => $s['graded_subjects'] > 0));
-$pending = $totalStudents - $graded;
 
 // Fetch announcements visible to teachers ('all' and 'teacher')
 $annStmt = $pdo->query("SELECT * FROM announcements WHERE audience IN ('all','teacher') ORDER BY posted_at DESC LIMIT 5");
@@ -140,7 +148,7 @@ $announcements = $annStmt->fetchAll();
         <div class="card h-100 mb-0">
           <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
             <div class="d-flex align-items-center gap-2">
-              <span><i class="fas fa-chalkboard me-2" style="color:var(--secondary);"></i>Advisory Class Roster — <strong><?= htmlspecialchars($advisoryGrade) ?> <?= htmlspecialchars($advisorySection) ?></strong></span>
+              <span><i class="fas fa-chalkboard me-2" style="color:var(--secondary);"></i>Advisory Class Roster — <strong><?= $hasAdvisory ? htmlspecialchars($advisoryGrade . ' ' . $advisorySection) : 'No Advisory Class' ?></strong></span>
               <span class="badge bg-success bg-opacity-15 text-success fw-semibold" style="font-size:.75rem;"><?= $totalStudents ?> Students</span>
             </div>
             <div class="d-flex align-items-center gap-2">
@@ -157,7 +165,7 @@ $announcements = $annStmt->fetchAll();
                 <thead><tr><th>#</th><th>LRN</th><th>Full Name</th><th>Sex</th><th>Age</th><th>Graded Subjects</th><th class="text-center">Action</th></tr></thead>
                 <tbody>
                   <?php if (empty($classStudents)): ?>
-                  <tr><td colspan="7" class="text-center py-4 text-muted">No students enrolled in <?= htmlspecialchars($advisoryGrade) ?> - Section <?= htmlspecialchars($advisorySection) ?>.</td></tr>
+                  <tr><td colspan="7" class="text-center py-4 text-muted"><?= $hasAdvisory ? 'No students enrolled in ' . htmlspecialchars($advisoryGrade . ' - Section ' . $advisorySection) . '.' : 'No advisory class assigned to your account.' ?></td></tr>
                   <?php else: foreach ($classStudents as $i => $s): ?>
                   <tr>
                     <td><?= $i+1 ?></td>
