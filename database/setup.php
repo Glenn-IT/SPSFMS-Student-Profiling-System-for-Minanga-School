@@ -288,6 +288,26 @@ if ($syCount == 0) {
     out('✔ Default <strong>school years</strong> seeded.', 'ok');
 }
 
+// ── Activity Logs Table ─────────────────────────────────────────────────────
+$pdo->exec("
+CREATE TABLE IF NOT EXISTS `activity_logs` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT NULL,
+  `username` VARCHAR(100) NULL,
+  `role` VARCHAR(20) NOT NULL,
+  `full_name` VARCHAR(150) NULL,
+  `action` VARCHAR(100) NOT NULL,
+  `details` TEXT NOT NULL,
+  `ip_address` VARCHAR(45) NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_logs_user` (`user_id`),
+  INDEX `idx_logs_role` (`role`),
+  INDEX `idx_logs_action` (`action`),
+  INDEX `idx_logs_created` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+");
+out('✔ Table <strong>activity_logs</strong> ready.', 'ok');
+
 
 
 // ── Seed Users ───────────────────────────────────────────────────────────────
@@ -312,6 +332,9 @@ if ($existingSt == 0) {
     $ins = $pdo->prepare("INSERT INTO students (lrn,grade_level,section,first_name,middle_name,last_name,sex,birthdate,age,mother_tongue,religion,address,mother_name,father_name,guardian_name,guardian_relation,contact,email,school_year,status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
     $sy = '2025-2026'; $addr = 'Minanga, Piat, Cagayan';
     $students = [
+      // Kindergarten — Sampaguita
+      ['100000000021','Kindergarten','Sampaguita','Joshua','D.','Aquino','Male','2020-04-10',5,'Ibanag','Roman Catholic','Purok 1, '.$addr,'Elena D. Aquino','Mario Aquino','Elena D. Aquino','Mother','09171234021','joshua.aquino@student.minanga.edu.ph',$sy,'active'],
+      ['100000000022','Kindergarten','Sampaguita','Bea','M.','Santos','Female','2020-06-15',5,'Ibanag','Roman Catholic','Purok 2, '.$addr,'Maria M. Santos','Carlos Santos','Maria M. Santos','Mother','09171234022','bea.santos@student.minanga.edu.ph',$sy,'active'],
       // Grade 1 — Mabini
       ['100000000001','Grade 1','Mabini','Ana','B.','Garcia','Female','2018-03-12',7,'Cebuano','Roman Catholic','Purok 1, '.$addr,'Luz B. Garcia','Roberto Garcia','Luz B. Garcia','Mother','09171234001','ana.garcia@student.minanga.edu.ph',$sy,'active'],
       ['100000000002','Grade 1','Mabini','Carlo','D.','Mendoza','Male','2018-05-20',7,'Cebuano','Roman Catholic','Purok 2, '.$addr,'Elena D. Mendoza','Jose Mendoza','Elena D. Mendoza','Mother','09171234002','carlo.mendoza@student.minanga.edu.ph',$sy,'active'],

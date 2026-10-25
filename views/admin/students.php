@@ -99,7 +99,7 @@ $sectionJson  = json_encode(SECTION_MAP);
         <form id="student-form">
           <input type="hidden" id="form-student-id">
           <div class="row g-3">
-            <div class="col-md-3"><label class="form-label">LRN *</label><input type="text" id="f-lrn" class="form-control" maxlength="12" required></div>
+            <div class="col-md-3"><label class="form-label">LRN *</label><input type="text" id="f-lrn" class="form-control" maxlength="12" pattern="\d{12}" inputmode="numeric" oninput="this.value = this.value.replace(/\D/g, '')" placeholder="12-digit LRN" required></div>
             <div class="col-md-3"><label class="form-label">School Year *</label>
               <select id="f-sy" class="form-select" required>
                 <?php foreach (getSchoolYearsList($pdo) as $syItem): ?>
@@ -339,6 +339,9 @@ async function saveStudent() {
   };
   if (!data.lrn || !data.grade_level || !data.section || !data.first_name || !data.last_name) {
     showToast('Please fill in all required fields.','error'); return;
+  }
+  if (!/^\d{12}$/.test(data.lrn)) {
+    showToast('LRN must be exactly 12 numeric digits (no letters allowed).','error'); return;
   }
   const namePattern = /^[A-Za-zÑñ' .\-]+$/;
   if (!namePattern.test(data.first_name) || !namePattern.test(data.last_name) ||

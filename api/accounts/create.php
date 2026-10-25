@@ -123,6 +123,11 @@ if ($role === 'teacher') {
         echo json_encode(['ok' => false, 'message' => 'LRN is required for student accounts.']);
         exit;
     }
+    if (!ctype_digit((string)$lrn) || strlen((string)$lrn) !== 12) {
+        http_response_code(400);
+        echo json_encode(['ok' => false, 'message' => 'LRN must be a 12-digit number (no letters allowed).']);
+        exit;
+    }
     $ck = $pdo->prepare('SELECT * FROM students WHERE lrn = ? LIMIT 1');
     $ck->execute([$lrn]);
     $student = $ck->fetch();
@@ -186,6 +191,7 @@ $stmt->execute([
 ]);
 
 $newId = (int)$pdo->lastInsertId();
+logUserActivity($pdo, 'CREATE_ACCOUNT', "Created {$role} account for '{$name}' (Username: '{$username}').");
 
 if ($role === 'teacher' && !empty($advisoryClasses)) {
     syncTeacherAdvisoryClasses($pdo, $newId, $advisoryClasses);

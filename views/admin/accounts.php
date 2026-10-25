@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../includes/auth_check.php';
 $user = requireAuth('admin');
 $activePage = 'accounts';
-$users = $pdo->query("SELECT * FROM users ORDER BY role, name")->fetchAll();
+$users = $pdo->query("SELECT * FROM users ORDER BY created_at DESC, id DESC")->fetchAll();
 $total = count($users);
 $active = count(array_filter($users, fn($u) => $u['status'] === 'active'));
 $inactive = $total - $active;
@@ -42,12 +42,59 @@ $inactive = $total - $active;
       <div class="col-md-4"><div class="stat-card red"><div class="stat-icon"><i class="fas fa-ban"></i></div><div><div class="stat-value" id="stat-inactive"><?= $inactive ?></div><div class="stat-label">Inactive</div></div></div></div>
     </div>
 
+    <!-- Filters & Sort Controls -->
+    <div class="card mb-3 border-0 shadow-sm">
+      <div class="card-body py-3">
+        <div class="row g-2 align-items-center">
+          <div class="col-md-4">
+            <div class="input-group">
+              <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+              <input type="text" id="filter-search" class="form-control" placeholder="Search name, username, or email..." oninput="renderAccounts()">
+            </div>
+          </div>
+          <div class="col-md-2">
+            <select id="filter-role" class="form-select" onchange="renderAccounts()">
+              <option value="">All Roles</option>
+              <option value="admin">Administrator</option>
+              <option value="teacher">Teacher</option>
+              <option value="student">Student</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <select id="filter-status" class="form-select" onchange="renderAccounts()">
+              <option value="">All Statuses</option>
+              <option value="active">Active Only</option>
+              <option value="inactive">Inactive Only</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted small"><i class="fas fa-sort-amount-down me-1"></i>Sort</span>
+              <select id="sort-order" class="form-select" onchange="renderAccounts()">
+                <option value="latest" selected>Latest Created (Newest First)</option>
+                <option value="oldest">Oldest Created First</option>
+                <option value="name_asc">Name (A — Z)</option>
+                <option value="name_desc">Name (Z — A)</option>
+                <option value="role">Role (Admin &gt; Teacher &gt; Student)</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-1">
+            <button class="btn btn-outline-secondary w-100" onclick="resetFilters()" title="Reset Filters"><i class="fas fa-sync-alt"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="card">
-      <div class="card-header"><i class="fas fa-user-cog me-2" style="color:var(--primary);"></i>User Accounts</div>
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div><i class="fas fa-user-cog me-2" style="color:var(--primary);"></i>User Accounts (<span id="accounts-count"><?= $total ?></span>)</div>
+        <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold" id="sort-badge"><i class="fas fa-clock me-1"></i>Sorted by: Latest</span>
+      </div>
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table table-modern mb-0">
-            <thead><tr><th>#</th><th>Name</th><th>Username</th><th>Role</th><th>Position</th><th>Status</th><th class="text-center">Actions</th></tr></thead>
+            <thead><tr><th>#</th><th>Name</th><th>Username</th><th>Role</th><th>Position</th><th>Created</th><th>Status</th><th class="text-center">Actions</th></tr></thead>
             <tbody id="accounts-tbody">
               <?php foreach ($users as $i => $u): ?>
               <tr id="row-<?= $u['id'] ?>">
@@ -59,6 +106,7 @@ $inactive = $total - $active;
                   <span class="badge bg-<?= $roleColor ?> bg-opacity-15 text-<?= $roleColor ?> fw-semibold text-capitalize"><?= $u['role'] ?></span>
                 </td>
                 <td style="font-size:.82rem;"><?= htmlspecialchars($u['position'] ?? '—') ?></td>
+                <td style="font-size:.80rem;" class="text-muted"><i class="far fa-clock me-1"></i><?= !empty($u['created_at']) ? date('M d, Y', strtotime($u['created_at'])) : '—' ?></td>
                 <td>
                   <span class="badge <?= $u['status']==='active' ? 'bg-success' : 'bg-danger' ?> bg-opacity-15 text-<?= $u['status']==='active'?'success':'danger' ?> fw-semibold status-badge" id="badge-<?= $u['id'] ?>">
                     <?= ucfirst($u['status']) ?>
@@ -137,7 +185,7 @@ $inactive = $total - $active;
             <label class="form-label fw-semibold">Student LRN <span class="text-danger">*</span></label>
             <div class="input-group">
               <span class="input-group-text"><i class="fas fa-id-card"></i></span>
-              <input type="text" id="ca-lrn" class="form-control" placeholder="Enter or paste 12-digit LRN" maxlength="12" oninput="onLrnInput()">
+              <input type="text" id="ca-lrn" class="form-control" placeholder="Enter or paste 12-digit LRN" maxlength="12" pattern="\d{12}" inputmode="numeric" oninput="this.value = this.value.replace(/\D/g, ''); onLrnInput()">
               <button class="btn btn-outline-secondary" type="button" onclick="verifyEnteredLrn()" title="Verify LRN">
                 <i class="fas fa-search me-1"></i> Verify
               </button>
@@ -201,6 +249,117 @@ const BASE = '<?= BASE_URL ?>';
 const CURRENT_USER_ID = <?= (int)$user['id'] ?>;
 showDesktopOnlyWarning();
 
+let allAccounts = <?= json_encode($users) ?>;
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr.replace(' ', 'T'));
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function renderAccounts() {
+  const search = (document.getElementById('filter-search')?.value || '').toLowerCase().trim();
+  const roleFilter = document.getElementById('filter-role')?.value || '';
+  const statusFilter = document.getElementById('filter-status')?.value || '';
+  const sortOrder = document.getElementById('sort-order')?.value || 'latest';
+
+  let filtered = allAccounts.filter(u => {
+    if (roleFilter && u.role !== roleFilter) return false;
+    if (statusFilter && u.status !== statusFilter) return false;
+    if (search) {
+      const matchName = (u.name || '').toLowerCase().includes(search);
+      const matchUser = (u.username || '').toLowerCase().includes(search);
+      const matchEmail = (u.email || '').toLowerCase().includes(search);
+      if (!matchName && !matchUser && !matchEmail) return false;
+    }
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    if (sortOrder === 'latest') {
+      const timeA = a.created_at ? new Date(a.created_at.replace(' ', 'T')).getTime() : 0;
+      const timeB = b.created_at ? new Date(b.created_at.replace(' ', 'T')).getTime() : 0;
+      return (timeB - timeA) || (parseInt(b.id) - parseInt(a.id));
+    } else if (sortOrder === 'oldest') {
+      const timeA = a.created_at ? new Date(a.created_at.replace(' ', 'T')).getTime() : 0;
+      const timeB = b.created_at ? new Date(b.created_at.replace(' ', 'T')).getTime() : 0;
+      return (timeA - timeB) || (parseInt(a.id) - parseInt(b.id));
+    } else if (sortOrder === 'name_asc') {
+      return (a.name || '').localeCompare(b.name || '');
+    } else if (sortOrder === 'name_desc') {
+      return (b.name || '').localeCompare(a.name || '');
+    } else if (sortOrder === 'role') {
+      const roleWeight = { admin: 1, teacher: 2, student: 3 };
+      const wA = roleWeight[a.role] || 99;
+      const wB = roleWeight[b.role] || 99;
+      return (wA - wB) || (a.name || '').localeCompare(b.name || '');
+    }
+    return 0;
+  });
+
+  const sortBadge = document.getElementById('sort-badge');
+  if (sortBadge) {
+    const sortLabels = {
+      latest: 'Sorted by: Latest',
+      oldest: 'Sorted by: Oldest',
+      name_asc: 'Sorted by: Name A-Z',
+      name_desc: 'Sorted by: Name Z-A',
+      role: 'Sorted by: Role'
+    };
+    sortBadge.innerHTML = `<i class="fas fa-sort-amount-down me-1"></i>${sortLabels[sortOrder] || 'Sorted'}`;
+  }
+
+  const countEl = document.getElementById('accounts-count');
+  if (countEl) countEl.textContent = filtered.length;
+
+  const roleColors = { admin: 'primary', teacher: 'success', student: 'warning' };
+  const tbody = document.getElementById('accounts-tbody');
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4"><i class="fas fa-search me-1"></i>No accounts matching criteria.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((u, i) => {
+    const color = roleColors[u.role] ?? 'secondary';
+    const isActive = u.status === 'active';
+    const actionBtn = (parseInt(u.id) === CURRENT_USER_ID)
+      ? '<span style="font-size:.78rem;color:var(--gray-400);">Current user</span>'
+      : `<button class="btn btn-sm ${isActive ? 'btn-outline-danger' : 'btn-outline-success'}" id="btn-${u.id}"
+           onclick="toggleStatus(${u.id}, '${isActive ? 'inactive' : 'active'}')">
+           <i class="fas ${isActive ? 'fa-ban' : 'fa-check'}"></i> ${isActive ? 'Deactivate' : 'Activate'}
+         </button>`;
+
+    const createdFormatted = u.created_at ? formatDate(u.created_at) : '—';
+
+    return `
+      <tr id="row-${u.id}">
+        <td>${i + 1}</td>
+        <td><strong>${escHtml(u.name)}</strong></td>
+        <td><span style="font-family:monospace;font-size:.82rem;">${escHtml(u.username)}</span></td>
+        <td><span class="badge bg-${color} bg-opacity-15 text-${color} fw-semibold text-capitalize">${escHtml(u.role)}</span></td>
+        <td style="font-size:.82rem;">${escHtml(u.position || '—')}</td>
+        <td style="font-size:.80rem;" class="text-muted"><i class="far fa-clock me-1"></i>${createdFormatted}</td>
+        <td>
+          <span class="badge ${isActive ? 'bg-success' : 'bg-danger'} bg-opacity-15 text-${isActive ? 'success' : 'danger'} fw-semibold status-badge" id="badge-${u.id}">
+            ${isActive ? 'Active' : 'Inactive'}
+          </span>
+        </td>
+        <td class="text-center">${actionBtn}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function resetFilters() {
+  if (document.getElementById('filter-search')) document.getElementById('filter-search').value = '';
+  if (document.getElementById('filter-role')) document.getElementById('filter-role').value = '';
+  if (document.getElementById('filter-status')) document.getElementById('filter-status').value = '';
+  if (document.getElementById('sort-order')) document.getElementById('sort-order').value = 'latest';
+  renderAccounts();
+}
+
 /* ── Live Account & Stat Loader ── */
 async function loadAccounts() {
   try {
@@ -208,48 +367,22 @@ async function loadAccounts() {
     const data = await res.json();
     if (!data.ok) return;
 
-    let total = data.users.length;
-    let active = 0;
-    let inactive = 0;
+    allAccounts = data.users || [];
+    let total = allAccounts.length;
+    let active = allAccounts.filter(u => u.status === 'active').length;
+    let inactive = total - active;
 
-    const roleColors = { admin: 'primary', teacher: 'success', student: 'warning' };
-    const tbody = document.getElementById('accounts-tbody');
-
-    tbody.innerHTML = data.users.map((u, i) => {
-      const color = roleColors[u.role] ?? 'secondary';
-      const isActive = u.status === 'active';
-      if (isActive) active++; else inactive++;
-
-      const actionBtn = (u.id == CURRENT_USER_ID)
-        ? '<span style="font-size:.78rem;color:var(--gray-400);">Current user</span>'
-        : `<button class="btn btn-sm ${isActive ? 'btn-outline-danger' : 'btn-outline-success'}" id="btn-${u.id}"
-             onclick="toggleStatus(${u.id}, '${isActive ? 'inactive' : 'active'}')">
-             <i class="fas ${isActive ? 'fa-ban' : 'fa-check'}"></i> ${isActive ? 'Deactivate' : 'Activate'}
-           </button>`;
-
-      return `
-        <tr id="row-${u.id}">
-          <td>${i + 1}</td>
-          <td><strong>${escHtml(u.name)}</strong></td>
-          <td><span style="font-family:monospace;font-size:.82rem;">${escHtml(u.username)}</span></td>
-          <td><span class="badge bg-${color} bg-opacity-15 text-${color} fw-semibold text-capitalize">${escHtml(u.role)}</span></td>
-          <td style="font-size:.82rem;">${escHtml(u.position || '—')}</td>
-          <td>
-            <span class="badge ${isActive ? 'bg-success' : 'bg-danger'} bg-opacity-15 text-${isActive ? 'success' : 'danger'} fw-semibold status-badge" id="badge-${u.id}">
-              ${isActive ? 'Active' : 'Inactive'}
-            </span>
-          </td>
-          <td class="text-center">${actionBtn}</td>
-        </tr>
-      `;
-    }).join('');
-
+    renderAccounts();
     updateStatCards(total, active, inactive);
   } catch (err) {
     console.error('Failed to load live account data:', err);
   }
 }
 
+// Call on DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  renderAccounts();
+});
 function updateStatCards(total, active, inactive) {
   const totalEl = document.getElementById('stat-total');
   const activeEl = document.getElementById('stat-active');

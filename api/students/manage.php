@@ -93,6 +93,11 @@ if ($method === 'POST') {
 
     // Determine values. If student is editing, protect academic classification (LRN, grade level, section, school year)
     $lrn        = ($role === 'admin') ? ($d['lrn'] ?? $currStudent['lrn']) : $currStudent['lrn'];
+    if ($role === 'admin' && (!ctype_digit((string)$lrn) || strlen((string)$lrn) !== 12)) {
+        http_response_code(400);
+        echo json_encode(['ok'=>false,'message'=>'LRN must be exactly 12 numeric digits (no letters allowed).']);
+        exit;
+    }
     $gradeLevel = ($role === 'admin') ? ($d['grade_level'] ?? $currStudent['grade_level']) : $currStudent['grade_level'];
     $section    = ($role === 'admin') ? ($d['section'] ?? $currStudent['section']) : $currStudent['section'];
     $schoolYear = ($role === 'admin' && !empty($d['school_year'])) ? trim($d['school_year']) : $currStudent['school_year'];

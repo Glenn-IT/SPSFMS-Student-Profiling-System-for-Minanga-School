@@ -49,6 +49,35 @@ if ($method === 'POST') {
             exit;
         }
 
+        $parts = explode('-', $yearLabel);
+        $y1 = (int)$parts[0];
+        $y2 = (int)$parts[1];
+        if ($y2 !== $y1 + 1) {
+            echo json_encode(['ok' => false, 'message' => "Academic school year must span consecutive calendar years (e.g. {$y1}-" . ($y1 + 1) . ")."]);
+            exit;
+        }
+
+        if ($startDate) {
+            $sy1 = (int)date('Y', strtotime($startDate));
+            if ($sy1 !== $y1) {
+                echo json_encode(['ok' => false, 'message' => "Classes start date must be within year {$y1} to match Academic Year {$yearLabel}."]);
+                exit;
+            }
+        }
+
+        if ($endDate) {
+            $sy2 = (int)date('Y', strtotime($endDate));
+            if ($sy2 !== $y2) {
+                echo json_encode(['ok' => false, 'message' => "Classes end date must be within year {$y2} to match Academic Year {$yearLabel}."]);
+                exit;
+            }
+        }
+
+        if ($startDate && $endDate && strtotime($endDate) <= strtotime($startDate)) {
+            echo json_encode(['ok' => false, 'message' => 'Classes end date must be after classes start date.']);
+            exit;
+        }
+
         try {
             $pdo->beginTransaction();
             if ($isActive) {
@@ -115,6 +144,35 @@ if ($method === 'POST') {
 
         if (!preg_match('/^\d{4}-\d{4}$/', $yearLabel)) {
             echo json_encode(['ok' => false, 'message' => 'Invalid format. School year must be in format YYYY-YYYY (e.g. 2026-2027).']);
+            exit;
+        }
+
+        $parts = explode('-', $yearLabel);
+        $y1 = (int)$parts[0];
+        $y2 = (int)$parts[1];
+        if ($y2 !== $y1 + 1) {
+            echo json_encode(['ok' => false, 'message' => "Academic school year must span consecutive calendar years (e.g. {$y1}-" . ($y1 + 1) . ")."]);
+            exit;
+        }
+
+        if ($startDate) {
+            $sy1 = (int)date('Y', strtotime($startDate));
+            if ($sy1 !== $y1) {
+                echo json_encode(['ok' => false, 'message' => "Classes start date must be within year {$y1} to match Academic Year {$yearLabel}."]);
+                exit;
+            }
+        }
+
+        if ($endDate) {
+            $sy2 = (int)date('Y', strtotime($endDate));
+            if ($sy2 !== $y2) {
+                echo json_encode(['ok' => false, 'message' => "Classes end date must be within year {$y2} to match Academic Year {$yearLabel}."]);
+                exit;
+            }
+        }
+
+        if ($startDate && $endDate && strtotime($endDate) <= strtotime($startDate)) {
+            echo json_encode(['ok' => false, 'message' => 'Classes end date must be after classes start date.']);
             exit;
         }
 

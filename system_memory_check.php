@@ -256,7 +256,8 @@ $expectedTables = [
     'report_signatories',
     'sections',
     'subjects',
-    'school_years'
+    'school_years',
+    'activity_logs'
 ];
 
 $schemaSql = file_exists($rootDir . '/database/schema.sql') ? file_get_contents($rootDir . '/database/schema.sql') : '';

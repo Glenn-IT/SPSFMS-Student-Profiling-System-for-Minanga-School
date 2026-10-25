@@ -123,6 +123,27 @@ try {
             foreach ($defaultSys as $syRow) { $insSy->execute($syRow); }
         }
     } catch (Exception $syErr) {}
+
+    // Ensure activity_logs table exists
+    try {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `activity_logs` (
+              `id` INT AUTO_INCREMENT PRIMARY KEY,
+              `user_id` INT NULL,
+              `username` VARCHAR(100) NULL,
+              `role` VARCHAR(20) NOT NULL,
+              `full_name` VARCHAR(150) NULL,
+              `action` VARCHAR(100) NOT NULL,
+              `details` TEXT NOT NULL,
+              `ip_address` VARCHAR(45) NULL,
+              `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              INDEX `idx_logs_user` (`user_id`),
+              INDEX `idx_logs_role` (`role`),
+              INDEX `idx_logs_action` (`action`),
+              INDEX `idx_logs_created` (`created_at`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
+    } catch (Exception $logErr) {}
 } catch (PDOException $e) {
 
     http_response_code(500);
@@ -253,5 +274,29 @@ if (!function_exists('getSignatories')) {
             }
         } catch (Exception $e) {}
         return $sig;
+    }
+}
+
+if (!function_exists('logUserActivity')) {
+    function logUserActivity($pdo, string $action, string $details, ?array $user = null): bool {
+        if (!($pdo instanceof PDO)) return false;
+        try {
+            if (!$user) {
+                $user = $_SESSION['user'] ?? null;
+            }
+            $userId   = !empty($user['id']) ? (int)$user['id'] : null;
+            $username = $user['username'] ?? null;
+            $role     = $user['role'] ?? 'system';
+            $fullName = $user['name'] ?? null;
+            $ip       = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+
+            $stmt = $pdo->prepare("
+                INSERT INTO activity_logs (user_id, username, role, full_name, action, details, ip_address)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ");
+            return $stmt->execute([$userId, $username, $role, $fullName, $action, $details, $ip]);
+        } catch (Exception $e) {
+            return false;
+        }
     }
 }

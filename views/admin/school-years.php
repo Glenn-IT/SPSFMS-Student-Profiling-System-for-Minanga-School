@@ -387,6 +387,39 @@ async function submitSchoolYear() {
     return;
   }
 
+  const parts = label.split('-');
+  const y1 = parseInt(parts[0], 10);
+  const y2 = parseInt(parts[1], 10);
+  if (y2 !== y1 + 1) {
+    errBox.textContent = `Academic school year must span consecutive calendar years (e.g., ${y1}-${y1 + 1}).`;
+    errBox.classList.remove('d-none');
+    return;
+  }
+
+  if (start) {
+    const sYear = parseInt(start.split('-')[0], 10);
+    if (sYear !== y1) {
+      errBox.textContent = `Classes start date must be within year ${y1} to match Academic Year ${label}.`;
+      errBox.classList.remove('d-none');
+      return;
+    }
+  }
+
+  if (end) {
+    const eYear = parseInt(end.split('-')[0], 10);
+    if (eYear !== y2) {
+      errBox.textContent = `Classes end date must be within year ${y2} to match Academic Year ${label}.`;
+      errBox.classList.remove('d-none');
+      return;
+    }
+  }
+
+  if (start && end && end <= start) {
+    errBox.textContent = 'Classes end date must be after classes start date.';
+    errBox.classList.remove('d-none');
+    return;
+  }
+
   const btn = document.getElementById('btn-save-sy');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';

@@ -41,7 +41,7 @@ SPSFMS/
 │   └── chart-download-menu.php         # Dropdown menu helper for exporting Chart.js
 │
 ├── database/
-│   ├── schema.sql                      # Complete MySQL database schema (9 tables)
+│   ├── schema.sql                      # Complete MySQL database schema (11 tables)
 │   ├── setup.php                       # Web database installer & sample data seeder
 │   └── spsmis.sql                      # Full phpMyAdmin SQL dump
 │
@@ -127,7 +127,7 @@ SPSFMS/
 
 ---
 
-## 3. Database Schema Memory (All 9 Tables)
+## 3. Database Schema Memory (All 11 Tables)
 
 ### Table Relationships & Key Entities
 ```
@@ -200,7 +200,7 @@ The system includes an automated integrity checker (`system_memory_check.php`) t
 3. **API Endpoint & Client Fetch Synchronization**: Extracts all `fetch()` calls in views/scripts and validates target endpoints.
 4. **Sidebar Navigation vs Existing Views**: Checks all sidebar links for missing views or unlinked pages.
 5. **Role Authentication Guards**: Ensures every portal view contains strict `requireAuth(...)` checks.
-6. **Database Schema & Table Synchronization**: Verifies all 9 core tables in `schema.sql`, `setup.php`, and live MySQL.
+6. **Database Schema & Table Synchronization**: Verifies all 11 core tables in `schema.sql`, `setup.php`, and live MySQL.
 7. **Static Asset Verification**: Confirms all CSS, JS, icon fonts, and school logos exist locally.
 
 ### How to Run the Memory Checker:

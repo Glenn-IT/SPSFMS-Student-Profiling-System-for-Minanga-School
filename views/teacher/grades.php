@@ -116,15 +116,33 @@ $preselectedStudentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 
           <!-- Republic of Philippines Header -->
           <div style="text-align:center;margin-bottom:1rem;border-bottom:2px solid #1a73e8;padding-bottom:.75rem;">
             <div style="font-size:.7rem;color:var(--gray-600);">Republic of the Philippines · Department of Education</div>
-            <div style="font-weight:700;font-size:1rem;color:var(--primary);">SCHOOL FORM 10 (SF10) — LEARNER's PERMANENT ACADEMIC RECORD</div>
+            <div style="font-weight:700;font-size:1rem;color:var(--primary);" id="sf10-doc-title">SCHOOL FORM 10 (SF10) — LEARNER's PERMANENT ACADEMIC RECORD</div>
             <div style="font-size:.8rem;color:var(--gray-600);"><?= SCHOOL_NAME ?></div>
           </div>
 
           <div class="d-flex align-items-center justify-content-between mb-2">
-            <span class="text-muted small"><i class="fas fa-id-card me-1"></i>Learner Academic Record</span>
+            <div>
+              <span class="text-muted small"><i class="fas fa-id-card me-1"></i>Learner Academic Record</span>
+              <span id="kinder-badge" class="badge bg-info text-dark ms-2 d-none"><i class="fas fa-shapes me-1"></i>Kindergarten / K-3 Grade Sheet</span>
+            </div>
             <a id="btn-print-sf9" href="#" target="_blank" class="btn btn-sm btn-outline-success fw-bold">
               <i class="fas fa-print me-1"></i>Print SF9 Report Card
             </a>
+          </div>
+
+          <div id="kinder-legend-box" class="alert alert-info py-2 px-3 mb-3 d-none" style="font-size:.82rem;">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <div>
+                <strong><i class="fas fa-info-circle me-1"></i>Kindergarten (K-3) Performance Standards:</strong>
+                <span class="ms-2 badge bg-success">C (85-100) Consistent</span>
+                <span class="ms-1 badge bg-primary">D (75-84) Developing</span>
+                <span class="ms-1 badge bg-warning text-dark">B (&lt;75) Beginning</span>
+              </div>
+              <div class="btn-group btn-group-sm">
+                <button type="button" class="btn btn-outline-success btn-sm py-0" onclick="quickFillKinder(88)">Set All Consistent (88)</button>
+                <button type="button" class="btn btn-outline-primary btn-sm py-0" onclick="quickFillKinder(80)">Set All Developing (80)</button>
+              </div>
+            </div>
           </div>
 
           <div class="sf10-header row g-2 mb-3">
@@ -247,8 +265,26 @@ async function loadGrades() {
     document.getElementById('sf10-sy').textContent = sy;
 
     const sf9Btn = document.getElementById('btn-print-sf9');
-    if (sf9Btn) {
-      sf9Btn.href = `${BASE}/views/teacher/reports.php?type=sf9&student_id=${studentId}&sy=${encodeURIComponent(sy)}`;
+    const isKinder = /kinder/i.test(data.student.grade_level);
+    const docTitle = document.getElementById('sf10-doc-title');
+    const kinderBadge = document.getElementById('kinder-badge');
+    const kinderLegend = document.getElementById('kinder-legend-box');
+    if (isKinder) {
+      if (docTitle) docTitle.innerHTML = 'K-3 REPORT CARD GRADE SHEET &bull; KINDERGARTEN LEARNER PROGRESS RECORD';
+      if (kinderBadge) kinderBadge.classList.remove('d-none');
+      if (kinderLegend) kinderLegend.classList.remove('d-none');
+      if (sf9Btn) {
+        sf9Btn.innerHTML = '<i class="fas fa-print me-1"></i>Print K-3 Report Card (SF9-K)';
+        sf9Btn.href = `${BASE}/views/teacher/reports.php?type=sf9&student_id=${studentId}&sy=${encodeURIComponent(sy)}`;
+      }
+    } else {
+      if (docTitle) docTitle.innerHTML = 'SCHOOL FORM 10 (SF10) — LEARNER\x27s PERMANENT ACADEMIC RECORD';
+      if (kinderBadge) kinderBadge.classList.add('d-none');
+      if (kinderLegend) kinderLegend.classList.add('d-none');
+      if (sf9Btn) {
+        sf9Btn.innerHTML = '<i class="fas fa-print me-1"></i>Print SF9 Report Card';
+        sf9Btn.href = `${BASE}/views/teacher/reports.php?type=sf9&student_id=${studentId}&sy=${encodeURIComponent(sy)}`;
+      }
     }
 
     const tbody = document.getElementById('grades-tbody');
@@ -370,3 +406,12 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
+function quickFillKinder(val) {
+  document.querySelectorAll('#grades-tbody .term-input').forEach(input => {
+    if (!input.value) {
+      input.value = val;
+      recomputeRow(input);
+    }
+  });
+}

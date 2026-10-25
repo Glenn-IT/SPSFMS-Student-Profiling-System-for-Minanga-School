@@ -218,3 +218,23 @@ INSERT IGNORE INTO `school_years` (`year_label`, `is_active`, `start_date`, `end
 ('2024-2025', 0, '2024-06-03', '2025-03-28'),
 ('2025-2026', 1, '2025-06-02', '2026-03-27'),
 ('2026-2027', 0, '2026-06-01', '2027-03-26');
+
+-- ─── Activity Logs ────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS `activity_logs` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT NULL,
+  `username` VARCHAR(100) NULL,
+  `role` VARCHAR(20) NOT NULL,
+  `full_name` VARCHAR(150) NULL,
+  `action` VARCHAR(100) NOT NULL,
+  `details` TEXT NOT NULL,
+  `ip_address` VARCHAR(45) NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_logs_user` (`user_id`),
+  INDEX `idx_logs_role` (`role`),
+  INDEX `idx_logs_action` (`action`),
+  INDEX `idx_logs_created` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO `activity_logs` (`id`, `user_id`, `username`, `role`, `full_name`, `action`, `details`, `ip_address`) VALUES
+(1, 1, 'admin', 'admin', 'Maria L. Reyes', 'SYSTEM_INITIALIZE', 'System memory initialized and database installed.', '127.0.0.1');

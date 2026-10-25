@@ -284,7 +284,7 @@ function renderSf9ReportCard(data, options = {}) {
 
           <!-- Report Title -->
           <div class="sf9-title-block">
-            <div class="main-title">LEARNER’S PERFORMANCE REPORT</div>
+            <div class="main-title">${isKinder ? "KINDERGARTEN PROGRESS REPORT (SF9-K / K-3)" : "LEARNER’S PERFORMANCE REPORT"}</div>
             <div class="sy-title">School Year <span contenteditable="false" class="editable-field" id="sf9SyText">${escapeHtml(sy)}</span></div>
           </div>
 
@@ -327,7 +327,7 @@ function renderSf9ReportCard(data, options = {}) {
           <table class="sf9-grades-table" id="sf9GradesTable">
             <thead>
               <tr>
-                <th rowspan="2" style="width: 54%; text-align: center;">Learning Areas</th>
+                <th rowspan="2" style="width: 54%; text-align: center;">${isKinder ? "Domains / Development Areas" : "Learning Areas"}</th>
                 <th colspan="3" style="width: 24%; text-align: center;">TERM</th>
                 <th rowspan="2" style="width: 11%; text-align: center;">Final<br>Grade</th>
                 <th rowspan="2" style="width: 11%; text-align: center;">Remarks</th>
@@ -351,6 +351,26 @@ function renderSf9ReportCard(data, options = {}) {
             </tbody>
           </table>
 
+          ${isKinder ? `
+          <!-- Kindergarten (K-3) Performance Descriptors Table -->
+          <div class="sf9-descriptors-block">
+            <div class="sf9-descriptors-title">KINDERGARTEN (K-3) PERFORMANCE DESCRIPTORS</div>
+            <table class="sf9-descriptors-table">
+              <thead>
+                <tr>
+                  <th style="width: 28%;">Rating / Scale</th>
+                  <th style="width: 44%;">Early Childhood Competency</th>
+                  <th style="width: 28%;">Remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>85-100 (C)</td><td>Consistently Demonstrates</td><td>Passed / Promoted</td></tr>
+                <tr><td>75-84 (D)</td><td>Developing Competency</td><td>Passed / Promoted</td></tr>
+                <tr><td>Below 75 (B)</td><td>Beginning / Needs Support</td><td>Needs Guidance</td></tr>
+              </tbody>
+            </table>
+          </div>
+          ` : `
           <!-- Performance Descriptors Table (Exact match from SF9-TVL-ICT12.pdf) -->
           <div class="sf9-descriptors-block">
             <div class="sf9-descriptors-title">PERFORMANCE DESCRIPTORS</div>
@@ -371,6 +391,7 @@ function renderSf9ReportCard(data, options = {}) {
               </tbody>
             </table>
           </div>
+          `}
 
         </div><!-- /.sf9-panel (Left) -->
 

@@ -46,6 +46,12 @@ if ($method === 'POST') {
             exit;
         }
     }
+    if (!ctype_digit((string)$d['lrn']) || strlen((string)$d['lrn']) !== 12) {
+        http_response_code(400);
+        echo json_encode(['ok'=>false,'message'=>'LRN must be exactly 12 numeric digits (no letters allowed).']);
+        exit;
+    }
+
     $namePattern = "/^[A-Za-zÑñ' .\\-]+$/u";
     foreach (['first_name','last_name'] as $f) {
         if (!preg_match($namePattern, $d[$f])) {
@@ -96,6 +102,7 @@ if ($method === 'POST') {
         $studentSy
     ]);
     $id = $pdo->lastInsertId();
+    logUserActivity($pdo, 'CREATE_STUDENT', "Enrolled student '{$d['first_name']} {$d['last_name']}' (LRN: {$d['lrn']}, {$d['grade_level']}-{$d['section']}).");
     $new = $pdo->prepare('SELECT * FROM students WHERE id = ?');
     $new->execute([$id]);
     echo json_encode(['ok'=>true,'student'=>$new->fetch()]);

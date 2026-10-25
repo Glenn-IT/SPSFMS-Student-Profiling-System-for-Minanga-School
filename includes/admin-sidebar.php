@@ -18,6 +18,7 @@ $navItems = [
   ['page'=>'settings',        'icon'=>'fa-cog',                  'label'=>'Settings',             'href'=>BASE_URL.'/views/admin/settings.php'],
   ['page'=>'sec_questions', 'icon'=>'fa-shield-alt',           'label'=>'Manage Security QT',   'href'=>BASE_URL.'/views/admin/security-questions.php'],
   ['page'=>'school_years',  'icon'=>'fa-calendar-alt',         'label'=>'Manage School Year',   'href'=>BASE_URL.'/views/admin/school-years.php'],
+  ['page'=>'user_logs',     'icon'=>'fa-history',              'label'=>'User Logs',            'href'=>BASE_URL.'/views/admin/user-logs.php'],
 ];
 
 ?>

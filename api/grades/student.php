@@ -158,6 +158,8 @@ if ($method === 'POST') {
             final_grade=VALUES(final_grade), remarks=VALUES(remarks)")
         ->execute([$studentId,$sy,$gradeLevel,$section,$subject,$t1,$t2,$t3,$t1,$t2,$t3,$q4,$final,$remarks]);
 
+    logUserActivity($pdo, 'SAVE_GRADES', "Saved grades for student #{$studentId} in {$subject} ({$gradeLevel}-{$section}, S.Y. {$sy}). Final: " . ($final !== null ? $final : 'Incomplete'));
+
     echo json_encode(['ok'=>true,'final_grade'=>$final,'remarks'=>$remarks,'t1'=>$t1,'t2'=>$t2,'t3'=>$t3]);
     exit;
 }

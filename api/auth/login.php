@@ -49,4 +49,6 @@ $_SESSION['user'] = [
     'section'          => $user['section'],
 ];
 
+logUserActivity($pdo, 'LOGIN', "User '{$user['username']}' logged into {$user['role']} portal.", $_SESSION['user']);
+
 echo json_encode(['ok' => true, 'role' => $user['role'], 'name' => $user['name']]);

@@ -9,4 +9,5 @@ $status = $d['status'] === 'active' ? 'active' : 'inactive';
 if (!$id) { http_response_code(400); echo json_encode(['ok'=>false,'message'=>'ID required']); exit; }
 if ($id == $_SESSION['user']['id']) { http_response_code(400); echo json_encode(['ok'=>false,'message'=>'Cannot change your own status']); exit; }
 $pdo->prepare('UPDATE users SET status=? WHERE id=?')->execute([$status, $id]);
+logUserActivity($pdo, 'TOGGLE_STATUS', "Changed account #{$id} status to '{$status}'.");
 echo json_encode(['ok'=>true,'status'=>$status]);

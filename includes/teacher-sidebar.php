@@ -8,6 +8,7 @@ $navItems = [
   ['page'=>'student-profiles', 'icon'=>'fa-users',           'label'=>'Student Profiles',   'href'=>BASE_URL.'/views/teacher/student-profiles.php'],
   ['page'=>'grades',           'icon'=>'fa-clipboard-list',  'label'=>'Grade Management',   'href'=>BASE_URL.'/views/teacher/grades.php'],
   ['page'=>'reports',          'icon'=>'fa-file-alt',        'label'=>'Reports',            'href'=>BASE_URL.'/views/teacher/reports.php'],
+  ['page'=>'activity_logs',    'icon'=>'fa-history',         'label'=>'Activity Logs',      'href'=>BASE_URL.'/views/teacher/activity-logs.php'],
   ['page'=>'settings',         'icon'=>'fa-cog',             'label'=>'Settings',           'href'=>BASE_URL.'/views/teacher/settings.php'],
 ];
 ?>
