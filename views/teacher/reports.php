@@ -79,7 +79,14 @@ if ($hasAdvisory) {
 $summaryStudents = [];
 if ($hasAdvisory && $grade && $section && $reportType === 'summary') {
     $stmt = $pdo->prepare("SELECT s.id, s.last_name, s.first_name, s.middle_name, s.lrn, s.sex,
-        AVG(g.final_grade) as avg_grade,
+        AVG(CASE 
+            WHEN g.final_grade = 'A' THEN 95 
+            WHEN g.final_grade = 'B' THEN 85 
+            WHEN g.final_grade = 'C' THEN 77 
+            WHEN g.final_grade = 'D' THEN 70 
+            WHEN g.final_grade = 'E' THEN 50 
+            ELSE g.final_grade 
+        END) as avg_grade,
         COUNT(g.id) as graded_count
         FROM students s
         LEFT JOIN grades g ON g.student_id=s.id AND g.school_year=?
@@ -438,9 +445,15 @@ $selectedStudentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 0;
                 <tbody>
                   <?php if (empty($summaryStudents)): ?>
                   <tr><td colspan="8" class="text-center text-muted py-4"><i class="fas fa-users-slash me-2"></i>No enrolled students found in your advisory class (<?= htmlspecialchars($grade . ' - ' . $section) ?>) for S.Y. <?= htmlspecialchars($sy) ?>.</td></tr>
-                  <?php else: foreach ($summaryStudents as $i => $s):
-                    $avg = $s['avg_grade'] !== null ? round($s['avg_grade'],2) : null;
-                    $remarks = $avg !== null ? ($avg >= 75 ? 'Passed' : 'Failed') : '—';
+                  <?php else: 
+                    $isKinder = isKindergartenGrade($grade);
+                    foreach ($summaryStudents as $i => $s):
+                    $avgRaw = $s['avg_grade'] !== null ? round($s['avg_grade'], 2) : null;
+                    $avgDisplay = '—';
+                    if ($avgRaw !== null) {
+                        $avgDisplay = $isKinder ? scoreToKinderLetter($avgRaw) : number_format($avgRaw, 2);
+                    }
+                    $remarks = $avgRaw !== null ? ($avgRaw >= 75 ? 'Passed' : 'Failed') : '—';
                   ?>
                   <tr>
                     <td class="text-center text-muted fw-bold"><?= $i+1 ?></td>
@@ -448,7 +461,7 @@ $selectedStudentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 0;
                     <td class="fw-semibold"><?= htmlspecialchars($s['last_name'].', '.$s['first_name'].' '.($s['middle_name']??'')) ?></td>
                     <td class="text-center"><?= htmlspecialchars($s['sex']) ?></td>
                     <td class="text-center"><span class="badge bg-light text-dark border"><?= $s['graded_count'] ?: '0' ?></span></td>
-                    <td class="text-center fw-bold fs-6"><?= $avg ?? '—' ?></td>
+                    <td class="text-center fw-bold fs-6"><?= $avgDisplay ?></td>
                     <td class="text-center" style="color:<?= $remarks==='Passed'?'#16a34a':($remarks==='Failed'?'#dc2626':'inherit') ?>;font-weight:700;"><?= $remarks ?></td>
                     <td class="text-center no-print">
                       <a href="?type=sf9&student_id=<?= $s['id'] ?>&sy=<?= urlencode($sy) ?>" class="btn btn-xs btn-outline-success py-1 px-2" style="font-size:.78rem;" title="View &amp; Print SF9">

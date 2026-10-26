@@ -26,23 +26,39 @@ $hour = (int)date('H');
 $greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
 
 // Calculate averages and counts
+$isKinder = isKindergartenGrade($student['grade_level'] ?? '');
 $finals = array_filter(array_column($grades, 'final_grade'), fn($v) => $v !== null && $v !== '');
-$avg = count($finals) ? round(array_sum($finals) / count($finals), 2) : null;
+if ($isKinder) {
+    $kinderScoresList = [];
+    foreach ($finals as $fVal) {
+        $sc = getKinderLetterScore((string)$fVal);
+        if ($sc !== null) $kinderScoresList[] = $sc;
+    }
+    $avgScore = count($kinderScoresList) ? round(array_sum($kinderScoresList) / count($kinderScoresList), 2) : null;
+    $avg = $avgScore !== null ? scoreToKinderLetter($avgScore) : null;
+} else {
+    $avg = count($finals) ? round(array_sum($finals) / count($finals), 2) : null;
+}
 $totalSubjects = count($grades);
 $passedCount = 0;
 foreach ($grades as $g) {
-    if (($g['remarks'] ?? '') === 'Passed' || (isset($g['final_grade']) && $g['final_grade'] >= 75)) {
+    $fG = $g['final_grade'] ?? '';
+    if (($g['remarks'] ?? '') === 'Passed' || ($isKinder ? in_array($fG, ['A','B','C'], true) : ($fG !== '' && (float)$fG >= 75))) {
         $passedCount++;
     }
 }
 $standing = 'In Progress';
 if ($avg !== null) {
-    if ($avg >= 90) {
-        $standing = 'With Honors';
-    } elseif ($avg >= 75) {
-        $standing = 'Passed';
+    if ($isKinder) {
+        $standing = in_array($avg, ['A','B','C'], true) ? 'Passed / Promoted' : 'Needs Support';
     } else {
-        $standing = 'Needs Improvement';
+        if ($avg >= 90) {
+            $standing = 'With Honors';
+        } elseif ($avg >= 75) {
+            $standing = 'Passed';
+        } else {
+            $standing = 'Needs Improvement';
+        }
     }
 }
 ?>
@@ -235,8 +251,8 @@ include __DIR__ . '/../../includes/student-navbar.php';
                 <?php foreach ($grades as $g): ?>
                   <?php
                     $final = $g['final_grade'];
-                    $isPass = ($g['remarks'] === 'Passed' || ($final !== null && $final >= 75));
-                    $color = $final >= 90 ? 'text-success' : ($final >= 75 ? 'text-primary' : 'text-danger');
+                    $isPass = ($g['remarks'] === 'Passed' || ($isKinder ? in_array($final, ['A','B','C'], true) : ($final !== null && (float)$final >= 75)));
+                    $color = $isPass ? 'text-success' : 'text-danger';
                   ?>
                   <tr>
                     <td class="subject-col"><?= htmlspecialchars($g['subject']) ?></td>
@@ -277,8 +293,8 @@ include __DIR__ . '/../../includes/student-navbar.php';
             <?php foreach ($grades as $g): ?>
               <?php
                 $final = $g['final_grade'];
-                $isPass = ($g['remarks'] === 'Passed' || ($final !== null && $final >= 75));
-                $color = $final >= 90 ? 'var(--secondary)' : ($final >= 75 ? 'var(--primary)' : 'var(--danger)');
+                $isPass = ($g['remarks'] === 'Passed' || ($isKinder ? in_array($final, ['A','B','C'], true) : ($final !== null && (float)$final >= 75)));
+                $color = $isPass ? 'var(--secondary)' : 'var(--danger)';
               ?>
               <div class="mobile-card">
                 <div class="card-row">

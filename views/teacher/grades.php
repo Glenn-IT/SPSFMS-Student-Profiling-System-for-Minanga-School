@@ -54,12 +54,17 @@ $preselectedStudentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 
     .sf10-table th, .subject-table th { background:#e0e7ff; font-size:.78rem; text-align:center; vertical-align:middle; }
     .sf10-table td, .subject-table td { text-align:center; font-size:.85rem; vertical-align:middle; }
     .sf10-table td:first-child, .subject-table td.student-name-cell { text-align:left; }
-    .grade-input { width:65px; text-align:center; border:1px solid #d1d5db; border-radius:4px; padding:4px 6px; font-size:.88rem; font-weight:600; }
+    .grade-input { width:68px; text-align:center; border:1px solid #d1d5db; border-radius:4px; padding:4px 6px; font-size:.88rem; font-weight:600; }
+    select.grade-input { width:74px; font-weight:700; cursor:pointer; background:#fff; }
     .grade-input:focus { outline:none; border-color:var(--secondary); box-shadow:0 0 0 2px rgba(16,185,129,.2); }
     .grade-input.is-modified { background-color:#fef3c7; border-color:#f59e0b; }
     .remarks-passed { color:var(--secondary); font-weight:700; }
     .remarks-failed { color:var(--danger); font-weight:700; }
-    .sticky-actions-bar { position:sticky; top:70px; z-index:10; background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+    .letter-badge-A { background:#10b981; color:#fff; padding:2px 8px; border-radius:4px; }
+    .letter-badge-B { background:#0284c7; color:#fff; padding:2px 8px; border-radius:4px; }
+    .letter-badge-C { background:#0d9488; color:#fff; padding:2px 8px; border-radius:4px; }
+    .letter-badge-D { background:#f59e0b; color:#fff; padding:2px 8px; border-radius:4px; }
+    .letter-badge-E { background:#ef4444; color:#fff; padding:2px 8px; border-radius:4px; }
   </style>
 </head>
 <body>
@@ -169,18 +174,21 @@ $preselectedStudentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 
           </div>
         </div>
 
-        <!-- Kindergarten Performance Standards Bar (Shown for Kindergarten) -->
+        <!-- Kindergarten Performance Standards Bar (Shown for Kindergarten: DepEd K-3 Scale) -->
         <div id="subj-kinder-legend" class="alert alert-info py-2 px-3 mb-3 d-none" style="font-size:.84rem;">
           <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
             <div>
-              <strong><i class="fas fa-shapes me-1"></i>Kindergarten Standards:</strong>
-              <span class="badge bg-success ms-1">C (85-100) Consistent</span>
-              <span class="badge bg-primary ms-1">D (75-84) Developing</span>
-              <span class="badge bg-warning text-dark ms-1">B (&lt;75) Beginning</span>
+              <strong><i class="fas fa-shapes me-1"></i>Kindergarten (K-3) Grading Standards:</strong>
+              <span class="badge bg-success ms-1">A (90-100) Advancing</span>
+              <span class="badge bg-primary ms-1">B (80-89) Benchmarking</span>
+              <span class="badge bg-info text-dark ms-1">C (75-79) Connecting</span>
+              <span class="badge bg-warning text-dark ms-1">D (65-74) Developing</span>
+              <span class="badge bg-danger ms-1">E (&lt;65) Emerging</span>
             </div>
             <div class="btn-group btn-group-sm">
-              <button type="button" class="btn btn-outline-success btn-sm py-0" onclick="quickFillSubjectRoster(88)">Set Blank to Consistent (88)</button>
-              <button type="button" class="btn btn-outline-primary btn-sm py-0" onclick="quickFillSubjectRoster(80)">Set Blank to Developing (80)</button>
+              <button type="button" class="btn btn-outline-success btn-sm py-0" onclick="quickFillSubjectRoster('A')">Set Blank to A (Advancing)</button>
+              <button type="button" class="btn btn-outline-primary btn-sm py-0" onclick="quickFillSubjectRoster('B')">Set Blank to B (Benchmarking)</button>
+              <button type="button" class="btn btn-outline-info text-dark btn-sm py-0" onclick="quickFillSubjectRoster('C')">Set Blank to C (Connecting)</button>
             </div>
           </div>
         </div>
@@ -327,13 +335,16 @@ $preselectedStudentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 
                 <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                   <div>
                     <strong><i class="fas fa-info-circle me-1"></i>Kindergarten (K-3) Performance Standards:</strong>
-                    <span class="ms-2 badge bg-success">C (85-100) Consistent</span>
-                    <span class="ms-1 badge bg-primary">D (75-84) Developing</span>
-                    <span class="ms-1 badge bg-warning text-dark">B (&lt;75) Beginning</span>
+                    <span class="ms-1 badge bg-success">A (90-100) Advancing</span>
+                    <span class="ms-1 badge bg-primary">B (80-89) Benchmarking</span>
+                    <span class="ms-1 badge bg-info text-dark">C (75-79) Connecting</span>
+                    <span class="ms-1 badge bg-warning text-dark">D (65-74) Developing</span>
+                    <span class="ms-1 badge bg-danger">E (&lt;65) Emerging</span>
                   </div>
                   <div class="btn-group btn-group-sm">
-                    <button type="button" class="btn btn-outline-success btn-sm py-0" onclick="quickFillKinder(88)">Set All Consistent (88)</button>
-                    <button type="button" class="btn btn-outline-primary btn-sm py-0" onclick="quickFillKinder(80)">Set All Developing (80)</button>
+                    <button type="button" class="btn btn-outline-success btn-sm py-0" onclick="quickFillKinder('A')">Set Blank to A</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm py-0" onclick="quickFillKinder('B')">Set Blank to B</button>
+                    <button type="button" class="btn btn-outline-info text-dark btn-sm py-0" onclick="quickFillKinder('C')">Set Blank to C</button>
                   </div>
                 </div>
               </div>
@@ -394,6 +405,33 @@ $preselectedStudentId = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 
 const BASE = '<?= BASE_URL ?>';
 const CLASS_SUBJECTS = <?= json_encode($classSubjects) ?>;
 showDesktopOnlyWarning();
+
+// Official DepEd K-3 Descriptor Standards Scale
+const KINDER_SCALE = {
+  'A': { label: 'Advancing', score: 95, remark: 'Passed' },
+  'B': { label: 'Benchmarking', score: 85, remark: 'Passed' },
+  'C': { label: 'Connecting', score: 77, remark: 'Passed' },
+  'D': { label: 'Developing', score: 70, remark: 'Failed' },
+  'E': { label: 'Emerging', score: 50, remark: 'Failed' }
+};
+
+function scoreToKinderLetter(score) {
+  if (score >= 90) return 'A';
+  if (score >= 80) return 'B';
+  if (score >= 75) return 'C';
+  if (score >= 65) return 'D';
+  return 'E';
+}
+
+function getKinderScore(val) {
+  if (!val) return null;
+  const s = String(val).trim().toUpperCase();
+  if (KINDER_SCALE[s]) return KINDER_SCALE[s].score;
+  if (!isNaN(Number(val))) {
+    return Number(val);
+  }
+  return null;
+}
 
 // State for Subject-Based Roster Grading
 let currentSubject = '';
@@ -514,7 +552,30 @@ async function loadSubjectGrades() {
   }
 }
 
+function renderRosterInput(val, col, isKinder) {
+  const cleanVal = (val !== null && val !== undefined) ? String(val).trim().toUpperCase() : '';
+  if (isKinder) {
+    return `
+      <select class="grade-input subj-term-input text-center fw-bold" data-col="${col}" onchange="recomputeSubjectRow(this)">
+        <option value="">—</option>
+        <option value="A" ${cleanVal === 'A' ? 'selected' : ''}>A</option>
+        <option value="B" ${cleanVal === 'B' ? 'selected' : ''}>B</option>
+        <option value="C" ${cleanVal === 'C' ? 'selected' : ''}>C</option>
+        <option value="D" ${cleanVal === 'D' ? 'selected' : ''}>D</option>
+        <option value="E" ${cleanVal === 'E' ? 'selected' : ''}>E</option>
+      </select>
+    `;
+  }
+  return `
+    <input type="number" class="grade-input subj-term-input" data-col="${col}" min="0" max="100" step="any"
+           value="${cleanVal}" oninput="recomputeSubjectRow(this)" onkeydown="navigateSubjectInputs(event, this)">
+  `;
+}
+
 function renderSubjectRosterTable(students) {
+  const { grade_level } = getActiveSubjectClass();
+  const isKinder = /kinder/i.test(grade_level);
+
   const tbody = document.getElementById('subject-grades-tbody');
   const countBadge = document.getElementById('roster-count-badge');
   const summaryCount = document.getElementById('summary-students-count');
@@ -532,7 +593,7 @@ function renderSubjectRosterTable(students) {
     const t1 = stu.t1 !== null && stu.t1 !== undefined ? stu.t1 : '';
     const t2 = stu.t2 !== null && stu.t2 !== undefined ? stu.t2 : '';
     const t3 = stu.t3 !== null && stu.t3 !== undefined ? stu.t3 : '';
-    const final = stu.final_grade !== null && stu.final_grade !== undefined ? stu.final_grade : '';
+    let final = stu.final_grade !== null && stu.final_grade !== undefined ? stu.final_grade : '';
     const remarks = stu.remarks || '';
     const sexBadge = stu.sex === 'Female' 
       ? '<span class="badge" style="background:#fce7f3;color:#be185d;">F</span>' 
@@ -543,6 +604,15 @@ function renderSubjectRosterTable(students) {
 
     const rmClass = remarks === 'Passed' ? 'remarks-passed' : (remarks === 'Failed' ? 'remarks-failed' : '');
 
+    let finalDisplay = '—';
+    if (final !== '') {
+      if (isKinder) {
+        finalDisplay = `<span class="fw-bold fs-6 ${remarks === 'Passed' ? 'text-success' : 'text-danger'}">${final}</span>`;
+      } else {
+        finalDisplay = Number(final).toFixed(2);
+      }
+    }
+
     html += `
       <tr class="roster-row" data-student-id="${stu.student_id}" data-name="${fullName.toLowerCase()}" data-lrn="${stu.lrn}">
         <td class="text-muted small">${idx + 1}</td>
@@ -551,19 +621,10 @@ function renderSubjectRosterTable(students) {
           ${fullName}
         </td>
         <td>${sexBadge}</td>
-        <td>
-          <input type="number" class="grade-input subj-term-input" data-col="t1" min="0" max="100" step="any"
-                 value="${t1}" oninput="recomputeSubjectRow(this)" onkeydown="navigateSubjectInputs(event, this)">
-        </td>
-        <td>
-          <input type="number" class="grade-input subj-term-input" data-col="t2" min="0" max="100" step="any"
-                 value="${t2}" oninput="recomputeSubjectRow(this)" onkeydown="navigateSubjectInputs(event, this)">
-        </td>
-        <td>
-          <input type="number" class="grade-input subj-term-input" data-col="t3" min="0" max="100" step="any"
-                 value="${t3}" oninput="recomputeSubjectRow(this)" onkeydown="navigateSubjectInputs(event, this)">
-        </td>
-        <td class="fw-bold final-cell text-center" style="background:#f0fdf4;">${final !== '' ? Number(final).toFixed(2) : '—'}</td>
+        <td>${renderRosterInput(t1, 't1', isKinder)}</td>
+        <td>${renderRosterInput(t2, 't2', isKinder)}</td>
+        <td>${renderRosterInput(t3, 't3', isKinder)}</td>
+        <td class="fw-bold final-cell text-center" style="background:#f0fdf4;">${finalDisplay}</td>
         <td class="${rmClass} remarks-cell text-center" style="background:#f0fdf4;">${remarks || '—'}</td>
         <td class="status-cell text-muted small"><i class="fas fa-check-circle text-muted"></i></td>
       </tr>
@@ -576,6 +637,9 @@ function renderSubjectRosterTable(students) {
 
 function recomputeSubjectRow(input) {
   input.classList.add('is-modified');
+  const { grade_level } = getActiveSubjectClass();
+  const isKinder = /kinder/i.test(grade_level);
+
   const row = input.closest('tr');
   const t1Input = row.querySelector('.subj-term-input[data-col="t1"]');
   const t2Input = row.querySelector('.subj-term-input[data-col="t2"]');
@@ -584,20 +648,45 @@ function recomputeSubjectRow(input) {
   const remarksCell = row.querySelector('.remarks-cell');
   const statusCell = row.querySelector('.status-cell');
 
-  const v1 = t1Input.value !== '' ? parseFloat(t1Input.value) : null;
-  const v2 = t2Input.value !== '' ? parseFloat(t2Input.value) : null;
-  const v3 = t3Input.value !== '' ? parseFloat(t3Input.value) : null;
+  if (isKinder) {
+    const v1 = (t1Input.value || '').trim().toUpperCase();
+    const v2 = (t2Input.value || '').trim().toUpperCase();
+    const v3 = (t3Input.value || '').trim().toUpperCase();
 
-  if (v1 !== null && v2 !== null && v3 !== null) {
-    const finalVal = Math.round(((v1 + v2 + v3) / 3) * 100) / 100;
-    const isPassed = finalVal >= 75;
-    finalCell.textContent = finalVal.toFixed(2);
-    remarksCell.textContent = isPassed ? 'Passed' : 'Failed';
-    remarksCell.className = 'remarks-cell text-center ' + (isPassed ? 'remarks-passed' : 'remarks-failed');
+    const s1 = getKinderScore(v1);
+    const s2 = getKinderScore(v2);
+    const s3 = getKinderScore(v3);
+
+    if (s1 !== null && s2 !== null && s3 !== null) {
+      const avgScore = (s1 + s2 + s3) / 3;
+      const finalLetter = scoreToKinderLetter(avgScore);
+      const isPassed = ['A', 'B', 'C'].includes(finalLetter);
+      finalCell.innerHTML = `<span class="fw-bold fs-6 ${isPassed ? 'text-success' : 'text-danger'}">${finalLetter}</span>`;
+      finalCell.dataset.letter = finalLetter;
+      remarksCell.textContent = isPassed ? 'Passed' : 'Failed';
+      remarksCell.className = 'remarks-cell text-center ' + (isPassed ? 'remarks-passed' : 'remarks-failed');
+    } else {
+      finalCell.textContent = '—';
+      finalCell.dataset.letter = '';
+      remarksCell.textContent = '—';
+      remarksCell.className = 'remarks-cell text-center';
+    }
   } else {
-    finalCell.textContent = '—';
-    remarksCell.textContent = '—';
-    remarksCell.className = 'remarks-cell text-center';
+    const v1 = t1Input.value !== '' ? parseFloat(t1Input.value) : null;
+    const v2 = t2Input.value !== '' ? parseFloat(t2Input.value) : null;
+    const v3 = t3Input.value !== '' ? parseFloat(t3Input.value) : null;
+
+    if (v1 !== null && v2 !== null && v3 !== null) {
+      const finalVal = Math.round(((v1 + v2 + v3) / 3) * 100) / 100;
+      const isPassed = finalVal >= 75;
+      finalCell.textContent = finalVal.toFixed(2);
+      remarksCell.textContent = isPassed ? 'Passed' : 'Failed';
+      remarksCell.className = 'remarks-cell text-center ' + (isPassed ? 'remarks-passed' : 'remarks-failed');
+    } else {
+      finalCell.textContent = '—';
+      remarksCell.textContent = '—';
+      remarksCell.className = 'remarks-cell text-center';
+    }
   }
 
   statusCell.innerHTML = '<span class="badge bg-warning text-dark">Edited</span>';
@@ -607,6 +696,9 @@ function recomputeSubjectRow(input) {
 }
 
 function recalculateSubjectSummary() {
+  const { grade_level } = getActiveSubjectClass();
+  const isKinder = /kinder/i.test(grade_level);
+
   const rows = document.querySelectorAll('#subject-grades-tbody tr.roster-row');
   let t1Sum = 0, t1Count = 0;
   let t2Sum = 0, t2Count = 0;
@@ -615,25 +707,40 @@ function recalculateSubjectSummary() {
   let passedCount = 0;
 
   rows.forEach(r => {
-    const t1 = parseFloat(r.querySelector('.subj-term-input[data-col="t1"]').value);
-    const t2 = parseFloat(r.querySelector('.subj-term-input[data-col="t2"]').value);
-    const t3 = parseFloat(r.querySelector('.subj-term-input[data-col="t3"]').value);
-    const final = parseFloat(r.querySelector('.final-cell').textContent);
+    const t1Val = r.querySelector('.subj-term-input[data-col="t1"]').value;
+    const t2Val = r.querySelector('.subj-term-input[data-col="t2"]').value;
+    const t3Val = r.querySelector('.subj-term-input[data-col="t3"]').value;
+    const finalTxt = r.querySelector('.final-cell').textContent.trim();
 
-    if (!isNaN(t1)) { t1Sum += t1; t1Count++; }
-    if (!isNaN(t2)) { t2Sum += t2; t2Count++; }
-    if (!isNaN(t3)) { t3Sum += t3; t3Count++; }
-    if (!isNaN(final)) {
-      finalSum += final;
-      finalCount++;
-      if (final >= 75) passedCount++;
+    if (isKinder) {
+      const s1 = getKinderScore(t1Val);
+      const s2 = getKinderScore(t2Val);
+      const s3 = getKinderScore(t3Val);
+      if (s1 !== null) { t1Sum += s1; t1Count++; }
+      if (s2 !== null) { t2Sum += s2; t2Count++; }
+      if (s3 !== null) { t3Sum += s3; t3Count++; }
+      if (['A','B','C','D','E'].includes(finalTxt)) {
+        const sFinal = getKinderScore(finalTxt);
+        finalSum += sFinal;
+        finalCount++;
+        if (['A','B','C'].includes(finalTxt)) passedCount++;
+      }
+    } else {
+      const t1 = parseFloat(t1Val);
+      const t2 = parseFloat(t2Val);
+      const t3 = parseFloat(t3Val);
+      const final = parseFloat(finalTxt);
+
+      if (!isNaN(t1)) { t1Sum += t1; t1Count++; }
+      if (!isNaN(t2)) { t2Sum += t2; t2Count++; }
+      if (!isNaN(t3)) { t3Sum += t3; t3Count++; }
+      if (!isNaN(final)) {
+        finalSum += final;
+        finalCount++;
+        if (final >= 75) passedCount++;
+      }
     }
   });
-
-  const avgT1 = t1Count ? (t1Sum / t1Count).toFixed(2) : '—';
-  const avgT2 = t2Count ? (t2Sum / t2Count).toFixed(2) : '—';
-  const avgT3 = t3Count ? (t3Sum / t3Count).toFixed(2) : '—';
-  const genAvg = finalCount ? (finalSum / finalCount).toFixed(2) : '—';
 
   const t1El = document.getElementById('avg-t1');
   const t2El = document.getElementById('avg-t2');
@@ -641,10 +748,18 @@ function recalculateSubjectSummary() {
   const genEl = document.getElementById('summary-general-avg');
   const passEl = document.getElementById('summary-pass-rate');
 
-  if (t1El) t1El.textContent = avgT1;
-  if (t2El) t2El.textContent = avgT2;
-  if (t3El) t3El.textContent = avgT3;
-  if (genEl) genEl.textContent = genAvg;
+  if (isKinder) {
+    if (t1El) t1El.textContent = t1Count ? scoreToKinderLetter(t1Sum / t1Count) : '—';
+    if (t2El) t2El.textContent = t2Count ? scoreToKinderLetter(t2Sum / t2Count) : '—';
+    if (t3El) t3El.textContent = t3Count ? scoreToKinderLetter(t3Sum / t3Count) : '—';
+    if (genEl) genEl.textContent = finalCount ? scoreToKinderLetter(finalSum / finalCount) : '—';
+  } else {
+    if (t1El) t1El.textContent = t1Count ? (t1Sum / t1Count).toFixed(2) : '—';
+    if (t2El) t2El.textContent = t2Count ? (t2Sum / t2Count).toFixed(2) : '—';
+    if (t3El) t3El.textContent = t3Count ? (t3Sum / t3Count).toFixed(2) : '—';
+    if (genEl) genEl.textContent = finalCount ? (finalSum / finalCount).toFixed(2) : '—';
+  }
+
   if (passEl) {
     if (finalCount > 0) {
       const pct = Math.round((passedCount / finalCount) * 100);
@@ -675,14 +790,14 @@ function navigateSubjectInputs(event, input) {
     const nextRow = row.nextElementSibling;
     if (nextRow && nextRow.classList.contains('roster-row')) {
       const targetInput = nextRow.querySelector(`.subj-term-input[data-col="${col}"]`);
-      if (targetInput) { targetInput.focus(); targetInput.select(); }
+      if (targetInput) { targetInput.focus(); if (targetInput.select) targetInput.select(); }
     }
   } else if (event.key === 'ArrowUp') {
     event.preventDefault();
     const prevRow = row.previousElementSibling;
     if (prevRow && prevRow.classList.contains('roster-row')) {
       const targetInput = prevRow.querySelector(`.subj-term-input[data-col="${col}"]`);
-      if (targetInput) { targetInput.focus(); targetInput.select(); }
+      if (targetInput) { targetInput.focus(); if (targetInput.select) targetInput.select(); }
     }
   }
 }
@@ -860,26 +975,70 @@ async function loadGrades() {
 
     data.subjects.forEach(subject => {
       const g = data.grades[subject] || {};
-      const t1 = g.t1 ?? g.q1 ?? '';
-      const t2 = g.t2 ?? g.q2 ?? '';
-      const t3 = g.t3 ?? g.q3 ?? '';
-      const final = g.final_grade ?? '';
+      const t1 = (g.t1 ?? g.q1 ?? '').toString().trim().toUpperCase();
+      const t2 = (g.t2 ?? g.q2 ?? '').toString().trim().toUpperCase();
+      const t3 = (g.t3 ?? g.q3 ?? '').toString().trim().toUpperCase();
+      const final = (g.final_grade ?? '').toString().trim().toUpperCase();
       const remarks = g.remarks || '';
-      if (final !== '' && final !== null) { gradeSum += parseFloat(final); gradeCount++; }
+
+      if (isKinder) {
+        if (['A','B','C','D','E'].includes(final)) {
+          gradeSum += getKinderScore(final);
+          gradeCount++;
+        }
+      } else {
+        if (final !== '' && !isNaN(Number(final))) {
+          gradeSum += parseFloat(final);
+          gradeCount++;
+        }
+      }
+
       const rmClass = remarks === 'Passed' ? 'remarks-passed' : (remarks === 'Failed' ? 'remarks-failed' : '');
+
+      let t1InputHtml = '';
+      let t2InputHtml = '';
+      let t3InputHtml = '';
+
+      if (isKinder) {
+        const renderKinderSelect = (val, term) => `
+          <select class="grade-input term-input text-center fw-bold" data-term="${term}" onchange="recomputeRow(this)">
+            <option value="">—</option>
+            <option value="A" ${val === 'A' ? 'selected' : ''}>A</option>
+            <option value="B" ${val === 'B' ? 'selected' : ''}>B</option>
+            <option value="C" ${val === 'C' ? 'selected' : ''}>C</option>
+            <option value="D" ${val === 'D' ? 'selected' : ''}>D</option>
+            <option value="E" ${val === 'E' ? 'selected' : ''}>E</option>
+          </select>
+        `;
+        t1InputHtml = renderKinderSelect(t1, 't1');
+        t2InputHtml = renderKinderSelect(t2, 't2');
+        t3InputHtml = renderKinderSelect(t3, 't3');
+      } else {
+        t1InputHtml = `<input type="number" class="grade-input term-input text-center" data-term="t1" min="0" max="100" step="any" value="${t1}" oninput="recomputeRow(this)" onchange="recomputeRow(this)">`;
+        t2InputHtml = `<input type="number" class="grade-input term-input text-center" data-term="t2" min="0" max="100" step="any" value="${t2}" oninput="recomputeRow(this)" onchange="recomputeRow(this)">`;
+        t3InputHtml = `<input type="number" class="grade-input term-input text-center" data-term="t3" min="0" max="100" step="any" value="${t3}" oninput="recomputeRow(this)" onchange="recomputeRow(this)">`;
+      }
+
       tbody.innerHTML += `<tr data-subject="${subject}">
         <td>${subject}</td>
-        <td><input type="number" class="grade-input term-input text-center" data-term="t1" min="0" max="100" step="any" value="${t1}" oninput="recomputeRow(this)" onchange="recomputeRow(this)"></td>
-        <td><input type="number" class="grade-input term-input text-center" data-term="t2" min="0" max="100" step="any" value="${t2}" oninput="recomputeRow(this)" onchange="recomputeRow(this)"></td>
-        <td><input type="number" class="grade-input term-input text-center" data-term="t3" min="0" max="100" step="any" value="${t3}" oninput="recomputeRow(this)" onchange="recomputeRow(this)"></td>
+        <td>${t1InputHtml}</td>
+        <td>${t2InputHtml}</td>
+        <td>${t3InputHtml}</td>
         <td class="fw-bold final-cell text-center">${final !== '' ? final : '—'}</td>
         <td class="${rmClass} remarks-cell text-center">${remarks || '—'}</td>
       </tr>`;
     });
 
-    const avg = gradeCount > 0 ? (gradeSum / gradeCount).toFixed(2) : '—';
-    document.getElementById('general-average').textContent = avg;
-    document.getElementById('general-remarks').textContent = avg !== '—' ? (parseFloat(avg) >= 75 ? 'Passed' : 'Failed') : '—';
+    if (isKinder) {
+      const avgLetter = gradeCount > 0 ? scoreToKinderLetter(gradeSum / gradeCount) : '—';
+      document.getElementById('general-average').textContent = avgLetter;
+      document.getElementById('general-remarks').textContent = avgLetter !== '—' ? (['A','B','C'].includes(avgLetter) ? 'Passed' : 'Failed') : '—';
+    } else {
+      const avg = gradeCount > 0 ? (gradeSum / gradeCount).toFixed(2) : '—';
+      document.getElementById('general-average').textContent = avg;
+      document.getElementById('general-remarks').textContent = avg !== '—' ? (parseFloat(avg) >= 75 ? 'Passed' : 'Failed') : '—';
+    }
+
     document.getElementById('sf10-container').style.display = 'block';
     const noMsg = document.getElementById('no-student-msg');
     if (noMsg) noMsg.style.display = 'none';
@@ -891,29 +1050,73 @@ async function loadGrades() {
 
 function recomputeRow(input) {
   const row = input.closest('tr');
+  const isKinder = currentStudent ? /kinder/i.test(currentStudent.grade_level) : false;
   const inputs = row.querySelectorAll('.term-input');
-  const vals = Array.from(inputs).map(i => i.value !== '' ? parseFloat(i.value) : null);
-  if (vals.every(v => v !== null)) {
-    const final = Math.round(vals.reduce((a,b) => a+b, 0) / 3 * 100) / 100;
-    const remarks = final >= 75 ? 'Passed' : 'Failed';
-    row.querySelector('.final-cell').textContent = final.toFixed(2);
-    row.querySelector('.remarks-cell').textContent = remarks;
-    row.querySelector('.remarks-cell').className = 'remarks-cell text-center ' + (remarks === 'Passed' ? 'remarks-passed' : 'remarks-failed');
+
+  if (isKinder) {
+    const v1 = (inputs[0].value || '').trim().toUpperCase();
+    const v2 = (inputs[1].value || '').trim().toUpperCase();
+    const v3 = (inputs[2].value || '').trim().toUpperCase();
+
+    const s1 = getKinderScore(v1);
+    const s2 = getKinderScore(v2);
+    const s3 = getKinderScore(v3);
+
+    if (s1 !== null && s2 !== null && s3 !== null) {
+      const avg = (s1 + s2 + s3) / 3;
+      const finalLetter = scoreToKinderLetter(avg);
+      const isPassed = ['A', 'B', 'C'].includes(finalLetter);
+      row.querySelector('.final-cell').textContent = finalLetter;
+      row.querySelector('.remarks-cell').textContent = isPassed ? 'Passed' : 'Failed';
+      row.querySelector('.remarks-cell').className = 'remarks-cell text-center ' + (isPassed ? 'remarks-passed' : 'remarks-failed');
+    } else {
+      row.querySelector('.final-cell').textContent = '—';
+      row.querySelector('.remarks-cell').textContent = '—';
+      row.querySelector('.remarks-cell').className = 'remarks-cell text-center';
+    }
   } else {
-    row.querySelector('.final-cell').textContent = '—';
-    row.querySelector('.remarks-cell').textContent = '—';
-    row.querySelector('.remarks-cell').className = 'remarks-cell text-center';
+    const vals = Array.from(inputs).map(i => i.value !== '' ? parseFloat(i.value) : null);
+    if (vals.every(v => v !== null)) {
+      const final = Math.round(vals.reduce((a,b) => a+b, 0) / 3 * 100) / 100;
+      const remarks = final >= 75 ? 'Passed' : 'Failed';
+      row.querySelector('.final-cell').textContent = final.toFixed(2);
+      row.querySelector('.remarks-cell').textContent = remarks;
+      row.querySelector('.remarks-cell').className = 'remarks-cell text-center ' + (remarks === 'Passed' ? 'remarks-passed' : 'remarks-failed');
+    } else {
+      row.querySelector('.final-cell').textContent = '—';
+      row.querySelector('.remarks-cell').textContent = '—';
+      row.querySelector('.remarks-cell').className = 'remarks-cell text-center';
+    }
   }
   updateGeneralAverage();
 }
 
 function updateGeneralAverage() {
-  const finals = Array.from(document.querySelectorAll('#grades-tbody .final-cell'))
-    .map(c => parseFloat(c.textContent)).filter(v => !isNaN(v));
-  if (!finals.length) { document.getElementById('general-average').textContent = '—'; document.getElementById('general-remarks').textContent = '—'; return; }
-  const avg = (finals.reduce((a,b)=>a+b,0)/finals.length).toFixed(2);
-  document.getElementById('general-average').textContent = avg;
-  document.getElementById('general-remarks').textContent = parseFloat(avg) >= 75 ? 'Passed' : 'Failed';
+  const isKinder = currentStudent ? /kinder/i.test(currentStudent.grade_level) : false;
+  const finalCells = Array.from(document.querySelectorAll('#grades-tbody .final-cell'));
+
+  if (isKinder) {
+    const letters = finalCells.map(c => c.textContent.trim().toUpperCase()).filter(l => ['A','B','C','D','E'].includes(l));
+    if (!letters.length) {
+      document.getElementById('general-average').textContent = '—';
+      document.getElementById('general-remarks').textContent = '—';
+      return;
+    }
+    const sum = letters.reduce((a, b) => a + getKinderScore(b), 0);
+    const avgLetter = scoreToKinderLetter(sum / letters.length);
+    document.getElementById('general-average').textContent = avgLetter;
+    document.getElementById('general-remarks').textContent = ['A','B','C'].includes(avgLetter) ? 'Passed' : 'Failed';
+  } else {
+    const finals = finalCells.map(c => parseFloat(c.textContent)).filter(v => !isNaN(v));
+    if (!finals.length) {
+      document.getElementById('general-average').textContent = '—';
+      document.getElementById('general-remarks').textContent = '—';
+      return;
+    }
+    const avg = (finals.reduce((a,b)=>a+b,0)/finals.length).toFixed(2);
+    document.getElementById('general-average').textContent = avg;
+    document.getElementById('general-remarks').textContent = parseFloat(avg) >= 75 ? 'Passed' : 'Failed';
+  }
 }
 
 function quickFillKinder(val) {

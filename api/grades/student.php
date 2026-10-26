@@ -114,41 +114,43 @@ if ($method === 'POST') {
     $section    = $d['section']      ?? '';
 
     // Support both t1/t2/t3 and q1/q2/q3
-    $t1Raw = $d['t1'] ?? $d['q1'] ?? null;
-    $t2Raw = $d['t2'] ?? $d['q2'] ?? null;
-    $t3Raw = $d['t3'] ?? $d['q3'] ?? null;
-    $q4Raw = $d['q4'] ?? null;
+    $t1Raw = trim((string)($d['t1'] ?? $d['q1'] ?? ''));
+    $t2Raw = trim((string)($d['t2'] ?? $d['q2'] ?? ''));
+    $t3Raw = trim((string)($d['t3'] ?? $d['q3'] ?? ''));
+    $q4Raw = trim((string)($d['q4'] ?? ''));
 
-    $t1 = ($t1Raw !== null && $t1Raw !== '') ? (float)$t1Raw : null;
-    $t2 = ($t2Raw !== null && $t2Raw !== '') ? (float)$t2Raw : null;
-    $t3 = ($t3Raw !== null && $t3Raw !== '') ? (float)$t3Raw : null;
-    $q4 = ($q4Raw !== null && $q4Raw !== '') ? (float)$q4Raw : null;
+    $isKinder = isKindergartenGrade($gradeLevel);
 
-    if (!$studentId || !$subject) {
-        http_response_code(400); echo json_encode(['ok'=>false,'message'=>'student_id and subject required']); exit;
-    }
+    if ($isKinder) {
+        $t1 = isKinderLetter($t1Raw) ? strtoupper($t1Raw) : null;
+        $t2 = isKinderLetter($t2Raw) ? strtoupper($t2Raw) : null;
+        $t3 = isKinderLetter($t3Raw) ? strtoupper($t3Raw) : null;
+        $q4 = null;
 
-    // If teacher, enforce advisory class restriction
-    if ($_SESSION['user']['role'] === 'teacher') {
-        $teacherClasses = getTeacherAdvisoryClasses($pdo, $_SESSION['user']['id']);
-        $isMyStudent = false;
-        foreach ($teacherClasses as $tc) {
-            if ($tc['grade_level'] === $gradeLevel && $tc['section'] === $section) {
-                $isMyStudent = true;
-                break;
-            }
+        $s1 = $t1 ? getKinderLetterScore($t1) : null;
+        $s2 = $t2 ? getKinderLetterScore($t2) : null;
+        $s3 = $t3 ? getKinderLetterScore($t3) : null;
+
+        $validScores = array_filter([$s1, $s2, $s3], fn($v) => $v !== null);
+        if (count($validScores) === 3) {
+            $avgScore = array_sum($validScores) / 3;
+            $final = scoreToKinderLetter($avgScore);
+            $remarks = in_array($final, ['A','B','C'], true) ? 'Passed' : 'Failed';
+        } else {
+            $final = null;
+            $remarks = '';
         }
-        if (!$isMyStudent) {
-            http_response_code(403);
-            echo json_encode(['ok'=>false,'message'=>'Access denied: You can only edit grades for students in your assigned advisory class.']);
-            exit;
-        }
-    }
+    } else {
+        $t1 = ($t1Raw !== '') ? (float)$t1Raw : null;
+        $t2 = ($t2Raw !== '') ? (float)$t2Raw : null;
+        $t3 = ($t3Raw !== '') ? (float)$t3Raw : null;
+        $q4 = ($q4Raw !== '') ? (float)$q4Raw : null;
 
-    // Compute final: average of 3 terms (T1 - T3)
-    $filled = array_filter([$t1, $t2, $t3], fn($v) => $v !== null);
-    $final  = count($filled) === 3 ? round(array_sum($filled) / 3, 2) : null;
-    $remarks = $final !== null ? ($final >= 75 ? 'Passed' : 'Failed') : '';
+        // Compute final: average of 3 terms (T1 - T3)
+        $filled = array_filter([$t1, $t2, $t3], fn($v) => $v !== null);
+        $final  = count($filled) === 3 ? round(array_sum($filled) / 3, 2) : null;
+        $remarks = $final !== null ? ($final >= 75 ? 'Passed' : 'Failed') : '';
+    }
 
     $pdo->prepare("INSERT INTO grades (student_id,school_year,grade_level,section,subject,t1,t2,t3,q1,q2,q3,q4,final_grade,remarks)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)

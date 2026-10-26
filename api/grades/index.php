@@ -143,23 +143,43 @@ if ($method === 'POST') {
                 final_grade = VALUES(final_grade), remarks = VALUES(remarks)
         ");
 
+        $isKinder = isKindergartenGrade($gradeLevel);
         $savedCount = 0;
         foreach ($grades as $item) {
             $studentId = (int)($item['student_id'] ?? 0);
             if (!$studentId) continue;
 
-            $t1Raw = $item['t1'] ?? null;
-            $t2Raw = $item['t2'] ?? null;
-            $t3Raw = $item['t3'] ?? null;
+            $t1Raw = trim((string)($item['t1'] ?? ''));
+            $t2Raw = trim((string)($item['t2'] ?? ''));
+            $t3Raw = trim((string)($item['t3'] ?? ''));
 
-            $t1 = ($t1Raw !== null && $t1Raw !== '') ? (float)$t1Raw : null;
-            $t2 = ($t2Raw !== null && $t2Raw !== '') ? (float)$t2Raw : null;
-            $t3 = ($t3Raw !== null && $t3Raw !== '') ? (float)$t3Raw : null;
+            if ($isKinder) {
+                $t1 = isKinderLetter($t1Raw) ? strtoupper($t1Raw) : null;
+                $t2 = isKinderLetter($t2Raw) ? strtoupper($t2Raw) : null;
+                $t3 = isKinderLetter($t3Raw) ? strtoupper($t3Raw) : null;
 
-            // Compute final grade if all 3 terms provided
-            $filled = array_filter([$t1, $t2, $t3], fn($v) => $v !== null);
-            $final = count($filled) === 3 ? round(array_sum($filled) / 3, 2) : null;
-            $remarks = $final !== null ? ($final >= 75 ? 'Passed' : 'Failed') : '';
+                $s1 = $t1 ? getKinderLetterScore($t1) : null;
+                $s2 = $t2 ? getKinderLetterScore($t2) : null;
+                $s3 = $t3 ? getKinderLetterScore($t3) : null;
+
+                $validScores = array_filter([$s1, $s2, $s3], fn($v) => $v !== null);
+                if (count($validScores) === 3) {
+                    $avgScore = array_sum($validScores) / 3;
+                    $final = scoreToKinderLetter($avgScore);
+                    $remarks = in_array($final, ['A','B','C'], true) ? 'Passed' : 'Failed';
+                } else {
+                    $final = null;
+                    $remarks = '';
+                }
+            } else {
+                $t1 = ($t1Raw !== '') ? (float)$t1Raw : null;
+                $t2 = ($t2Raw !== '') ? (float)$t2Raw : null;
+                $t3 = ($t3Raw !== '') ? (float)$t3Raw : null;
+
+                $filled = array_filter([$t1, $t2, $t3], fn($v) => $v !== null);
+                $final = count($filled) === 3 ? round(array_sum($filled) / 3, 2) : null;
+                $remarks = $final !== null ? ($final >= 75 ? 'Passed' : 'Failed') : '';
+            }
 
             $upsertStmt->execute([
                 $studentId, $sy, $gradeLevel, $section, $subject,

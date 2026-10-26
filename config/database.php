@@ -78,6 +78,24 @@ try {
         }
     } catch (Exception $tcErr) {}
 
+    // Ensure grades table supports letter grades for Kindergarten (VARCHAR(10))
+    try {
+        $colStmt = $pdo->query("SHOW COLUMNS FROM `grades` LIKE 't1'");
+        $colInfo = $colStmt->fetch();
+        if ($colInfo && stripos($colInfo['Type'] ?? '', 'decimal') !== false) {
+            $pdo->exec("ALTER TABLE `grades` 
+                MODIFY COLUMN `t1` VARCHAR(10) NULL DEFAULT NULL,
+                MODIFY COLUMN `t2` VARCHAR(10) NULL DEFAULT NULL,
+                MODIFY COLUMN `t3` VARCHAR(10) NULL DEFAULT NULL,
+                MODIFY COLUMN `q1` VARCHAR(10) NULL DEFAULT NULL,
+                MODIFY COLUMN `q2` VARCHAR(10) NULL DEFAULT NULL,
+                MODIFY COLUMN `q3` VARCHAR(10) NULL DEFAULT NULL,
+                MODIFY COLUMN `q4` VARCHAR(10) NULL DEFAULT NULL,
+                MODIFY COLUMN `final_grade` VARCHAR(10) NULL DEFAULT NULL;
+            ");
+        }
+    } catch (Exception $gMigErr) {}
+
     // Ensure report_signatories table exists and is seeded
     try {
         $pdo->exec("

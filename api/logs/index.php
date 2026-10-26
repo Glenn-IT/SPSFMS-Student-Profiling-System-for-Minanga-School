@@ -3,14 +3,14 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../includes/auth_check.php';
 
-$user = requireAuth();
-$role = $user['role'];
-
-if (!in_array($role, ['admin', 'teacher'])) {
-    http_response_code(403);
+if (empty($_SESSION['user']) || !in_array($_SESSION['user']['role'], ['admin', 'teacher'])) {
+    http_response_code(401);
     echo json_encode(['ok' => false, 'message' => 'Unauthorized access.']);
     exit;
 }
+
+$user = $_SESSION['user'];
+$role = $user['role'];
 
 try {
     $where  = [];

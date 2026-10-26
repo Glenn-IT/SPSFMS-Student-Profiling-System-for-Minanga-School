@@ -73,7 +73,27 @@ function renderSf9ReportCard(data, options = {}) {
   const selectedPeriod = parseInt(options.period ?? data.selected_term ?? 0);
   const periodBadge = selectedPeriod > 0 ? `Term ${selectedPeriod} Progress` : 'All Terms';
 
-  const fmtG = val => (val !== null && val !== undefined && val !== '' && !isNaN(Number(val))) ? Math.round(Number(val)) : '—';
+  const kinderScores = { 'A': 95, 'B': 85, 'C': 77, 'D': 70, 'E': 50 };
+  const scoreToKinder = score => {
+    if (score >= 90) return 'A';
+    if (score >= 80) return 'B';
+    if (score >= 75) return 'C';
+    if (score >= 65) return 'D';
+    return 'E';
+  };
+
+  const fmtG = val => {
+    if (val === null || val === undefined || val === '') return '—';
+    const s = String(val).trim().toUpperCase();
+    if (['A','B','C','D','E'].includes(s)) return s;
+    if (!isNaN(Number(val))) {
+      if (isKinder) {
+        return scoreToKinder(Number(val));
+      }
+      return Math.round(Number(val));
+    }
+    return val;
+  };
 
   let subjectRowsHtml = '';
   const allFinals = [];
@@ -175,21 +195,37 @@ function renderSf9ReportCard(data, options = {}) {
       const t2 = fmtG(rawT2);
       const t3 = fmtG(rawT3);
 
-      const validTerms = [t1, t2, t3].filter(v => typeof v === 'number');
       let finalG = '—';
       let remark = '—';
       let remarkColor = '#000000';
 
-      if (validTerms.length === 3 || (selectedPeriod === 0 && validTerms.length > 0)) {
-        finalG = Math.round(validTerms.reduce((a, b) => a + b, 0) / validTerms.length);
-        remark = finalG >= 75 ? 'Passed' : 'Failed';
-        remarkColor = remark === 'Failed' ? '#dc2626' : '#000000';
-        allFinals.push(finalG);
-      } else if (sub.final_grade !== null && sub.final_grade !== undefined && sub.final_grade !== '') {
-        finalG = Math.round(Number(sub.final_grade));
-        remark = finalG >= 75 ? 'Passed' : 'Failed';
-        remarkColor = remark === 'Failed' ? '#dc2626' : '#000000';
-        allFinals.push(finalG);
+      if (isKinder) {
+        const kTerms = [t1, t2, t3].filter(v => ['A','B','C','D','E'].includes(v));
+        if (kTerms.length === 3 || (selectedPeriod === 0 && kTerms.length > 0)) {
+          const avgScore = kTerms.reduce((a, b) => a + (kinderScores[b] || 75), 0) / kTerms.length;
+          finalG = scoreToKinder(avgScore);
+          remark = ['A','B','C'].includes(finalG) ? 'Passed' : 'Failed';
+          remarkColor = remark === 'Failed' ? '#dc2626' : '#000000';
+          allFinals.push(avgScore);
+        } else if (sub.final_grade) {
+          finalG = fmtG(sub.final_grade);
+          remark = ['A','B','C'].includes(finalG) ? 'Passed' : 'Failed';
+          remarkColor = remark === 'Failed' ? '#dc2626' : '#000000';
+          if (kinderScores[finalG]) allFinals.push(kinderScores[finalG]);
+        }
+      } else {
+        const validTerms = [t1, t2, t3].filter(v => typeof v === 'number');
+        if (validTerms.length === 3 || (selectedPeriod === 0 && validTerms.length > 0)) {
+          finalG = Math.round(validTerms.reduce((a, b) => a + b, 0) / validTerms.length);
+          remark = finalG >= 75 ? 'Passed' : 'Failed';
+          remarkColor = remark === 'Failed' ? '#dc2626' : '#000000';
+          allFinals.push(finalG);
+        } else if (sub.final_grade !== null && sub.final_grade !== undefined && sub.final_grade !== '') {
+          finalG = Math.round(Number(sub.final_grade));
+          remark = finalG >= 75 ? 'Passed' : 'Failed';
+          remarkColor = remark === 'Failed' ? '#dc2626' : '#000000';
+          allFinals.push(finalG);
+        }
       }
 
       subjectRowsHtml += `
@@ -232,12 +268,27 @@ function renderSf9ReportCard(data, options = {}) {
     });
   }
 
-  const finalGenAvg = (allFinals.length > 0)
-    ? Math.round(allFinals.reduce((a, b) => a + b, 0) / allFinals.length)
-    : (data.general_average ? Math.round(parseFloat(data.general_average)) : '—');
-  const finalGenRemark = (finalGenAvg !== '—')
-    ? (Number(finalGenAvg) >= 75 ? 'Passed' : 'Failed')
-    : '—';
+  let finalGenAvg = '—';
+  let finalGenRemark = '—';
+  if (allFinals.length > 0) {
+    const avgScore = allFinals.reduce((a, b) => a + b, 0) / allFinals.length;
+    if (isKinder) {
+      finalGenAvg = scoreToKinder(avgScore);
+      finalGenRemark = ['A','B','C'].includes(finalGenAvg) ? 'Passed' : 'Failed';
+    } else {
+      finalGenAvg = Math.round(avgScore);
+      finalGenRemark = Number(finalGenAvg) >= 75 ? 'Passed' : 'Failed';
+    }
+  } else if (data.general_average) {
+    const gaStr = String(data.general_average).trim().toUpperCase();
+    if (isKinder && ['A','B','C','D','E'].includes(gaStr)) {
+      finalGenAvg = gaStr;
+      finalGenRemark = ['A','B','C'].includes(finalGenAvg) ? 'Passed' : 'Failed';
+    } else {
+      finalGenAvg = Math.round(parseFloat(data.general_average));
+      finalGenRemark = Number(finalGenAvg) >= 75 ? 'Passed' : 'Failed';
+    }
+  }
 
   return `
     <!-- SF9 Screen Toolbar -->
@@ -354,19 +405,21 @@ function renderSf9ReportCard(data, options = {}) {
           ${isKinder ? `
           <!-- Kindergarten (K-3) Performance Descriptors Table -->
           <div class="sf9-descriptors-block">
-            <div class="sf9-descriptors-title">KINDERGARTEN (K-3) PERFORMANCE DESCRIPTORS</div>
+            <div class="sf9-descriptors-title">REPORT ON LEARNING PROGRESS AND ACHIEVEMENT (K-3)</div>
             <table class="sf9-descriptors-table">
               <thead>
                 <tr>
-                  <th style="width: 28%;">Rating / Scale</th>
-                  <th style="width: 44%;">Early Childhood Competency</th>
-                  <th style="width: 28%;">Remarks</th>
+                  <th style="width: 36%;">Descriptors</th>
+                  <th style="width: 34%;">Grading Scale</th>
+                  <th style="width: 30%;">Remarks</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td>85-100 (C)</td><td>Consistently Demonstrates</td><td>Passed / Promoted</td></tr>
-                <tr><td>75-84 (D)</td><td>Developing Competency</td><td>Passed / Promoted</td></tr>
-                <tr><td>Below 75 (B)</td><td>Beginning / Needs Support</td><td>Needs Guidance</td></tr>
+                <tr><td>Advancing (A)</td><td>90-100</td><td>Passed</td></tr>
+                <tr><td>Benchmarking (B)</td><td>80-89</td><td>Passed</td></tr>
+                <tr><td>Connecting (C)</td><td>75-79</td><td>Passed</td></tr>
+                <tr><td>Developing (D)</td><td>65-74</td><td>Failed</td></tr>
+                <tr><td>Emerging (E)</td><td>0-64</td><td>Failed</td></tr>
               </tbody>
             </table>
           </div>

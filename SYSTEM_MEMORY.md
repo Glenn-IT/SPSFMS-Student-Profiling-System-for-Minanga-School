@@ -63,12 +63,14 @@ SPSFMS/
 │   │   ├── announcements.php           # Announcements CRUD (post/edit/delete notices to students & teachers)
 │   │   ├── settings.php                # Admin profile, credentials, security QT
 │   │   ├── security-questions.php      # Global security question catalogue
-│   │   └── school-years.php            # Academic calendar & active school year management
+│   │   ├── school-years.php            # Academic calendar & active school year management
+│   │   └── user-logs.php               # System audit trail & user activity log viewer
 │   ├── teacher/
 │   │   ├── dashboard.php               # Advisory overview, grading completion status & school announcements feed
 │   │   ├── student-profiles.php        # Read-only student browser for teachers
 │   │   ├── grades.php                  # SF10 grade entry grid (Q1-Q4, remarks, auto-save)
 │   │   ├── reports.php                 # Printable class grade summary & official DepEd Form 9 (SF9) report cards
+│   │   ├── activity-logs.php           # Teacher activity log history
 │   │   └── settings.php                # Teacher credentials update
 │   └── student/
 │       ├── dashboard.php               # Announcements & summary grade cards
@@ -110,8 +112,10 @@ SPSFMS/
 │   │   └── index.php                   # GET/POST: School years CRUD & active activation
 │   ├── analytics/
 │       └── index.php                   # GET: Aggregated enrollment & demographic data
-│   └── announcements/
-│       └── index.php                   # GET (role-aware: admin/teacher/student), POST/PUT/DELETE (admin CRUD)
+│   ├── announcements/
+│   │   └── index.php                   # GET (role-aware: admin/teacher/student), POST/PUT/DELETE (admin CRUD)
+│   └── logs/
+│       └── index.php                   # GET: Activity logs & audit statistics (admin/teacher)
 │
 └── assets/
     ├── css/
@@ -170,6 +174,8 @@ SPSFMS/
    - Fields: `id`, `prepared_by_type`, `prepared_by_user_id`, `prepared_by_name`, `prepared_by_title`, `noted_by_type`, `noted_by_user_id`, `noted_by_name`, `noted_by_title`, `updated_at`.
 10. **`school_years`**: Masterlist of school years and current active academic calendar.
    - Fields: `id`, `year_label` (unique), `is_active` (boolean flag), `start_date`, `end_date`, `created_at`.
+11. **`activity_logs`**: System audit trail & action logs for admin and teacher operations.
+   - Fields: `id`, `user_id`, `username`, `role`, `full_name`, `action`, `details`, `ip_address`, `created_at`.
 
 ---
 
@@ -187,7 +193,7 @@ Whenever any file or logic in the system is changed or refactored, the developer
 | **School Year** | 1. `config/constants.php` (`SCHOOL_YEAR`, `getActiveSchoolYear()`, `getSchoolYearsList()`)<br>2. `database/schema.sql` & `database/setup.php`<br>3. `api/school-years/index.php`<br>4. `views/admin/school-years.php`<br>5. Dropdowns in `views/teacher/grades.php`, `views/teacher/reports.php`, `views/admin/students.php` | • Ensure only one school year has `is_active = 1`.<br>• Active school year dynamically populates as the default across teacher and admin modules.<br>• Dropdown options load dynamically from `getSchoolYearsList()`. |
 | **Grade Levels / Sections** | 1. `config/constants.php` (`GRADE_LEVELS`, `SECTION_MAP`)<br>2. `database/schema.sql` (default section inserts)<br>3. `database/setup.php` (default section inserts)<br>4. Grade dropdown filters across views (`students.php`, `grades.php`, `sections.php`, `teachers.php`) | • Grade levels support Kindergarten, and Grade 1 through Grade 12.<br>• Dynamic section map loads from `sections` table with fallback to constants.<br>• Filter dropdowns populate accurately. |
 | **Subjects** | 1. `config/constants.php` (`getSubjectsForGrade()`)<br>2. `database/schema.sql` & `database/setup.php`<br>3. `api/subjects/index.php`<br>4. `views/admin/subjects.php`<br>5. `api/grades/student.php`<br>6. `views/teacher/grades.php` | • `getSubjectsForGrade()` queries `subjects` table dynamically by `grade_type` (`kindergarten`, `elementary`, `jhs`, `shs`) with constant fallback.<br>• Newly added/edited subjects in Admin automatically appear in Teacher SF10 grade cards.<br>• Previously recorded subject grades are preserved even if catalog changes. |
-| **Grades / Terms (New Curriculum)** | 1. `database/schema.sql`<br>2. `database/setup.php`<br>3. `api/grades/student.php`<br>4. `api/grades/index.php`<br>5. `views/teacher/grades.php`<br>6. `views/teacher/reports.php`<br>7. `views/student/dashboard.php` | • Grades structure supports Term 1 (T1), Term 2 (T2), and Term 3 (T3).<br>• Final Grade is auto-computed as average of (T1 + T2 + T3) / 3.<br>• Remarks: Passed (>= 75) / Failed (< 75).<br>• Dual storage/read compatibility for `t1..t3` and `q1..q3`. |
+| **Grades / Terms (New Curriculum)** | 1. `database/schema.sql`<br>2. `database/setup.php`<br>3. `api/grades/student.php`<br>4. `api/grades/index.php`<br>5. `views/teacher/grades.php`<br>6. `views/teacher/reports.php`<br>7. `views/student/dashboard.php`<br>8. `assets/js/sf9-renderer.js` | • Grades structure supports Term 1 (T1), Term 2 (T2), and Term 3 (T3) stored as VARCHAR(10) to support both numerical scores and K-3 letter descriptors.<br>• Kindergarten (K-3) letter descriptors: A (Advancing, 90-100), B (Benchmarking, 80-89), C (Connecting, 75-79), D (Developing, 65-74), E (Emerging, 0-64).<br>• Grades 1-12: Final Grade is auto-computed as average of (T1 + T2 + T3) / 3.<br>• Remarks: Passed (A, B, C or >= 75) / Failed (D, E or < 75).<br>• Dual storage/read compatibility for `t1..t3` and `q1..q3`. |
 | **Auth / Roles / Sessions** | 1. `api/auth/login.php`<br>2. `api/auth/logout.php`<br>3. `includes/auth_check.php`<br>4. `index.php` role redirection | • Ensure session keys (`$_SESSION['user']`, `['role']`, `['id']`, `['name']`) remain uniform.<br>• Ensure `redirectByRole()` handles all active roles.<br>• Verify cache control headers prevent back-button after logout. |
 
 ---

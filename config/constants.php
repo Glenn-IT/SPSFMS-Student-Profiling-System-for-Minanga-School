@@ -145,3 +145,31 @@ function getSubjectsForGrade(string $gradeLevel, ?PDO $pdo = null): array {
     if ($group === 'jhs')          return SUBJECTS_JHS;
     return SUBJECTS_SHS;
 }
+
+function isKindergartenGrade(string $gradeLevel): bool {
+    return (stripos($gradeLevel, 'kinder') !== false);
+}
+
+function getKinderLetterScore(string $letter): ?float {
+    $l = strtoupper(trim($letter));
+    return match ($l) {
+        'A' => 95.0,
+        'B' => 85.0,
+        'C' => 77.0,
+        'D' => 70.0,
+        'E' => 50.0,
+        default => null,
+    };
+}
+
+function scoreToKinderLetter(float $score): string {
+    if ($score >= 90) return 'A';
+    if ($score >= 80) return 'B';
+    if ($score >= 75) return 'C';
+    if ($score >= 65) return 'D';
+    return 'E';
+}
+
+function isKinderLetter(string $val): bool {
+    return in_array(strtoupper(trim($val)), ['A','B','C','D','E'], true);
+}
